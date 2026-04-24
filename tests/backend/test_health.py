@@ -19,3 +19,5 @@ def test_app_state_contains_runtime_settings() -> None:
     """The application should expose environment-backed settings on app.state."""
     assert app.state.settings.api_v1_prefix == "/api/v1"
     assert app.state.settings.enable_demo_login is True
+    assert app.state.db_engine.url.drivername == "mysql+pymysql"
+    assert app.state.db_session_factory is not None

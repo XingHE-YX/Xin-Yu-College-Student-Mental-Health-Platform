@@ -5,4 +5,7 @@
 当前状态：已完成 IMPLEMENTATION_PLAN.md 步骤1中的项目结构创建、backend 初始化、依赖安装、开发工具配置和小程序基础壳文件创建。
 当前状态补充：后端已具备最小可运行入口，GET /health 已通过本地 pytest 验证并返回 200。
 当前状态补充：Settings 已接入 app.state，测试环境下可通过环境变量成功启动应用。
-待办：见 IMPLEMENTATION_PLAN.md 步骤2.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤2.3（SQLAlchemy engine、sessionmaker、数据库会话依赖、模型 Base、非测试环境启动连通性检查）。
+当前状态补充：FastAPI app.state 已挂载数据库引擎与会话工厂，后续模型与 Alembic 可直接复用同一套元数据和连接配置。
+当前状态补充：已通过本地 pytest 验证数据库基础设施相关测试，覆盖 engine 创建、会话依赖、启动检查与健康接口，共 8 项测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤2.4。
