@@ -33,13 +33,31 @@ def test_alembic_upgrade_head_applies_current_revision(
 
     engine = create_engine(database_url)
     with engine.connect() as connection:
-        version = connection.execute(
-            text("SELECT version_num FROM alembic_version")
-        ).scalar_one()
-        table_names = inspect(connection).get_table_names()
+        version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+        inspector = inspect(connection)
+        table_names = inspector.get_table_names()
+        student_unique_constraints = {
+            tuple(constraint["column_names"])
+            for constraint in inspector.get_unique_constraints("student_users")
+        }
+        admin_unique_constraints = {
+            tuple(constraint["column_names"])
+            for constraint in inspector.get_unique_constraints("admin_users")
+        }
+        consent_foreign_keys = inspector.get_foreign_keys("consent_records")
 
     assert version == script.get_current_head()
-    assert table_names == ["alembic_version"]
+    assert sorted(table_names) == [
+        "admin_users",
+        "alembic_version",
+        "consent_records",
+        "student_users",
+    ]
+    assert ("phone_e164",) in student_unique_constraints
+    assert ("wechat_openid",) in student_unique_constraints
+    assert ("username",) in admin_unique_constraints
+    assert consent_foreign_keys[0]["referred_table"] == "student_users"
+    assert consent_foreign_keys[0]["constrained_columns"] == ["student_id"]
 
     engine.dispose()
 
@@ -64,7 +82,7 @@ def test_alembic_downgrade_base_removes_version_table(
         ).scalar_one_or_none()
         table_names = inspect(connection).get_table_names()
 
-    assert "alembic_version" in table_names
+    assert table_names == ["alembic_version"]
     assert version is None
 
     engine.dispose()
