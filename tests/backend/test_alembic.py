@@ -44,20 +44,47 @@ def test_alembic_upgrade_head_applies_current_revision(
             tuple(constraint["column_names"])
             for constraint in inspector.get_unique_constraints("admin_users")
         }
+        template_unique_constraints = {
+            tuple(constraint["column_names"])
+            for constraint in inspector.get_unique_constraints("questionnaire_templates")
+        }
+        question_unique_constraints = {
+            tuple(constraint["column_names"])
+            for constraint in inspector.get_unique_constraints("question_bank")
+        }
         consent_foreign_keys = inspector.get_foreign_keys("consent_records")
+        submission_foreign_keys = inspector.get_foreign_keys("questionnaire_submissions")
+        answer_foreign_keys = inspector.get_foreign_keys("questionnaire_answers")
+        report_foreign_keys = inspector.get_foreign_keys("assessment_reports")
 
     assert version == script.get_current_head()
     assert sorted(table_names) == [
         "admin_users",
         "alembic_version",
+        "assessment_reports",
         "consent_records",
+        "question_bank",
+        "questionnaire_answers",
+        "questionnaire_submissions",
+        "questionnaire_templates",
         "student_users",
     ]
     assert ("phone_e164",) in student_unique_constraints
     assert ("wechat_openid",) in student_unique_constraints
     assert ("username",) in admin_unique_constraints
+    assert ("code",) in template_unique_constraints
+    assert ("question_code",) in question_unique_constraints
     assert consent_foreign_keys[0]["referred_table"] == "student_users"
     assert consent_foreign_keys[0]["constrained_columns"] == ["student_id"]
+    assert sorted(foreign_key["referred_table"] for foreign_key in submission_foreign_keys) == [
+        "questionnaire_templates",
+        "student_users",
+    ]
+    assert sorted(foreign_key["referred_table"] for foreign_key in answer_foreign_keys) == [
+        "question_bank",
+        "questionnaire_submissions",
+    ]
+    assert report_foreign_keys[0]["referred_table"] == "student_users"
 
     engine.dispose()
 
