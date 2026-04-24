@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, Integer, MetaData
+from sqlalchemy import DateTime, Integer, MetaData, SmallInteger
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -24,6 +24,10 @@ MYSQL_TABLE_OPTIONS = {
 
 BIGINT_PRIMARY_KEY = Integer().with_variant(
     mysql.BIGINT(unsigned=True),
+    "mysql",
+)
+SMALLINT_UNSIGNED = SmallInteger().with_variant(
+    mysql.SMALLINT(unsigned=True),
     "mysql",
 )
 DATETIME_3 = DateTime(timezone=False).with_variant(
@@ -70,5 +74,15 @@ class TimestampMixin:
         DATETIME_3,
         default=utc_now,
         onupdate=utc_now,
+        nullable=False,
+    )
+
+
+class CreatedAtMixin:
+    """Provide a shared UTC created_at column for immutable or append-only tables."""
+
+    created_at: Mapped[datetime] = mapped_column(
+        DATETIME_3,
+        default=utc_now,
         nullable=False,
     )

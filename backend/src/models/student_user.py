@@ -19,7 +19,9 @@ from src.models.base import (
 )
 
 if TYPE_CHECKING:
+    from src.models.assessment_report import AssessmentReport
     from src.models.consent_record import ConsentRecord
+    from src.models.questionnaire_submission import QuestionnaireSubmission
 
 
 class StudentUser(PrimaryKeyMixin, TimestampMixin, Base):
@@ -56,3 +58,7 @@ class StudentUser(PrimaryKeyMixin, TimestampMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DATETIME_3, nullable=True)
 
     consent_records: Mapped[list[ConsentRecord]] = relationship(back_populates="student")
+    questionnaire_submissions: Mapped[list[QuestionnaireSubmission]] = relationship(
+        back_populates="student"
+    )
+    assessment_reports: Mapped[list[AssessmentReport]] = relationship(back_populates="student")
