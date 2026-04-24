@@ -1,0 +1,12 @@
+{
+  "pages": [],
+  "window": {
+    "navigationBarTitleText": "心语",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F8FAFA",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

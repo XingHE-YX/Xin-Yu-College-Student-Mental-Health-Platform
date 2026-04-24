@@ -1,0 +1,8 @@
+项目开始。已完成：规范文档（PRD.md, APP_FLOW.md, TECH_STACK.md, FRONTEND_GUIDELINES.md, BACKEND_STRUCTURE.md, IMPLEMENTATION_PLAN.md）和 CODEX.md。
+已完成：项目初始化与依赖安装。
+已完成：IMPLEMENTATION_PLAN.md 步骤2.1（FastAPI 应用骨架、路由聚合、/health 健康检查接口）。
+已完成：IMPLEMENTATION_PLAN.md 步骤2.2（环境变量配置系统、Settings 加载、.env.example、应用启动依赖环境变量）。
+当前状态：已完成 IMPLEMENTATION_PLAN.md 步骤1中的项目结构创建、backend 初始化、依赖安装、开发工具配置和小程序基础壳文件创建。
+当前状态补充：后端已具备最小可运行入口，GET /health 已通过本地 pytest 验证并返回 200。
+当前状态补充：Settings 已接入 app.state，测试环境下可通过环境变量成功启动应用。
+待办：见 IMPLEMENTATION_PLAN.md 步骤2.3。
