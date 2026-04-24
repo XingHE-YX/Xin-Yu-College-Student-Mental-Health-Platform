@@ -8,4 +8,8 @@
 已完成：IMPLEMENTATION_PLAN.md 步骤2.3（SQLAlchemy engine、sessionmaker、数据库会话依赖、模型 Base、非测试环境启动连通性检查）。
 当前状态补充：FastAPI app.state 已挂载数据库引擎与会话工厂，后续模型与 Alembic 可直接复用同一套元数据和连接配置。
 当前状态补充：已通过本地 pytest 验证数据库基础设施相关测试，覆盖 engine 创建、会话依赖、启动检查与健康接口，共 8 项测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤2.4。
+已完成：IMPLEMENTATION_PLAN.md 步骤2.4（Alembic 初始化、模型元数据接入、首个空迁移生成与执行验证）。
+当前状态补充：已新增 `backend/alembic.ini`、`backend/alembic/env.py`、迁移模板与首个 revision `ad77297002e7_initialize_alembic.py`，Alembic 已连接项目 `Base.metadata`。
+当前状态补充：已实际执行 `alembic revision --autogenerate -m "initialize alembic"` 和 `alembic upgrade head`，使用临时 SQLite 数据库验证空迁移链路可生成、可升级。
+当前状态补充：已通过本地 pytest 验证 Alembic upgrade/downgrade 与既有数据库基础设施，共 10 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤3.1。
