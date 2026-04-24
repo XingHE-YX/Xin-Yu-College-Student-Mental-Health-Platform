@@ -16,4 +16,8 @@
 当前状态补充：已新增核心账户枚举与 ORM 模型，覆盖学生账户、不可变授权记录和管理员账户，并按 MySQL 规范落实 `BIGINT UNSIGNED`、`DATETIME(3)`、唯一约束、外键和 `utf8mb4` 表配置。
 当前状态补充：已生成 Alembic revision `49e5c01e7c6c_create_core_account_tables.py`，并实际执行 `alembic upgrade head` 验证三张核心账户表可成功迁移。
 当前状态补充：已通过本地 pytest 验证核心账户模型编译、约束、默认值以及 Alembic 升级链路，共 12 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤3.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤3.2（`questionnaire_templates`、`question_bank`、`questionnaire_submissions`、`questionnaire_answers`、`assessment_reports` 模型与迁移创建）。
+当前状态补充：已新增问卷模板、题库、提交记录、答案明细和报告表的 ORM 模型与枚举，并接入学生账户关系；按 MySQL 规范落实 `SMALLINT UNSIGNED`、`BIGINT UNSIGNED`、`DATETIME(3)`、JSON 字段、唯一约束、外键和 `utf8mb4` 表配置。
+当前状态补充：已生成 Alembic revision `7570a1e0c36e_create_questionnaire_tables.py`，并实际执行 `alembic upgrade head` 验证五张问卷相关表可成功迁移。
+当前状态补充：已通过本地 pytest 验证问卷表 DDL 编译、题库数据导入、答案明细写入、报告持久化以及最新 Alembic head，共 14 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤3.3。
