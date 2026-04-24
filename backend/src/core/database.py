@@ -2,13 +2,29 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 
 from fastapi import Request
+from pydantic import ValidationError
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.core.settings import Settings
+from src.core.settings import Settings, get_settings
+
+
+def resolve_database_url(default: str | None = None) -> str:
+    """Resolve the database URL for runtime code and migration commands."""
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url
+
+    try:
+        return get_settings().database_url
+    except ValidationError:
+        if default is None:
+            raise
+        return default
 
 
 def create_database_engine(settings: Settings) -> Engine:
