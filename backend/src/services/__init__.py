@@ -23,14 +23,29 @@ from src.services.questionnaire_scoring_service import (
     ScoredQuestionAnswer,
     ScoringQuestion,
 )
+from src.services.student_auth_service import (
+    DemoLoginDisabledError,
+    InvalidPhoneTicketError,
+    StudentAuthError,
+    StudentAuthService,
+    StudentLoginConflictError,
+    StudentLoginResult,
+)
+from src.services.wechat_session_service import (
+    WeChatSession,
+    WeChatSessionExchangeError,
+    WeChatSessionService,
+)
 
 __all__ = [
     "AssessmentReportConfigurationError",
     "AssessmentReportGenerationError",
     "AssessmentReportService",
+    "DemoLoginDisabledError",
     "FullProfileLockedError",
     "GeneratedAssessmentReport",
     "IncompleteQuestionnaireAnswersError",
+    "InvalidPhoneTicketError",
     "InvalidQuestionnaireAnswerError",
     "HardTriggerMatch",
     "QuestionBankImportSummary",
@@ -42,4 +57,11 @@ __all__ = [
     "QuestionnaireScoringService",
     "ScoredQuestionAnswer",
     "ScoringQuestion",
+    "StudentAuthError",
+    "StudentAuthService",
+    "StudentLoginConflictError",
+    "StudentLoginResult",
+    "WeChatSession",
+    "WeChatSessionExchangeError",
+    "WeChatSessionService",
 ]
