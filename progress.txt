@@ -77,4 +77,11 @@
 当前状态补充：当提交的是 `crisis_intervention_authorization` 时，服务层会同步更新 `student_users.consent_status` 为 `granted` 或 `declined`；提交成功后接口会返回最新学生资料、刚写入的 `consent_record` 以及刷新后的学生访问令牌，便于前端在 `S03` 成功后立即更新本地会话状态并按流程进入 `S04 首页`。
 当前状态补充：隐私授权记录不会错误覆盖危机干预授权状态；重复提交危机授权会继续追加不可变历史记录，同时以最新一次决策作为 `student_users.consent_status` 的当前值，满足“可追溯 + 当前态同步”两个目标。
 当前状态补充：已新增 pytest 覆盖危机授权同意、危机授权拒绝、重复提交形成历史、隐私授权不影响危机授权状态、未登录拒绝访问等场景；复跑全部后端测试后共 52 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤6.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤6.3（学生端启动页、登录页、授权页与首页主流程实现）。
+当前状态补充：已在 `miniprogram/` 下新增 `pages/startup/`、`pages/login/`、`pages/consent/`、`pages/home/` 四个页面，并更新 `app.json` 路由顺序；`S01` 现会检查本地会话与授权状态，自动在登录页、授权页和首页之间跳转，满足 `APP_FLOW.md` 中启动入口与授权分流逻辑。
+当前状态补充：已新增 `miniprogram/constants/`、`services/`、`utils/` 与 `styles/` 下的共享前端基础设施，包括 API 配置、会话存储、访问令牌本地解码、请求封装与认证服务调用；当前小程序端已可直接调用 `POST /api/v1/auth/student/wechat-login`、`POST /api/v1/auth/student/demo-login` 与 `POST /api/v1/consents`。
+当前状态补充：登录页已实现微信登录、失败重试、手机号授权拒绝阻断提示与演示登录入口；考虑到后端当前登录接口尚未对接真实微信手机号解密，本阶段采用“`wx.login` + 受控手机号表单”作为开发联调桥接方案，以保证 6.1 / 6.2 / 6.3 链路可在本地完整跑通，同时清晰提示该手机号授权为开发联调模式。
+当前状态补充：授权页已实现隐私说明、危机干预授权说明、同意 / 拒绝两条路径以及拒绝确认弹窗；无论同意还是拒绝，前端都会调用 `/api/v1/consents` 记录授权结果并刷新本地访问令牌，随后进入首页；首页已根据 `consent_status` 正确展示“树洞入口禁用”状态，并为报告锁定状态展示固定 `0 / 70` 进度占位。
+当前状态补充：已按 `FRONTEND_GUIDELINES.md` 新增并落盘学生端业务组件 `app-shell`、`hero-card`、`primary-button`、`secondary-button`、`danger-button`、`question-card`、`progress-bar`、`result-badge`、`safety-banner`、`treehole-post-card`、`reaction-chip`、`confirm-modal`，为后续 7.x / 8.x 页面复用统一视觉和交互骨架。
+当前状态补充：本地已完成小程序 `json` 文件结构校验，`miniprogram/` 下共 18 个 `json` 文件可成功解析；当前环境缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过人工检查关键 `js` 入口与页面流转逻辑完成本步最小验证。
+待办：见 IMPLEMENTATION_PLAN.md 步骤7.1。
