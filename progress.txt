@@ -98,4 +98,11 @@
 当前状态补充：学生端 `miniprogram/services/questionnaires.js` 已补充 `submitQuestionnaire()` 请求封装，为后续 `S05 - S09` 问卷页面直接复用；该改动不提前实现 7.3 页面，但已把提交 API 的调用入口固定下来。
 当前状态补充：已新增 `tests/backend/test_questionnaire_submission_api.py`，覆盖快速筛查持久化、SDS / SAS 标准分返回、睡眠问卷与 UPI 成功提交、UPI 硬触发升级高风险、漏答拒绝、非法选项拒绝、未导入题库时的 503、未登录拒绝访问、未知问卷 404 以及答案明细外键关联等场景；复跑全部后端测试后共 68 项后端测试通过。
 当前状态补充：已额外执行 `ruff check` 校验本次新增与改动的 Python 文件，当前静态检查通过。由于本步只新增后端接口与小程序服务封装，未修改小程序 `json` 配置或页面结构，因此未重复执行微信小程序运行态检查。
-待办：见 IMPLEMENTATION_PLAN.md 步骤7.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤7.3（快速筛查、SDS、SAS、睡眠问卷、UPI 五个小程序问卷页面实现）。
+当前状态补充：已新增 `miniprogram/pages/questionnaires/` 下的五个页面壳文件，并通过 `miniprogram/utils/questionnaire-page.js` 抽出共享问卷页运行器；当前 `S05 - S09` 会按问卷编码复用同一套加载、作答、提交、结果展示和导航逻辑，同时保留各页面独立路由、独立导航栏标题和分阶段文案，满足 `APP_FLOW.md` 中五条学生端问卷流程。
+当前状态补充：已新增 `miniprogram/constants/questionnaires.js` 和共享模板 `miniprogram/pages/questionnaires/shared.wxml` / `miniprogram/styles/questionnaire-page.wxss`，统一定义每份问卷的标题、说明、分数标签、辅助提示和提交流转文案；页面视觉严格沿用 `hero-card`、`question-card`、`progress-bar`、`result-badge`、`safety-banner`、`primary-button`、`secondary-button`、`danger-button` 等既有组件，整体保持平静、可信、低压基调，并在高风险结果下提升安全提示层级。
+当前状态补充：五个问卷页现已支持从首页真实进入；首页 `pages/home/` 已从“点击后 toast 占位”改为按问卷编码跳转到对应页面。问卷页加载时会请求 `GET /api/v1/questionnaires/{code}` 与 `GET /api/v1/questionnaires/progress`，展示当前问卷元数据、70 题固定进度或 UPI 可选说明，以及“此前已作答，重新提交以最新结果为准”的温和提示。
+当前状态补充：前端现已实现本地漏答拦截：未完成全部题目时会阻止提交、给缺失题目外层加红色提醒包裹、滚动到首个未答题，并保留已填答案不丢失；若后端仍返回 `QUESTIONNAIRE_SUBMISSION_INCOMPLETE`，前端也会根据结构化 `errors` 回显缺失题目。服务端错误透传已通过 `miniprogram/services/request.js` 补齐 `errors` 字段，为 7.3 页面和后续表单页复用提供统一约定。
+当前状态补充：问卷提交成功后，页面会切换到结果态并展示风险标签、分数摘要、免责声明、固定进度刷新结果和下一步动作；`SCREEN -> SDS -> SAS -> SLEEP` 已按流程提供“继续下一份问卷”跳转，`SLEEP` 与 `UPI` 完成后返回首页，`UPI` 明确标注“仅作辅助参考、不影响完整报告解锁”；高风险结果会额外展示 `safety-banner` 与热线电话，并将主按钮切换为危险色，符合前端规范中的高风险表达要求。
+当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 23 个 `json` 文件可成功解析；同时复跑全部后端测试后仍为 68 项通过。当前环境依旧缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过页面结构人工检查、JSON 校验和后端接口回归测试完成本步最小验证。
+待办：见 IMPLEMENTATION_PLAN.md 步骤7.4。
