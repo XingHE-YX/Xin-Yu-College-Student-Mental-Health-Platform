@@ -113,4 +113,10 @@
 当前状态补充：报告页会在高风险状态下渲染 `safety-banner` 并注入热线电话，确保高风险表达层级高于普通信息；帮助资源按钮目前仍保留为后续步骤入口提示，不提前虚构 `S15` 页面。测评历史区域现已通过 `GET /api/v1/reports/history` 展示按时间倒序排列的历史记录，满足 PRD 中“测评历史记录”能力的最小闭环。
 当前状态补充：已新增 `tests/backend/test_report_api.py`，覆盖无提交时的 `locked` 摘要、部分完成时的 `partial` 摘要与历史记录、完整报告未解锁时的 409、70 题完成后的 `full_profile` 返回以及未登录拒绝访问等场景；复跑全部后端测试后共 73 项通过，并额外执行 `ruff check` 校验新增后端文件，当前静态检查通过。
 当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 25 个 `json` 文件可成功解析。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过 JSON 校验、页面结构人工检查和后端回归测试完成本步最小验证。
-待办：见 IMPLEMENTATION_PLAN.md 步骤8.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤8.1（树洞数据接口实现）。
+当前状态补充：已新增 `backend/src/api/routes/treehole.py`、`backend/src/schemas/treehole.py`、`backend/src/services/treehole_service.py` 与 `backend/src/repositories/treehole_repository.py`，打通 `GET /api/v1/treehole/feed`、`POST /api/v1/treehole/posts`、`DELETE /api/v1/treehole/posts/{post_id}` 和 `POST /api/v1/treehole/posts/{post_id}/reactions`；已发布内容现可在广场被读取、互动和删除。
+当前状态补充：广场接口当前只返回公开所需字段（匿名昵称、匿名头像标识、脱敏正文、发布时间、互动汇总以及“我是否已互动”状态），响应结构可直接服务后续 `treehole-post-card` 与 `reaction-chip` 组件渲染；接口严格不返回 `content_raw`，并只暴露 `publish_status = published` 且 `allow_publication = true` 的帖子，确保被拦截 / 已删除内容不会出现在学生端公开广场。
+当前状态补充：发帖接口当前按第 8 阶段 bootstrap 路径实现基础脱敏与占位分析记录：仅 `consent_status = granted` 的学生可发帖，空内容会被拒绝，手机号与邮箱会在公开正文中被替换；服务端会为新帖写入 `ai_analysis_records` 占位记录，并以 `ai_status = mocked`、`risk_level = low`、`publish_status = published` 先打通低风险可发布链路，为 9.1 - 9.4 的正式 AI 集成与风险聚合保留清晰替换点。
+当前状态补充：删除接口已采用软删除语义：学生删除后会把帖子状态写为 `deleted_by_user`、关闭 `allow_publication` 并写入 `deleted_at`，数据库记录保留不丢失；互动接口支持 `hug / light / accompany` 三种预设反应，同一学生对同一帖子同一种 reaction 重复提交会按幂等处理，不会重复计数。
+当前状态补充：已新增 `tests/backend/test_treehole_api.py`，覆盖广场公开过滤、发帖持久化与脱敏、授权拒绝拦截、软删除后广场隐藏、互动幂等和非公开帖子拒绝互动等场景；已执行 `ruff check --no-cache` 校验新增文件，并复跑全部后端测试后共 79 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤8.2。
