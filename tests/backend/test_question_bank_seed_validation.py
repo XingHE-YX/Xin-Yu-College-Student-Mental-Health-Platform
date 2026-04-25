@@ -13,6 +13,9 @@ from src.utils.validate_question_bank_seeds import (
     validate_seed_files,
 )
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+QUESTION_BANK_DIR = REPO_ROOT / "appendices" / "question_bank"
+
 
 def write_seed_file(path: Path, payload: dict) -> None:
     """Persist one JSON seed payload for validation tests."""
@@ -179,3 +182,47 @@ def test_discover_and_validate_seed_files_in_directory(tmp_path: Path) -> None:
         "SCREEN",
         "UPI",
     ]
+
+
+def test_real_custom_question_bank_seed_files_validate() -> None:
+    """The committed custom questionnaire seeds should satisfy the frozen contract."""
+    seed_paths = [
+        QUESTION_BANK_DIR / "screen_questions.json",
+        QUESTION_BANK_DIR / "sleep_questions.json",
+        QUESTION_BANK_DIR / "upi_questions.json",
+    ]
+
+    seed_files = validate_seed_files(seed_paths)
+    seed_by_code = {seed_file.template.code: seed_file for seed_file in seed_files}
+
+    assert set(seed_by_code) == {"SCREEN", "SLEEP", "UPI"}
+
+    screen_seed = seed_by_code["SCREEN"]
+    sleep_seed = seed_by_code["SLEEP"]
+    upi_seed = seed_by_code["UPI"]
+
+    assert screen_seed.template.question_count == 15
+    assert screen_seed.template.scoring_mode == "sum_1_5"
+    assert screen_seed.template.unlock_required is True
+    assert screen_seed.questions[-1].question_id == "SCREEN_15"
+    assert screen_seed.questions[-1].hard_trigger_rule is not None
+    assert screen_seed.questions[-1].hard_trigger_rule.operator == ">="
+    assert screen_seed.questions[-1].hard_trigger_rule.value == 4
+    assert screen_seed.questions[-1].hard_trigger_rule.reason_code == "HT-01"
+
+    assert sleep_seed.template.question_count == 15
+    assert sleep_seed.template.scoring_mode == "sum_0_3"
+    assert sleep_seed.template.unlock_required is True
+    assert all(question.hard_trigger_rule is None for question in sleep_seed.questions)
+
+    assert upi_seed.template.question_count == 4
+    assert upi_seed.template.scoring_mode == "yes_no"
+    assert upi_seed.template.unlock_required is False
+    assert upi_seed.questions[0].question_id == "UPI_01"
+    assert upi_seed.questions[0].hard_trigger_rule is not None
+    assert upi_seed.questions[0].hard_trigger_rule.operator == "=="
+    assert upi_seed.questions[0].hard_trigger_rule.value == "yes"
+    assert upi_seed.questions[0].hard_trigger_rule.reason_code == "HT-04"
+    assert upi_seed.questions[1].question_id == "UPI_02"
+    assert upi_seed.questions[1].hard_trigger_rule is not None
+    assert upi_seed.questions[1].hard_trigger_rule.reason_code == "HT-05"

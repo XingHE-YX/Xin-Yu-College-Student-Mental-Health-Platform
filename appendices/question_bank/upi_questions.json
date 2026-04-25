@@ -1,0 +1,83 @@
+{
+  "template": {
+    "code": "UPI",
+    "name": "UPI 辅助筛查",
+    "category": "optional",
+    "question_count": 4,
+    "scoring_mode": "yes_no",
+    "unlock_required": false,
+    "is_active": true
+  },
+  "questions": [
+    {
+      "question_id": "UPI_01",
+      "question_text": "你是否曾认真想过结束自己的生命？",
+      "question_type": "yes_no",
+      "options": [
+        { "value": "yes", "label": "是" },
+        { "value": "no", "label": "否" }
+      ],
+      "score_mapping": {
+        "yes": 1,
+        "no": 0
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": {
+        "operator": "==",
+        "value": "yes",
+        "risk_level": "high",
+        "reason_code": "HT-04"
+      }
+    },
+    {
+      "question_id": "UPI_02",
+      "question_text": "你是否曾有过明确伤害自己的计划或行为？",
+      "question_type": "yes_no",
+      "options": [
+        { "value": "yes", "label": "是" },
+        { "value": "no", "label": "否" }
+      ],
+      "score_mapping": {
+        "yes": 1,
+        "no": 0
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": {
+        "operator": "==",
+        "value": "yes",
+        "risk_level": "high",
+        "reason_code": "HT-05"
+      }
+    },
+    {
+      "question_id": "UPI_03",
+      "question_text": "你是否经常觉得自己与周围人疏离，很难获得支持？",
+      "question_type": "yes_no",
+      "options": [
+        { "value": "yes", "label": "是" },
+        { "value": "no", "label": "否" }
+      ],
+      "score_mapping": {
+        "yes": 1,
+        "no": 0
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "UPI_04",
+      "question_text": "你是否觉得目前的心理压力已经明显影响日常学习或生活？",
+      "question_type": "yes_no",
+      "options": [
+        { "value": "yes", "label": "是" },
+        { "value": "no", "label": "否" }
+      ],
+      "score_mapping": {
+        "yes": 1,
+        "no": 0
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    }
+  ]
+}

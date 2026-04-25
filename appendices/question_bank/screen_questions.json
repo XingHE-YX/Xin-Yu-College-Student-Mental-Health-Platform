@@ -1,0 +1,333 @@
+{
+  "template": {
+    "code": "SCREEN",
+    "name": "快速筛查",
+    "category": "required",
+    "question_count": 15,
+    "scoring_mode": "sum_1_5",
+    "unlock_required": true,
+    "is_active": true
+  },
+  "questions": [
+    {
+      "question_id": "SCREEN_01",
+      "question_text": "最近一周，你是否经常感到紧张或难以放松？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_02",
+      "question_text": "最近一周，你是否觉得心情低落、提不起劲？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_03",
+      "question_text": "最近一周，你是否因为学习或生活压力感到明显疲惫？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_04",
+      "question_text": "最近一周，你是否很难集中注意力完成手头事情？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_05",
+      "question_text": "最近一周，你是否容易因为小事烦躁或发脾气？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_06",
+      "question_text": "最近一周，你是否觉得与周围人交流变得吃力？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_07",
+      "question_text": "最近一周，你是否对原本感兴趣的事情失去兴趣？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_08",
+      "question_text": "最近一周，你是否常常担心未来或对事情过度忧虑？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_09",
+      "question_text": "最近一周，你是否觉得自己做什么都不够好？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_10",
+      "question_text": "最近一周，你是否因为情绪问题影响了上课、学习或日常安排？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_11",
+      "question_text": "最近一周，你是否觉得自己总像被压着，难以喘口气？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_12",
+      "question_text": "最近一周，你是否明显减少了与同学、朋友或家人的联系？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_13",
+      "question_text": "最近一周，你是否觉得休息之后仍然恢复不了精力？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_14",
+      "question_text": "最近一周，你是否经常在夜里因为情绪问题难以平静下来？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SCREEN_15",
+      "question_text": "最近一周，你是否反复出现不想继续生活或伤害自己的念头？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "从不" },
+        { "value": "2", "label": "偶尔" },
+        { "value": "3", "label": "有时" },
+        { "value": "4", "label": "经常" },
+        { "value": "5", "label": "总是" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": {
+        "operator": ">=",
+        "value": 4,
+        "risk_level": "high",
+        "reason_code": "HT-01"
+      }
+    }
+  ]
+}

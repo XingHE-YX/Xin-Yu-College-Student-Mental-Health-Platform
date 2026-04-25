@@ -1,0 +1,298 @@
+{
+  "template": {
+    "code": "SLEEP",
+    "name": "睡眠问卷",
+    "category": "required",
+    "question_count": 15,
+    "scoring_mode": "sum_0_3",
+    "unlock_required": true,
+    "is_active": true
+  },
+  "questions": [
+    {
+      "question_id": "SLEEP_01",
+      "question_text": "最近一周，你是否需要很久才能入睡？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_02",
+      "question_text": "最近一周，你是否在夜间容易醒来？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_03",
+      "question_text": "最近一周，你是否在清晨过早醒来后难以再次入睡？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_04",
+      "question_text": "最近一周，你是否因为做梦较多或噩梦而睡眠中断？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_05",
+      "question_text": "最近一周，你是否觉得整体睡眠时间不足？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_06",
+      "question_text": "最近一周，你是否觉得睡醒后仍然疲惫？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_07",
+      "question_text": "最近一周，你是否白天容易犯困或打瞌睡？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_08",
+      "question_text": "最近一周，你是否因为作息混乱而难以保持稳定睡眠？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_09",
+      "question_text": "最近一周，你是否在上床后还会长时间刷手机或处理事情，影响睡眠？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_10",
+      "question_text": "最近一周，你是否因为担心学业、人际或生活问题而影响入睡？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_11",
+      "question_text": "最近一周，你是否因为宿舍环境（光线、声音、温度）而睡不好？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_12",
+      "question_text": "最近一周，你是否觉得睡眠问题已经影响第二天学习效率？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_13",
+      "question_text": "最近一周，你是否需要依靠补觉才能维持白天状态？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_14",
+      "question_text": "最近一周，你是否因为睡眠问题而情绪更容易波动？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SLEEP_15",
+      "question_text": "最近一周，你是否觉得自己的睡眠质量整体较差？",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "0", "label": "没有" },
+        { "value": "1", "label": "偶尔" },
+        { "value": "2", "label": "较多" },
+        { "value": "3", "label": "几乎每天" }
+      ],
+      "score_mapping": {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    }
+  ]
+}
