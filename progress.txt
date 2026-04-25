@@ -35,4 +35,9 @@
 当前状态补充：已新增 `backend/src/utils/validate_question_bank_seeds.py` 作为本地校验脚本，可按文件或目录验证 `appendices/question_bank/` 下的题库 JSON；当目录中暂无题库文件时会返回可读提示而非异常中断。
 当前状态补充：已新增 `appendices/question_bank/README.md`，明确统一种子文件顶层结构、必填字段、硬触发规则格式、`question_order` 与数组顺序映射关系，以及脚本运行方式，为后续 4.2 / 4.3 录入题库提供固定契约。
 当前状态补充：已通过本地 pytest 验证题库种子结构校验、题量一致性、`yes_no` 硬触发约束和目录扫描逻辑，并复跑全部后端测试，共 22 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤4.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤4.2（`appendices/question_bank/screen_questions.json`、`sleep_questions.json`、`upi_questions.json` 创建）。
+当前状态补充：已补齐三份项目自定义问卷种子文件，分别覆盖 15 题快速筛查、15 题睡眠问卷和 4 题可选 UPI；模板元数据已与冻结需求对齐，其中快速筛查和睡眠问卷为必做并参与完整报告解锁，UPI 为可选且不阻塞解锁。
+当前状态补充：快速筛查题目统一采用 1-5 分频率量表，睡眠问卷统一采用 0-3 分频率量表，UPI 统一采用 `yes/no` 选项；三份种子均可直接通过 4.1 中定义的校验结构。
+当前状态补充：已按冻结规则写入硬触发定义：`SCREEN_15 >= 4` 对应 `HT-01`，`UPI_01 = yes` 对应 `HT-04`，`UPI_02 = yes` 对应 `HT-05`；睡眠问卷不设置额外硬触发。
+当前状态补充：已通过本地校验脚本验证三份真实种子文件，并新增 pytest 覆盖真实文件存在性、题量、评分模式、解锁标记和硬触发规则，复跑全部后端测试后共 23 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤4.3。
