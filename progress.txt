@@ -50,4 +50,9 @@
 当前状态补充：导入服务支持按 `template.code` 刷新 `questionnaire_templates`，按 `question_id` 刷新 `question_bank`，自动写入 `question_order` 和 `seed_source`，并在重复导入时更新现有题目、删除已从种子中移除的旧题目，满足“插入或刷新”要求。
 当前状态补充：已为题库附录说明补充导入命令文档，并新增 pytest 覆盖空数据库初始化、重复导入刷新与 CLI `--database-url` 覆盖场景；复跑全部后端测试后共 26 项后端测试通过。
 当前状态补充：已实际执行 `PYTHONPATH=backend backend/.venv/bin/python -m src.utils.import_question_bank_seeds --database-url sqlite+pysqlite:////tmp/xinyu_question_bank_import.db appendices/question_bank`，在临时 SQLite 数据库中成功导入 5 个问卷模板和 74 条题库记录。
-待办：见 IMPLEMENTATION_PLAN.md 步骤5.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤5.1（快速筛查、SDS、SAS、睡眠问卷、UPI 评分服务实现）。
+当前状态补充：已新增 `backend/src/services/questionnaire_scoring_service.py`，实现五类问卷评分器、统一评分结果结构、逐题标准化得分产物和快照输出；服务层可直接复用题库种子或后续 `question_bank` ORM 元数据进行评分。
+当前状态补充：快速筛查已按总分 `< 45 / >= 45` 输出低风险与需关注；睡眠问卷已按 `0-7 / 8-14 / >= 15` 输出低风险、需关注、高风险；SDS 与 SAS 已按 Zung 标准分 `int(1.25 * raw_score)` 计算标准分，并分别按 `53 / 63` 与 `50 / 60` 边界输出风险等级；UPI 在 5.1 阶段保持辅助评分，不在此步直接升级为高风险。
+当前状态补充：评分服务已支持漏答校验、意外题号校验、非法选项校验，以及 SDS / SAS 反向计分；`reverse_scored` 元数据已在评分时生效，后续 5.2 可直接在现有逐题结果基础上叠加硬触发判断。
+当前状态补充：已新增 pytest 覆盖五类问卷的阈值边界、Zung 反向计分和漏答错误场景，并复跑全部后端测试后共 33 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤5.2。
