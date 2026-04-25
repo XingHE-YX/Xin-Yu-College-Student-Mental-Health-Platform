@@ -71,4 +71,10 @@
 当前状态补充：为兼容 `APP_FLOW.md` 中“登录成功后若缺少授权记录则进入 S03 授权页”的主流程，登录接口当前只返回 `student.consent_status` 供前端判断，不在 6.1 阶段持久化授权决定；请求中的 `consent_status` 被保留为兼容字段，真正的授权写入将留到 6.2 的 `/api/v1/consents` 实现。
 当前状态补充：演示登录现已严格受 `ENABLE_DEMO_LOGIN` 控制；开启时会创建或复用固定 demo 学生账号并返回 JWT，关闭时返回业务错误 `DEMO_LOGIN_DISABLED`；登录服务同时覆盖手机号 / openid 冲突保护，避免两个学生账户被错误合并。
 当前状态补充：已新增 pytest 覆盖微信登录新建账号、返回用户刷新、手机号与 openid 冲突、演示登录开关、访问令牌 claims 校验等场景；复跑全部后端测试后共 48 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤6.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤6.2（授权提交接口、授权记录持久化与学生授权状态同步实现）。
+当前状态补充：已新增 `backend/src/core/auth.py`，实现学生 Bearer 令牌解析、JWT 校验和当前学生回查；受保护接口现在会按 `student_id` 从数据库读取最新学生状态，而不是直接信任令牌中的 `consent_status`，避免授权状态变更后出现旧令牌信息滞后。
+当前状态补充：已新增 `backend/src/schemas/consent.py`、`backend/src/repositories/consent_record_repository.py`、`backend/src/services/student_consent_service.py` 与路由 `backend/src/api/routes/consents.py`，打通 `POST /api/v1/consents`；接口支持提交 `privacy_policy` 与 `crisis_intervention_authorization` 两类授权记录，并以追加写入方式保存到 `consent_records`，保证授权决策可追溯。
+当前状态补充：当提交的是 `crisis_intervention_authorization` 时，服务层会同步更新 `student_users.consent_status` 为 `granted` 或 `declined`；提交成功后接口会返回最新学生资料、刚写入的 `consent_record` 以及刷新后的学生访问令牌，便于前端在 `S03` 成功后立即更新本地会话状态并按流程进入 `S04 首页`。
+当前状态补充：隐私授权记录不会错误覆盖危机干预授权状态；重复提交危机授权会继续追加不可变历史记录，同时以最新一次决策作为 `student_users.consent_status` 的当前值，满足“可追溯 + 当前态同步”两个目标。
+当前状态补充：已新增 pytest 覆盖危机授权同意、危机授权拒绝、重复提交形成历史、隐私授权不影响危机授权状态、未登录拒绝访问等场景；复跑全部后端测试后共 52 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤6.3。
