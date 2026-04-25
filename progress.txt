@@ -65,4 +65,10 @@
 当前状态补充：报告服务现已强制执行完整报告解锁规则，仅当快速筛查、SDS、SAS、睡眠问卷四份必做问卷全部完成时才允许生成 `full_profile` 报告；进度按固定 70 题链路计算，缺失问卷会在摘要状态中返回缺口列表与下一步动作；可选 UPI 不阻塞解锁，但若命中高风险硬触发，仍可升级完整报告风险等级。
 当前状态补充：完整报告综合风险聚合已按 PRD 的完整数据规则实现，支持基于最新一次提交生成各量表摘要、综合结论、趋势占位区、调节建议和免责声明；报告内容会优先采用每份问卷的最新提交，避免旧结果覆盖新结果。
 当前状态补充：已新增 pytest 覆盖单量表报告结构、70 题锁定 / 解锁、缺失必做问卷时报错、最新提交覆盖旧提交、睡眠高分在完整画像中维持 `watch` 聚合、以及可选 UPI 在不阻塞解锁的前提下升级综合风险等场景；复跑全部后端测试后共 43 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤6.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤6.1（学生微信登录 API 与演示登录 API 实现）。
+当前状态补充：已新增 `backend/src/core/security.py`，使用标准库实现 HS256 风格访问令牌签发与校验；`create_app()` 已将访问令牌服务与微信会话交换服务挂载到 `app.state`，供后续学生端认证依赖和管理员认证复用。
+当前状态补充：已新增 `backend/src/services/wechat_session_service.py`、`backend/src/services/student_auth_service.py`、`backend/src/repositories/student_user_repository.py`、`backend/src/schemas/student_auth.py` 与路由 `backend/src/api/routes/student_auth.py`，打通 `POST /api/v1/auth/student/wechat-login` 与 `POST /api/v1/auth/student/demo-login`；微信登录会调用 `jscode2session` 交换 openid，按手机号与 openid 创建或刷新 `student_users`，并返回学生访问令牌与基础资料。
+当前状态补充：为兼容 `APP_FLOW.md` 中“登录成功后若缺少授权记录则进入 S03 授权页”的主流程，登录接口当前只返回 `student.consent_status` 供前端判断，不在 6.1 阶段持久化授权决定；请求中的 `consent_status` 被保留为兼容字段，真正的授权写入将留到 6.2 的 `/api/v1/consents` 实现。
+当前状态补充：演示登录现已严格受 `ENABLE_DEMO_LOGIN` 控制；开启时会创建或复用固定 demo 学生账号并返回 JWT，关闭时返回业务错误 `DEMO_LOGIN_DISABLED`；登录服务同时覆盖手机号 / openid 冲突保护，避免两个学生账户被错误合并。
+当前状态补充：已新增 pytest 覆盖微信登录新建账号、返回用户刷新、手机号与 openid 冲突、演示登录开关、访问令牌 claims 校验等场景；复跑全部后端测试后共 48 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤6.2。
