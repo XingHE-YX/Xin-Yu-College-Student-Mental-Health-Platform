@@ -84,4 +84,10 @@
 当前状态补充：授权页已实现隐私说明、危机干预授权说明、同意 / 拒绝两条路径以及拒绝确认弹窗；无论同意还是拒绝，前端都会调用 `/api/v1/consents` 记录授权结果并刷新本地访问令牌，随后进入首页；首页已根据 `consent_status` 正确展示“树洞入口禁用”状态，并为报告锁定状态展示固定 `0 / 70` 进度占位。
 当前状态补充：已按 `FRONTEND_GUIDELINES.md` 新增并落盘学生端业务组件 `app-shell`、`hero-card`、`primary-button`、`secondary-button`、`danger-button`、`question-card`、`progress-bar`、`result-badge`、`safety-banner`、`treehole-post-card`、`reaction-chip`、`confirm-modal`，为后续 7.x / 8.x 页面复用统一视觉和交互骨架。
 当前状态补充：本地已完成小程序 `json` 文件结构校验，`miniprogram/` 下共 18 个 `json` 文件可成功解析；当前环境缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过人工检查关键 `js` 入口与页面流转逻辑完成本步最小验证。
-待办：见 IMPLEMENTATION_PLAN.md 步骤7.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤7.1（问卷列表接口、问卷详情接口、必做进度接口与学生端首页元数据接入）。
+当前状态补充：已新增 `backend/src/services/questionnaire_query_service.py`、`backend/src/schemas/questionnaire.py` 与路由 `backend/src/api/routes/questionnaires.py`，打通 `GET /api/v1/questionnaires`、`GET /api/v1/questionnaires/{code}` 和 `GET /api/v1/questionnaires/progress`；接口现基于已冻结的题库种子文件输出问卷目录、可渲染题目结构和固定 70 题必做进度，同时叠加当前学生最新一次提交摘要，直接服务后续 7.2 / 7.3 / 7.4。
+当前状态补充：问卷详情接口当前只返回前端渲染所需元数据（题目文案、题型、选项、问卷基础信息），不会向学生端暴露 `score_mapping`、反向计分或硬触发规则等评分内部细节；问卷列表与进度接口按 `APP_FLOW.md` 固定顺序返回 `SCREEN`、`SDS`、`SAS`、`SLEEP`、`UPI`，并正确区分必做 / 可选与 `S05 - S09` 流程阶段。
+当前状态补充：已新增 `tests/backend/test_questionnaire_api.py`，覆盖问卷列表顺序、问卷详情结构、必做进度去重统计、最新提交摘要透出、未知问卷 404 和未登录拒绝访问等场景；复跑全部后端测试后共 58 项后端测试通过。
+当前状态补充：学生端已新增 `miniprogram/services/questionnaires.js`，首页 `pages/home/` 已从固定占位改为真实请求问卷目录与必做进度，并按 `FRONTEND_GUIDELINES.md` 的平静、可信、低压基调重构“问卷中心”和报告进度卡片；当前首页可展示真实的 70 题完成度、待完成问卷列表、各问卷必做 / 可选状态以及最近一次风险结果标签，同时保留树洞 / 报告 / 帮助资源入口。
+当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 18 个 `json` 文件可成功解析；校验过程中 `python3` 因沙箱环境对 `/tmp` 写入受限出现 `xcrun` 相关警告，但不影响 JSON 解析结果。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已结合后端接口测试和前端代码人工检查完成本步最小验证。
+待办：见 IMPLEMENTATION_PLAN.md 步骤7.2。
