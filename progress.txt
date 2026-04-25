@@ -105,4 +105,12 @@
 当前状态补充：前端现已实现本地漏答拦截：未完成全部题目时会阻止提交、给缺失题目外层加红色提醒包裹、滚动到首个未答题，并保留已填答案不丢失；若后端仍返回 `QUESTIONNAIRE_SUBMISSION_INCOMPLETE`，前端也会根据结构化 `errors` 回显缺失题目。服务端错误透传已通过 `miniprogram/services/request.js` 补齐 `errors` 字段，为 7.3 页面和后续表单页复用提供统一约定。
 当前状态补充：问卷提交成功后，页面会切换到结果态并展示风险标签、分数摘要、免责声明、固定进度刷新结果和下一步动作；`SCREEN -> SDS -> SAS -> SLEEP` 已按流程提供“继续下一份问卷”跳转，`SLEEP` 与 `UPI` 完成后返回首页，`UPI` 明确标注“仅作辅助参考、不影响完整报告解锁”；高风险结果会额外展示 `safety-banner` 与热线电话，并将主按钮切换为危险色，符合前端规范中的高风险表达要求。
 当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 23 个 `json` 文件可成功解析；同时复跑全部后端测试后仍为 68 项通过。当前环境依旧缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过页面结构人工检查、JSON 校验和后端接口回归测试完成本步最小验证。
-待办：见 IMPLEMENTATION_PLAN.md 步骤7.4。
+已完成：IMPLEMENTATION_PLAN.md 步骤7.4（报告页、完整报告页与报告接口实现）。
+当前状态补充：已新增 `backend/src/api/routes/reports.py`、`backend/src/schemas/report.py` 与 `backend/src/services/student_report_service.py`，打通 `GET /api/v1/reports/summary`、`GET /api/v1/reports/full`、`GET /api/v1/reports/history`；接口当前基于最新 `questionnaire_submissions` 与 5.3 已实现的 `AssessmentReportService` 现算生成报告摘要、完整综合画像和测评历史记录，不依赖额外手工同步步骤。
+当前状态补充：报告摘要接口现会严格输出 `S10` 三种状态：`locked`、`partial`、`unlocked`。当尚未完成 70 道必做题时，会返回已完成量表摘要、缺失问卷、进度条数据和下一步行动按钮；当 70 题完成后，会解锁 `S10A` 完整报告入口。`GET /api/v1/reports/full` 在未解锁时返回业务错误 `FULL_PROFILE_LOCKED`，前端据此回退到报告摘要页，保证锁定 / 解锁逻辑与需求严格一致。
+当前状态补充：学生端已新增 `miniprogram/services/reports.js`、`miniprogram/pages/reports/index.*`、`miniprogram/pages/reports/full/index.*` 与共享样式 `miniprogram/styles/report-page.wxss`；`S10 报告页` 当前会展示完整报告解锁进度、已完成量表结果、最近测评历史、下一步动作和免责声明，`S10A 完整报告详情页` 当前会展示综合结果、各量表摘要、趋势占位区、调节建议和安全提示，整体视觉延续 `FRONTEND_GUIDELINES.md` 要求的平静、可信、低压表达。
+当前状态补充：首页报告模块现已从占位提示切换为真实跳转到 `S10`；报告摘要页中的 CTA 会按 `APP_FLOW.md` 分流到未完成问卷或完整报告详情页。为增强 7.3 与 7.4 的联动，问卷页在完成最终必做问卷并达到解锁条件后，主按钮也会直接切换为“查看完整报告”。
+当前状态补充：报告页会在高风险状态下渲染 `safety-banner` 并注入热线电话，确保高风险表达层级高于普通信息；帮助资源按钮目前仍保留为后续步骤入口提示，不提前虚构 `S15` 页面。测评历史区域现已通过 `GET /api/v1/reports/history` 展示按时间倒序排列的历史记录，满足 PRD 中“测评历史记录”能力的最小闭环。
+当前状态补充：已新增 `tests/backend/test_report_api.py`，覆盖无提交时的 `locked` 摘要、部分完成时的 `partial` 摘要与历史记录、完整报告未解锁时的 409、70 题完成后的 `full_profile` 返回以及未登录拒绝访问等场景；复跑全部后端测试后共 73 项通过，并额外执行 `ruff check` 校验新增后端文件，当前静态检查通过。
+当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 25 个 `json` 文件可成功解析。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过 JSON 校验、页面结构人工检查和后端回归测试完成本步最小验证。
+待办：见 IMPLEMENTATION_PLAN.md 步骤8.1。
