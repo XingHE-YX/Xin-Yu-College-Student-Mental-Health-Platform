@@ -4,7 +4,7 @@
       <hero-card
         eyebrow="S04 Home"
         title="欢迎回来，{{student.display_nickname}}"
-        summary="学生端主流程已经打通到首页。你可以从这里继续进入测评、报告、树洞和帮助资源模块。"
+        summary="你可以从这里继续查看问卷目录、当前必做进度，以及后续会接入的报告、树洞和帮助资源模块。"
         tone="brand"
       />
 
@@ -13,25 +13,93 @@
       </view>
 
       <view class="surface-card surface-card--soft">
-        <view class="eyebrow">当前状态</view>
-        <view class="section-subtitle">完整报告仍需完成 70 道必做题</view>
-        <view class="body-text">
-          当前首页先展示固定进度占位。等问卷页与提交接口接入后，这里会显示真实完成度。
-        </view>
+        <view class="eyebrow">当前进度</view>
+        <view class="section-subtitle">{{progressTitle}}</view>
+        <view class="body-text">{{progressSummary}}</view>
         <view class="chip-row home-page__chip-row">
           <view class="chip">{{student.college_name}}</view>
           <view class="chip chip--warm">
             {{student.consent_status === 'granted' ? '授权已完成' : '授权已拒绝'}}
           </view>
+          <view class="chip {{requiredProgress.full_profile_unlocked ? 'chip--success' : 'chip--muted'}}">
+            {{requiredProgress.full_profile_unlocked ? '完整报告可查看' : '完整报告未解锁'}}
+          </view>
         </view>
         <view class="home-page__progress">
-          <progress-bar label="必做进度" current="0" total="70"></progress-bar>
+          <progress-bar
+            label="必做进度"
+            current="{{requiredProgress.completed_required_questions}}"
+            total="{{requiredProgress.total_required_questions}}"
+          ></progress-bar>
+        </view>
+        <view wx:if="{{missingRequiredNames.length}}" class="home-page__missing">
+          <view class="helper-text">待完成问卷</view>
+          <view class="chip-row">
+            <view wx:for="{{missingRequiredNames}}" wx:key="*this" class="chip chip--muted">
+              {{item}}
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="surface-card">
+        <view class="home-page__section-head">
+          <view>
+            <view class="eyebrow">Assessment</view>
+            <view class="section-subtitle">问卷中心</view>
+          </view>
+          <view class="helper-text">按 S05 - S09 逐步完成</view>
+        </view>
+
+        <view wx:if="{{dashboardError}}" class="status-banner status-banner--error">
+          {{dashboardError}}
+        </view>
+        <view wx:if="{{loadingDashboard}}" class="helper-text home-page__loading">
+          正在同步问卷目录与当前进度...
+        </view>
+        <view wx:elif="{{questionnaires.length}}" class="module-grid">
+          <view
+            wx:for="{{questionnaires}}"
+            wx:key="code"
+            class="module-card"
+            data-code="{{item.code}}"
+            bindtap="handleQuestionnaireTap"
+          >
+            <view class="module-card__head">
+              <view>
+                <view class="module-card__title">{{item.name}}</view>
+                <view class="helper-text">{{item.flowStepLabel}}</view>
+              </view>
+              <view class="module-card__meta {{item.metaToneClass}}">
+                {{item.statusLabel}}
+              </view>
+            </view>
+            <view class="chip-row">
+              <view class="chip {{item.categoryChipClass}}">{{item.categoryLabel}}</view>
+              <view class="chip chip--muted">{{item.questionCountLabel}}</view>
+              <view class="chip chip--warm">{{item.chainLabel}}</view>
+            </view>
+            <view class="body-text">{{item.summary}}</view>
+            <view wx:if="{{item.latestResultLabel}}" class="chip-row">
+              <view class="chip {{item.resultChipClass}}">{{item.latestResultLabel}}</view>
+            </view>
+            <view class="helper-text">{{item.helper}}</view>
+          </view>
+        </view>
+        <view wx:else class="helper-text home-page__loading">
+          当前暂无可展示问卷。
+        </view>
+        <view wx:if="{{dashboardError}}" class="button-stack home-page__retry">
+          <secondary-button
+            label="重新加载问卷目录"
+            bind:tap="handleRetryTap"
+          />
         </view>
       </view>
 
       <view class="module-grid">
         <view
-          wx:for="{{modules}}"
+          wx:for="{{supportModules}}"
           wx:key="key"
           class="module-card {{item.disabled ? 'module-card--disabled' : ''}}"
           data-key="{{item.key}}"
@@ -42,6 +110,7 @@
             <view class="module-card__title">{{item.title}}</view>
             <view
               class="module-card__meta
+              {{item.metaTone === 'success' ? 'module-card__meta--success' : ''}}
               {{item.metaTone === 'warning' ? 'module-card__meta--warning' : ''}}
               {{item.metaTone === 'disabled' ? 'module-card__meta--disabled' : ''}}"
             >

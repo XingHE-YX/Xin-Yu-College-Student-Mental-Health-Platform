@@ -7,3 +7,41 @@
 .home-page__progress {
   margin-top: 24rpx;
 }
+
+.home-page__missing {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.home-page__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.home-page__loading {
+  margin-top: 12rpx;
+}
+
+.home-page__retry {
+  margin-top: 20rpx;
+}
+
+.module-card__meta--success {
+  background: #e9f6ed;
+  color: #2f7d49;
+}
+
+.chip--success {
+  background: #e9f6ed;
+  color: #2f7d49;
+}
+
+.chip--danger {
+  background: #fbe7e7;
+  color: #a92a2a;
+}

@@ -3,6 +3,7 @@
   "usingComponents": {
     "app-shell": "/components/app-shell/index",
     "hero-card": "/components/hero-card/index",
-    "progress-bar": "/components/progress-bar/index"
+    "progress-bar": "/components/progress-bar/index",
+    "secondary-button": "/components/secondary-button/index"
   }
 }
