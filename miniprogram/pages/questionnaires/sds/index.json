@@ -1,0 +1,15 @@
+{
+  "navigationBarTitleText": "SDS 抑郁量表",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index",
+    "danger-button": "/components/danger-button/index",
+    "question-card": "/components/question-card/index",
+    "progress-bar": "/components/progress-bar/index",
+    "result-badge": "/components/result-badge/index",
+    "safety-banner": "/components/safety-banner/index"
+  }
+}

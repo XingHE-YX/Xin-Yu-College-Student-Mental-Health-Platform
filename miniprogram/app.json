@@ -3,7 +3,12 @@
     "pages/startup/index",
     "pages/login/index",
     "pages/consent/index",
-    "pages/home/index"
+    "pages/home/index",
+    "pages/questionnaires/screen/index",
+    "pages/questionnaires/sds/index",
+    "pages/questionnaires/sas/index",
+    "pages/questionnaires/sleep/index",
+    "pages/questionnaires/upi/index"
   ],
   "window": {
     "navigationBarTitleText": "心语",

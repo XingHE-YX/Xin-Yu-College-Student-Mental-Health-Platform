@@ -1,5 +1,8 @@
 const { PAGE_ROUTES } = require("../../constants/config");
 const {
+  getQuestionnaireRouteByCode,
+} = require("../../constants/questionnaires");
+const {
   fetchQuestionnaireList,
   fetchRequiredProgress,
 } = require("../../services/questionnaires");
@@ -307,10 +310,16 @@ Page({
       return;
     }
 
-    wx.showToast({
-      title: `${code} 作答页将在 7.3 接入`,
-      icon: "none",
-    });
+    const route = getQuestionnaireRouteByCode(code);
+    if (!route) {
+      wx.showToast({
+        title: "该问卷入口暂不可用",
+        icon: "none",
+      });
+      return;
+    }
+
+    wx.navigateTo({ url: route });
   },
 
   handleModuleTap(event) {

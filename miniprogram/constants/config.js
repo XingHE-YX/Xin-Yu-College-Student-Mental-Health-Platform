@@ -6,6 +6,11 @@ const PAGE_ROUTES = {
   LOGIN: "/pages/login/index",
   CONSENT: "/pages/consent/index",
   HOME: "/pages/home/index",
+  QUESTIONNAIRE_SCREEN: "/pages/questionnaires/screen/index",
+  QUESTIONNAIRE_SDS: "/pages/questionnaires/sds/index",
+  QUESTIONNAIRE_SAS: "/pages/questionnaires/sas/index",
+  QUESTIONNAIRE_SLEEP: "/pages/questionnaires/sleep/index",
+  QUESTIONNAIRE_UPI: "/pages/questionnaires/upi/index",
 };
 
 function shouldShowDemoEntry() {

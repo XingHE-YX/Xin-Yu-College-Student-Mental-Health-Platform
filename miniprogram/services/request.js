@@ -44,6 +44,7 @@ function request(options) {
           code: body.code || "REQUEST_FAILED",
           message: body.message || "请求失败，请稍后重试。",
           requestId: body.request_id || "",
+          errors: Array.isArray(body.errors) ? body.errors : [],
         });
       },
       fail(error) {

@@ -1,0 +1,202 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="{{pageConfig.heroEyebrow}}"
+        title="{{pageConfig.heroTitle}}"
+        summary="{{pageConfig.heroSummary}}"
+        tone="{{resultView ? resultView.heroTone : 'brand'}}"
+      />
+
+      <view wx:if="{{loading}}" class="surface-card surface-card--soft">
+        <view class="eyebrow">加载中</view>
+        <view class="section-subtitle">正在同步 {{pageConfig.name}}</view>
+        <view class="body-text">请稍候，问卷元数据与当前进度正在加载。</view>
+      </view>
+
+      <block wx:elif="{{loadError}}">
+        <view class="status-banner status-banner--error">{{loadError}}</view>
+        <view class="button-stack">
+          <primary-button label="重新加载问卷" bind:tap="handleRetryLoad" />
+          <secondary-button label="返回首页" bind:tap="handleBackHome" />
+        </view>
+      </block>
+
+      <block wx:elif="{{resultView}}">
+        <view class="surface-card surface-card--soft">
+          <view class="questionnaire-page__result-head">
+            <view>
+              <view class="eyebrow">提交结果</view>
+              <view class="section-subtitle">{{resultView.title}}</view>
+            </view>
+            <result-badge
+              label="{{resultView.badgeLabel}}"
+              tone="{{resultView.badgeTone}}"
+            />
+          </view>
+          <view class="body-text">{{resultView.summary}}</view>
+          <view class="questionnaire-page__metric-grid">
+            <view class="questionnaire-page__metric-card">
+              <view class="caption-text">{{resultView.scoreLabel}}</view>
+              <view class="questionnaire-page__metric-value">
+                {{resultView.scoreValue}}
+              </view>
+              <view class="helper-text">{{resultView.scoreHelper}}</view>
+            </view>
+            <view class="questionnaire-page__metric-card">
+              <view class="caption-text">提交状态</view>
+              <view class="questionnaire-page__metric-value questionnaire-page__metric-value--sm">
+                已保存
+              </view>
+              <view class="helper-text">{{resultView.submittedSummary}}</view>
+            </view>
+          </view>
+        </view>
+
+        <safety-banner
+          wx:if="{{resultView.showSafetyBanner}}"
+          title="{{resultView.safetyTitle}}"
+          message="{{resultView.safetyMessage}}"
+          hotline="{{hotlinePhone}}"
+        />
+
+        <view class="surface-card surface-card--warm">
+          <view class="eyebrow">后续建议</view>
+          <view class="section-subtitle">下一步可以这样做</view>
+          <view class="inline-list">
+            <view
+              wx:for="{{resultView.followUpItems}}"
+              wx:key="*this"
+              class="inline-list__item"
+            >
+              {{index + 1}}. {{item}}
+            </view>
+          </view>
+        </view>
+
+        <view class="surface-card surface-card--soft">
+          <view class="eyebrow">{{resultView.progressCard.eyebrow}}</view>
+          <view class="section-subtitle">{{resultView.progressCard.title}}</view>
+          <view class="body-text">{{resultView.progressCard.summary}}</view>
+          <view
+            wx:if="{{resultView.progressCard.showProgressBar}}"
+            class="questionnaire-page__progress"
+          >
+            <progress-bar
+              label="固定进度"
+              current="{{resultView.progressCard.current}}"
+              total="{{resultView.progressCard.total}}"
+            />
+          </view>
+          <view class="helper-text">{{resultView.progressCard.helper}}</view>
+        </view>
+
+        <view class="button-stack">
+          <danger-button
+            wx:if="{{resultView.primaryAction.tone === 'danger'}}"
+            label="{{resultView.primaryAction.label}}"
+            bind:tap="handlePrimaryAction"
+          />
+          <primary-button
+            wx:else
+            label="{{resultView.primaryAction.label}}"
+            bind:tap="handlePrimaryAction"
+          />
+          <secondary-button label="保留结果并重新作答" bind:tap="handleRetake" />
+        </view>
+      </block>
+
+      <block wx:else>
+        <view class="surface-card surface-card--soft">
+          <view class="eyebrow">{{progressCard.eyebrow}}</view>
+          <view class="section-subtitle">{{progressCard.title}}</view>
+          <view class="body-text">{{progressCard.summary}}</view>
+          <view wx:if="{{progressCard.showProgressBar}}" class="questionnaire-page__progress">
+            <progress-bar
+              label="固定进度"
+              current="{{progressCard.current}}"
+              total="{{progressCard.total}}"
+            />
+          </view>
+          <view class="chip-row questionnaire-page__chip-row">
+            <view class="chip">{{questionnaire.question_count}} 题</view>
+            <view class="chip chip--warm">{{pageConfig.scaleLabel}}</view>
+            <view
+              wx:if="{{!pageConfig.unlockRequired}}"
+              class="chip chip--muted"
+            >
+              可选问卷
+            </view>
+          </view>
+          <view class="helper-text questionnaire-page__helper">
+            {{progressCard.helper}}
+          </view>
+        </view>
+
+        <view wx:if="{{latestSubmissionHint}}" class="status-banner status-banner--warning">
+          {{latestSubmissionHint}}
+        </view>
+
+        <view class="surface-card surface-card--warm">
+          <view class="eyebrow">作答说明</view>
+          <view class="body-text">{{pageConfig.disclaimer}}</view>
+          <view wx:if="{{pageConfig.optionalHint}}" class="helper-text questionnaire-page__helper">
+            {{pageConfig.optionalHint}}
+          </view>
+        </view>
+
+        <view class="module-grid">
+          <view
+            wx:for="{{questionCards}}"
+            wx:key="question_code"
+            wx:for-item="question"
+            id="{{question.anchor_id}}"
+            class="questionnaire-page__question-shell {{question.missing ? 'questionnaire-page__question-shell--missing' : ''}}"
+          >
+            <question-card
+              questionNumber="{{question.question_order}}"
+              title="{{question.question_text}}"
+              description="{{question.description}}"
+            >
+              <view class="questionnaire-page__option-list">
+                <view
+                  wx:for="{{question.options}}"
+                  wx:key="value"
+                  wx:for-item="option"
+                  class="questionnaire-page__option {{option.selected ? 'questionnaire-page__option--selected' : ''}}"
+                  data-question-code="{{question.question_code}}"
+                  data-value="{{option.value}}"
+                  bindtap="handleSelectOption"
+                >
+                  <view class="questionnaire-page__option-mark">
+                    <view
+                      class="questionnaire-page__option-dot {{option.selected ? 'questionnaire-page__option-dot--selected' : ''}}"
+                    ></view>
+                  </view>
+                  <view class="questionnaire-page__option-label">{{option.label}}</view>
+                </view>
+              </view>
+            </question-card>
+          </view>
+        </view>
+
+        <view wx:if="{{submitError}}" class="status-banner status-banner--error">
+          {{submitError}}
+        </view>
+
+        <view class="button-stack">
+          <primary-button
+            label="提交并查看结果"
+            loading="{{submitting}}"
+            bind:tap="handleSubmit"
+          />
+          <secondary-button
+            label="先返回首页"
+            disabled="{{submitting}}"
+            bind:tap="handleBackHome"
+          />
+        </view>
+      </block>
+    </view>
+  </view>
+</app-shell>

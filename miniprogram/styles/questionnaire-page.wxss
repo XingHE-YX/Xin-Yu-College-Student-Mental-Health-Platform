@@ -1,0 +1,117 @@
+@import "./page.wxss";
+
+.questionnaire-page__progress {
+  margin-top: 24rpx;
+}
+
+.questionnaire-page__chip-row {
+  margin-top: 20rpx;
+}
+
+.questionnaire-page__helper {
+  margin-top: 16rpx;
+}
+
+.questionnaire-page__question-shell {
+  position: relative;
+  border-radius: 44rpx;
+}
+
+.questionnaire-page__question-shell--missing {
+  padding: 4rpx;
+  background: linear-gradient(180deg, rgba(216, 76, 76, 0.16) 0%, rgba(251, 231, 231, 0.65) 100%);
+}
+
+.questionnaire-page__option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.questionnaire-page__option {
+  min-height: 92rpx;
+  padding: 0 24rpx;
+  border-radius: 28rpx;
+  border: 2rpx solid #d7e1de;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  box-sizing: border-box;
+}
+
+.questionnaire-page__option--selected {
+  border-color: #2f8f83;
+  background: linear-gradient(180deg, #ffffff 0%, #eef7f5 100%);
+  box-shadow: 0 10rpx 24rpx rgba(47, 143, 131, 0.12);
+}
+
+.questionnaire-page__option-mark {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #c5cfcd;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.questionnaire-page__option--selected .questionnaire-page__option-mark {
+  border-color: #2f8f83;
+}
+
+.questionnaire-page__option-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: transparent;
+}
+
+.questionnaire-page__option-dot--selected {
+  background: #2f8f83;
+}
+
+.questionnaire-page__option-label {
+  flex: 1;
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #41504c;
+}
+
+.questionnaire-page__result-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.questionnaire-page__metric-grid {
+  margin-top: 24rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.questionnaire-page__metric-card {
+  background: #f8fbfa;
+  border-radius: 28rpx;
+  border: 2rpx solid #e3eae7;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.questionnaire-page__metric-value {
+  font-size: 56rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #123f3a;
+}
+
+.questionnaire-page__metric-value--sm {
+  font-size: 40rpx;
+}
