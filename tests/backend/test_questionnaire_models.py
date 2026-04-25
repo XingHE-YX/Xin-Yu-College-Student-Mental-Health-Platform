@@ -8,14 +8,13 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import CreateTable
-
 from src.constants.questionnaire_enums import (
     AssessmentReportType,
-    QuestionType,
     QuestionnaireCategory,
     QuestionnaireRiskLevel,
     QuestionnaireScoringMode,
     QuestionnaireSubmissionStatus,
+    QuestionType,
 )
 from src.models import (
     AssessmentReport,
@@ -33,19 +32,28 @@ def test_questionnaire_tables_compile_to_mysql_contract() -> None:
     template_sql = str(
         CreateTable(QuestionnaireTemplate.__table__).compile(dialect=mysql.dialect())
     )
-    question_sql = str(CreateTable(QuestionBank.__table__).compile(dialect=mysql.dialect()))
+    question_sql = str(
+        CreateTable(QuestionBank.__table__).compile(dialect=mysql.dialect())
+    )
     submission_sql = str(
         CreateTable(QuestionnaireSubmission.__table__).compile(dialect=mysql.dialect())
     )
-    answer_sql = str(CreateTable(QuestionnaireAnswer.__table__).compile(dialect=mysql.dialect()))
-    report_sql = str(CreateTable(AssessmentReport.__table__).compile(dialect=mysql.dialect()))
+    answer_sql = str(
+        CreateTable(QuestionnaireAnswer.__table__).compile(dialect=mysql.dialect())
+    )
+    report_sql = str(
+        CreateTable(AssessmentReport.__table__).compile(dialect=mysql.dialect())
+    )
 
     assert "SMALLINT UNSIGNED NOT NULL" in template_sql
     assert "ENUM('required','optional')" in template_sql
     assert "ENUM('sum_1_5','sum_0_3','zung_standard','yes_no')" in template_sql
     assert "JSON NOT NULL" in question_sql
     assert "ENUM('single_choice','yes_no')" in question_sql
-    assert "FOREIGN KEY(template_id) REFERENCES questionnaire_templates (id)" in question_sql
+    assert (
+        "FOREIGN KEY(template_id) REFERENCES questionnaire_templates (id)"
+        in question_sql
+    )
     assert "ENUM('submitted','scored')" in submission_sql
     assert "ENUM('low','watch','high')" in submission_sql
     assert "FOREIGN KEY(student_id) REFERENCES student_users (id)" in submission_sql
@@ -84,11 +92,15 @@ def test_questionnaire_seed_import_and_answer_persistence_work() -> None:
 
     assert ("code",) in template_unique_constraints
     assert ("question_code",) in question_unique_constraints
-    assert sorted(foreign_key["referred_table"] for foreign_key in submission_foreign_keys) == [
+    assert sorted(
+        foreign_key["referred_table"] for foreign_key in submission_foreign_keys
+    ) == [
         "questionnaire_templates",
         "student_users",
     ]
-    assert sorted(foreign_key["referred_table"] for foreign_key in answer_foreign_keys) == [
+    assert sorted(
+        foreign_key["referred_table"] for foreign_key in answer_foreign_keys
+    ) == [
         "question_bank",
         "questionnaire_submissions",
     ]

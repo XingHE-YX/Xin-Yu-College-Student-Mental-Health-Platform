@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, Integer, MetaData, SmallInteger
+from sqlalchemy import DateTime, Integer, MetaData, SmallInteger, Text
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -30,8 +30,16 @@ SMALLINT_UNSIGNED = SmallInteger().with_variant(
     mysql.SMALLINT(unsigned=True),
     "mysql",
 )
+INT_UNSIGNED = Integer().with_variant(
+    mysql.INTEGER(unsigned=True),
+    "mysql",
+)
 DATETIME_3 = DateTime(timezone=False).with_variant(
     mysql.DATETIME(fsp=3),
+    "mysql",
+)
+MEDIUMTEXT = Text().with_variant(
+    mysql.MEDIUMTEXT(),
     "mysql",
 )
 

@@ -21,7 +21,9 @@ from src.models.base import (
 if TYPE_CHECKING:
     from src.models.assessment_report import AssessmentReport
     from src.models.consent_record import ConsentRecord
+    from src.models.post_reaction import PostReaction
     from src.models.questionnaire_submission import QuestionnaireSubmission
+    from src.models.treehole_post import TreeholePost
 
 
 class StudentUser(PrimaryKeyMixin, TimestampMixin, Base):
@@ -31,7 +33,9 @@ class StudentUser(PrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = MYSQL_TABLE_OPTIONS.copy()
 
     phone_e164: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
-    wechat_openid: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    wechat_openid: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, unique=True
+    )
     display_nickname: Mapped[str] = mapped_column(String(32), nullable=False)
     display_avatar_seed: Mapped[str] = mapped_column(String(64), nullable=False)
     college_name: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -57,8 +61,14 @@ class StudentUser(PrimaryKeyMixin, TimestampMixin, Base):
     is_demo: Mapped[bool] = mapped_column(default=False, nullable=False)
     last_login_at: Mapped[datetime | None] = mapped_column(DATETIME_3, nullable=True)
 
-    consent_records: Mapped[list[ConsentRecord]] = relationship(back_populates="student")
+    consent_records: Mapped[list[ConsentRecord]] = relationship(
+        back_populates="student"
+    )
     questionnaire_submissions: Mapped[list[QuestionnaireSubmission]] = relationship(
         back_populates="student"
     )
-    assessment_reports: Mapped[list[AssessmentReport]] = relationship(back_populates="student")
+    assessment_reports: Mapped[list[AssessmentReport]] = relationship(
+        back_populates="student"
+    )
+    treehole_posts: Mapped[list[TreeholePost]] = relationship(back_populates="student")
+    post_reactions: Mapped[list[PostReaction]] = relationship(back_populates="student")
