@@ -27,17 +27,22 @@ def resolve_database_url(default: str | None = None) -> str:
         return default
 
 
-def create_database_engine(settings: Settings) -> Engine:
-    """Create a shared SQLAlchemy engine from runtime settings."""
+def create_database_engine_from_url(database_url: str) -> Engine:
+    """Create a shared SQLAlchemy engine from a database URL."""
     engine_kwargs: dict[str, object] = {
         "pool_pre_ping": True,
         "pool_recycle": 3600,
     }
 
-    if settings.database_url.startswith("mysql"):
+    if database_url.startswith("mysql"):
         engine_kwargs["connect_args"] = {"charset": "utf8mb4"}
 
-    return create_engine(settings.database_url, **engine_kwargs)
+    return create_engine(database_url, **engine_kwargs)
+
+
+def create_database_engine(settings: Settings) -> Engine:
+    """Create a shared SQLAlchemy engine from runtime settings."""
+    return create_database_engine_from_url(settings.database_url)
 
 
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:

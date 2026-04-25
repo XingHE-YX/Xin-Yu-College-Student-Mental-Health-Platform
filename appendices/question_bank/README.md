@@ -106,3 +106,22 @@ PYTHONPATH=backend backend/.venv/bin/python -m src.utils.validate_question_bank_
 - `upi_questions.json`
 - `sds_questions.json`
 - `sas_questions.json`
+
+## 导入脚本
+
+在数据库已完成迁移后，可使用统一导入脚本将模板和题目初始化到
+`questionnaire_templates` 与 `question_bank`：
+
+在仓库根目录运行：
+
+```bash
+PYTHONPATH=backend backend/.venv/bin/python -m src.utils.import_question_bank_seeds
+```
+
+如需显式指定数据库地址：
+
+```bash
+PYTHONPATH=backend backend/.venv/bin/python -m src.utils.import_question_bank_seeds \
+  --database-url sqlite+pysqlite:////tmp/xinyu_question_bank.db \
+  appendices/question_bank
+```
