@@ -45,4 +45,9 @@
 当前状态补充：已按 PRD 固定题号写入反向计分定义：SDS 反向题为 `2、5、6、11、12、14、16、17、18、20`，SAS 反向题为 `5、9、13、17、19`；反向信息已落到每道题的 `reverse_scored` 元数据中。
 当前状态补充：已按冻结规则写入硬触发定义：`SDS_15 >= 4` 对应 `HT-02`，`SAS_13 >= 4` 对应 `HT-03`；两份种子均保持 4 级评分选项和完整 `score_mapping`，后续标准分计算可完全依赖题库元数据。
 当前状态补充：已通过本地校验脚本验证五份真实题库种子文件，并扩展 pytest 覆盖 SDS / SAS 的题量、评分模式、解锁标记、反向计分题号集合和硬触发配置；复跑全部后端测试后共 23 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤4.4。
+已完成：IMPLEMENTATION_PLAN.md 步骤4.4（统一题库导入脚本创建，可插入或刷新 `questionnaire_templates` 与 `question_bank`）。
+当前状态补充：已新增 `backend/src/repositories/question_bank_seed_repository.py`、`backend/src/services/question_bank_seed_service.py` 和 `backend/src/utils/import_question_bank_seeds.py`，形成题库文件校验、模板/题目入库、刷新更新和 CLI 执行的完整导入链路。
+当前状态补充：导入服务支持按 `template.code` 刷新 `questionnaire_templates`，按 `question_id` 刷新 `question_bank`，自动写入 `question_order` 和 `seed_source`，并在重复导入时更新现有题目、删除已从种子中移除的旧题目，满足“插入或刷新”要求。
+当前状态补充：已为题库附录说明补充导入命令文档，并新增 pytest 覆盖空数据库初始化、重复导入刷新与 CLI `--database-url` 覆盖场景；复跑全部后端测试后共 26 项后端测试通过。
+当前状态补充：已实际执行 `PYTHONPATH=backend backend/.venv/bin/python -m src.utils.import_question_bank_seeds --database-url sqlite+pysqlite:////tmp/xinyu_question_bank_import.db appendices/question_bank`，在临时 SQLite 数据库中成功导入 5 个问卷模板和 74 条题库记录。
+待办：见 IMPLEMENTATION_PLAN.md 步骤5.1。
