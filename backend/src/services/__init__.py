@@ -21,6 +21,11 @@ from src.services.questionnaire_query_service import (
     QuestionnaireQueryService,
     QuestionnaireQuestionEntry,
 )
+from src.services.questionnaire_submission_service import (
+    QuestionnaireSubmissionService,
+    SubmittedQuestionAnswerInput,
+    SubmittedQuestionnaireResult,
+)
 from src.services.questionnaire_scoring_service import (
     HardTriggerMatch,
     IncompleteQuestionnaireAnswersError,
@@ -75,6 +80,7 @@ __all__ = [
     "QuestionnaireScoreResult",
     "QuestionnaireScoringError",
     "QuestionnaireScoringService",
+    "QuestionnaireSubmissionService",
     "ScoredQuestionAnswer",
     "ScoringQuestion",
     "StudentConsentResult",
@@ -83,6 +89,8 @@ __all__ = [
     "StudentAuthService",
     "StudentLoginConflictError",
     "StudentLoginResult",
+    "SubmittedQuestionAnswerInput",
+    "SubmittedQuestionnaireResult",
     "WeChatSession",
     "WeChatSessionExchangeError",
     "WeChatSessionService",

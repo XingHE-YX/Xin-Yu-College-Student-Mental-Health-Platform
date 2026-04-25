@@ -25,6 +25,9 @@ from src.schemas.questionnaire import (
     QuestionnaireProgressResponse,
     QuestionnaireProgressSuccessResponse,
     QuestionnaireQuestionResponse,
+    QuestionnaireSubmissionRequest,
+    QuestionnaireSubmissionResultData,
+    QuestionnaireSubmissionSuccessResponse,
     RequiredProgressQuestionnaireResponse,
 )
 from src.services.questionnaire_query_service import (
@@ -34,6 +37,15 @@ from src.services.questionnaire_query_service import (
     QuestionnaireNotFoundError,
     QuestionnaireProgressSnapshot,
     QuestionnaireQueryService,
+)
+from src.services.questionnaire_scoring_service import (
+    IncompleteQuestionnaireAnswersError,
+    InvalidQuestionnaireAnswerError,
+    QuestionnaireConfigurationError,
+)
+from src.services.questionnaire_submission_service import (
+    QuestionnaireSubmissionService,
+    SubmittedQuestionAnswerInput,
 )
 
 router = APIRouter(prefix="/questionnaires", tags=["questionnaires"])
@@ -49,16 +61,17 @@ def build_error_response(
     http_status: int,
     code: str,
     message: str,
+    errors: list[dict[str, str]] | None = None,
 ) -> JSONResponse:
     """Return a business-style error envelope."""
-    return JSONResponse(
-        status_code=http_status,
-        content={
-            "code": code,
-            "message": message,
-            "request_id": build_request_id(),
-        },
-    )
+    content = {
+        "code": code,
+        "message": message,
+        "request_id": build_request_id(),
+    }
+    if errors:
+        content["errors"] = errors
+    return JSONResponse(status_code=http_status, content=content)
 
 
 def build_latest_submission_response(
@@ -135,6 +148,19 @@ def build_progress_response(
             for entry in progress.required_questionnaires
         ],
     )
+
+
+def build_incomplete_answer_errors(
+    missing_question_codes: list[str],
+) -> list[dict[str, str]]:
+    """Build structured field errors for incomplete questionnaire submissions."""
+    return [
+        {
+            "field": f"answers.{question_code}",
+            "reason": "missing answer",
+        }
+        for question_code in missing_question_codes
+    ]
 
 
 @router.get(
@@ -241,5 +267,81 @@ def get_questionnaire_detail(
         request_id=build_request_id(),
         data=QuestionnaireDetailData(
             questionnaire=build_questionnaire_detail_response(detail)
+        ),
+    )
+
+
+@router.post(
+    "/{questionnaire_code}/submissions",
+    response_model=QuestionnaireSubmissionSuccessResponse,
+    status_code=status.HTTP_200_OK,
+)
+def submit_questionnaire(
+    questionnaire_code: str,
+    payload: QuestionnaireSubmissionRequest,
+    student: Annotated[StudentUser, Depends(get_current_student)],
+    session: Annotated[Session, Depends(get_db_session)],
+) -> QuestionnaireSubmissionSuccessResponse | JSONResponse:
+    """Validate, score, and persist one questionnaire submission."""
+    service = QuestionnaireSubmissionService(session)
+    try:
+        result = service.submit_questionnaire(
+            student_id=student.id,
+            questionnaire_code=questionnaire_code,
+            answers=[
+                SubmittedQuestionAnswerInput(
+                    question_code=answer.question_code,
+                    selected_option=answer.selected_option,
+                )
+                for answer in payload.answers
+            ],
+        )
+    except QuestionnaireNotFoundError as exc:
+        return build_error_response(
+            http_status=status.HTTP_404_NOT_FOUND,
+            code="QUESTIONNAIRE_NOT_FOUND",
+            message=str(exc),
+        )
+    except QuestionnaireCatalogUnavailableError as exc:
+        return build_error_response(
+            http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            code="QUESTIONNAIRE_CATALOG_UNAVAILABLE",
+            message=str(exc),
+        )
+    except IncompleteQuestionnaireAnswersError as exc:
+        return build_error_response(
+            http_status=status.HTTP_400_BAD_REQUEST,
+            code="QUESTIONNAIRE_SUBMISSION_INCOMPLETE",
+            message="questionnaire submission is incomplete",
+            errors=build_incomplete_answer_errors(exc.missing_question_codes),
+        )
+    except InvalidQuestionnaireAnswerError as exc:
+        return build_error_response(
+            http_status=status.HTTP_400_BAD_REQUEST,
+            code="QUESTIONNAIRE_ANSWER_INVALID",
+            message=str(exc),
+        )
+    except QuestionnaireConfigurationError as exc:
+        return build_error_response(
+            http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            code="QUESTIONNAIRE_CATALOG_UNAVAILABLE",
+            message=str(exc),
+        )
+    except ValueError as exc:
+        return build_error_response(
+            http_status=status.HTTP_400_BAD_REQUEST,
+            code="QUESTIONNAIRE_ANSWER_INVALID",
+            message=str(exc),
+        )
+
+    return QuestionnaireSubmissionSuccessResponse(
+        request_id=build_request_id(),
+        data=QuestionnaireSubmissionResultData(
+            submission_id=result.submission.id,
+            questionnaire_code=result.score_result.questionnaire_code,
+            raw_score=result.score_result.raw_score,
+            standardized_score=result.score_result.standardized_score,
+            risk_level=result.score_result.risk_level,
+            hard_trigger_hit=result.score_result.hard_trigger_hit,
         ),
     )

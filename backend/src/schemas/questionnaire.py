@@ -1,11 +1,11 @@
-"""Request and response schemas for questionnaire metadata APIs."""
+"""Request and response schemas for questionnaire metadata and submission APIs."""
 
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.constants.questionnaire_enums import (
     QuestionnaireCategory,
@@ -163,3 +163,48 @@ class QuestionnaireProgressSuccessResponse(BaseModel):
     message: Literal["success"] = "success"
     request_id: str
     data: QuestionnaireProgressData
+
+
+class SubmittedQuestionAnswerRequest(BaseModel):
+    """One submitted answer inside a questionnaire submission payload."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    question_code: str = Field(
+        min_length=1,
+        max_length=32,
+        pattern=r"^[A-Z][A-Z0-9_]*_\d{2}$",
+    )
+    selected_option: str = Field(min_length=1, max_length=32)
+
+
+class QuestionnaireSubmissionRequest(BaseModel):
+    """Payload for `POST /api/v1/questionnaires/{code}/submissions`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    answers: list[SubmittedQuestionAnswerRequest] = Field(min_length=1)
+
+
+class QuestionnaireSubmissionResultData(BaseModel):
+    """Business payload returned after scoring and persisting a submission."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    submission_id: int
+    questionnaire_code: str
+    raw_score: int
+    standardized_score: int | None
+    risk_level: QuestionnaireRiskLevel
+    hard_trigger_hit: bool
+
+
+class QuestionnaireSubmissionSuccessResponse(BaseModel):
+    """Standard success envelope for questionnaire submission responses."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: Literal["OK"] = "OK"
+    message: Literal["success"] = "success"
+    request_id: str
+    data: QuestionnaireSubmissionResultData

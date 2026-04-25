@@ -22,6 +22,10 @@ class QuestionnaireScoringError(ValueError):
 class IncompleteQuestionnaireAnswersError(QuestionnaireScoringError):
     """Raised when submitted answers do not cover the full questionnaire."""
 
+    def __init__(self, missing_question_codes: list[str]) -> None:
+        self.missing_question_codes = missing_question_codes
+        super().__init__(f"missing answers for: {', '.join(missing_question_codes)}")
+
 
 class InvalidQuestionnaireAnswerError(QuestionnaireScoringError):
     """Raised when a submitted answer is incompatible with question metadata."""
@@ -196,9 +200,7 @@ class QuestionnaireScoringService:
 
         missing_answers = sorted(set(question_codes) - set(answers))
         if missing_answers:
-            raise IncompleteQuestionnaireAnswersError(
-                f"missing answers for: {', '.join(missing_answers)}"
-            )
+            raise IncompleteQuestionnaireAnswersError(missing_answers)
 
         unexpected_answers = sorted(set(answers) - set(question_codes))
         if unexpected_answers:

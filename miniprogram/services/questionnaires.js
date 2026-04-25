@@ -21,8 +21,20 @@ function fetchRequiredProgress(options) {
   });
 }
 
+function submitQuestionnaire(options) {
+  return request({
+    url: `/questionnaires/${encodeURIComponent(options.code)}/submissions`,
+    method: "POST",
+    token: options.accessToken,
+    data: {
+      answers: options.answers,
+    },
+  });
+}
+
 module.exports = {
   fetchQuestionnaireDetail,
   fetchQuestionnaireList,
   fetchRequiredProgress,
+  submitQuestionnaire,
 };
