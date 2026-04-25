@@ -1,0 +1,63 @@
+@import "./page.wxss";
+
+.report-page__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.report-page__progress {
+  margin-top: 24rpx;
+}
+
+.report-page__summary-text {
+  margin-top: 20rpx;
+}
+
+.report-page__chip-wrap {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.report-page__card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.report-page__result-card,
+.report-page__history-item {
+  padding: 24rpx;
+  border-radius: 28rpx;
+  border: 2rpx solid #e3eae7;
+  background: #ffffff;
+  box-shadow: 0 10rpx 28rpx rgba(18, 63, 58, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.report-page__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.report-page__result-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.report-page__card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1f2a28;
+}

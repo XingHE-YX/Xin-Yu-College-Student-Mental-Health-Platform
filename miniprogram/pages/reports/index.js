@@ -1,0 +1,245 @@
+const { HOTLINE_PHONE, PAGE_ROUTES } = require("../../constants/config");
+const { getQuestionnaireRouteByCode } = require("../../constants/questionnaires");
+const {
+  fetchReportHistory,
+  fetchReportSummary,
+} = require("../../services/reports");
+const {
+  clearStudentSession,
+  hasValidStudentSession,
+  loadStudentSession,
+} = require("../../utils/session");
+
+function buildFallbackSummary() {
+  return {
+    state: "locked",
+    hero_card: {
+      eyebrow: "我的报告",
+      title: "完成 70 道必做题后可查看完整报告",
+      summary: "建议先从快速筛查开始，系统会在每次提交后自动更新进度与单量表结果。",
+      surface_tone: "brand",
+    },
+    progress: {
+      required_questions_completed: 0,
+      required_questions_total: 70,
+      required_questionnaires_completed: 0,
+      required_questionnaires_total: 4,
+      full_profile_unlocked: false,
+      missing_required_questionnaires: [],
+    },
+    scale_results: [],
+    next_actions: [],
+    disclaimer: "本结果用于自助筛查与校园支持参考，不构成诊断。",
+  };
+}
+
+function ensureAuthenticatedSession(pageInstance) {
+  const session = loadStudentSession();
+  if (!hasValidStudentSession(session)) {
+    clearStudentSession();
+    wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+    return null;
+  }
+
+  getApp().globalData.studentSession = session;
+  if (session.student.consent_status === "missing") {
+    wx.reLaunch({ url: PAGE_ROUTES.CONSENT });
+    return null;
+  }
+
+  if (pageInstance) {
+    pageInstance.setData({
+      student: session.student,
+    });
+  }
+  return session;
+}
+
+function formatSubmittedAt(value) {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+  const normalized = value.replace("T", " ");
+  return normalized.slice(0, 16);
+}
+
+function joinScoreSummary(scoreSummary) {
+  if (!Array.isArray(scoreSummary) || !scoreSummary.length) {
+    return "";
+  }
+
+  return scoreSummary
+    .map((item) => `${item.label} ${item.value}`)
+    .join(" · ");
+}
+
+function mapAction(action) {
+  let route = "";
+  let mode = "navigateTo";
+  let available = true;
+  if (action.target_questionnaire_code) {
+    route = getQuestionnaireRouteByCode(action.target_questionnaire_code);
+    available = Boolean(route);
+  } else if (action.flow_step === "S10A") {
+    route = PAGE_ROUTES.REPORT_FULL;
+  } else if (action.flow_step === "S15") {
+    available = false;
+  } else {
+    available = false;
+  }
+
+  return {
+    label: action.label,
+    buttonVariant: action.button_variant,
+    route,
+    mode,
+    available,
+  };
+}
+
+function mapScaleResultCard(item) {
+  return {
+    code: item.questionnaire.code,
+    name: item.questionnaire.name,
+    submittedAtLabel: formatSubmittedAt(item.submitted_at),
+    riskLabel: item.result_badge.label,
+    riskTone: item.result_badge.risk_level,
+    scoreSummaryText: joinScoreSummary(item.score_summary),
+    summaryText: item.summary_text,
+    hardTriggerHit: Boolean(item.hard_trigger_hit),
+  };
+}
+
+function mapHistoryRecord(item) {
+  return {
+    code: item.questionnaire_code,
+    name: item.questionnaire_name,
+    submittedAtLabel: formatSubmittedAt(item.submitted_at),
+    riskLabel: item.risk_level === "low" ? "低风险" : item.risk_level === "watch" ? "需关注" : "高风险",
+    riskTone: item.risk_level,
+    resultTitle: item.result_title,
+    scoreSummaryText: joinScoreSummary(item.score_summary),
+    summaryText: item.summary_text,
+    hardTriggerHit: item.hard_trigger_hit,
+  };
+}
+
+Page({
+  data: {
+    student: null,
+    hotlinePhone: HOTLINE_PHONE,
+    loading: true,
+    loadError: "",
+    hero: buildFallbackSummary().hero_card,
+    overviewBadge: null,
+    progress: buildFallbackSummary().progress,
+    scaleResults: [],
+    nextActions: [],
+    historyRecords: [],
+    disclaimer: buildFallbackSummary().disclaimer,
+    safetyBanner: null,
+    summaryState: "locked",
+    missingRequiredNames: [],
+  },
+
+  onLoad() {
+    this.bootstrap();
+  },
+
+  onShow() {
+    if (!this.data.loading) {
+      this.bootstrap();
+    }
+  },
+
+  onPullDownRefresh() {
+    this.bootstrap();
+  },
+
+  bootstrap() {
+    const session = ensureAuthenticatedSession(this);
+    if (!session) {
+      wx.stopPullDownRefresh();
+      return;
+    }
+
+    this.setData({
+      loading: true,
+      loadError: "",
+    });
+
+    Promise.all([
+      fetchReportSummary({ accessToken: session.accessToken }),
+      fetchReportHistory({ accessToken: session.accessToken }).catch(() => ({
+        records: [],
+      })),
+    ])
+      .then(([summaryResponse, historyResponse]) => {
+        const summary = summaryResponse.summary || buildFallbackSummary();
+        const progress = summary.progress || buildFallbackSummary().progress;
+        this.setData({
+          loading: false,
+          loadError: "",
+          hero: summary.hero_card || buildFallbackSummary().hero_card,
+          overviewBadge: summary.overview_badge || null,
+          progress,
+          scaleResults: (summary.scale_results || []).map(mapScaleResultCard),
+          nextActions: (summary.next_actions || []).map(mapAction),
+          historyRecords: (historyResponse.records || []).map(mapHistoryRecord),
+          disclaimer: summary.disclaimer || buildFallbackSummary().disclaimer,
+          safetyBanner: summary.safety_banner || null,
+          summaryState: summary.state || "locked",
+          missingRequiredNames: (progress.missing_required_questionnaires || []).map(
+            (item) => item.name
+          ),
+        });
+      })
+      .catch((error) => {
+        if (error && error.statusCode === 401) {
+          clearStudentSession();
+          wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+          return;
+        }
+
+        this.setData({
+          loading: false,
+          loadError:
+            (error && error.message) || "报告页加载失败，请稍后重试。",
+        });
+      })
+      .finally(() => {
+        wx.stopPullDownRefresh();
+      });
+  },
+
+  handleRetryLoad() {
+    this.bootstrap();
+  },
+
+  handleActionTap(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const action = this.data.nextActions[index];
+    if (!action) {
+      return;
+    }
+
+    if (!action.available || !action.route) {
+      wx.showToast({
+        title: "该入口将在后续步骤接入",
+        icon: "none",
+      });
+      return;
+    }
+
+    if (action.mode === "reLaunch") {
+      wx.reLaunch({ url: action.route });
+      return;
+    }
+
+    wx.navigateTo({ url: action.route });
+  },
+
+  handleBackHome() {
+    wx.reLaunch({ url: PAGE_ROUTES.HOME });
+  },
+});

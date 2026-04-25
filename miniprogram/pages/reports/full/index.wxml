@@ -1,0 +1,100 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        wx:if="{{hero}}"
+        eyebrow="{{hero.eyebrow}}"
+        title="{{hero.title}}"
+        summary="{{hero.summary}}"
+        tone="{{hero.surface_tone || 'brand'}}"
+      />
+
+      <view wx:if="{{loading}}" class="surface-card surface-card--soft">
+        <view class="eyebrow">加载中</view>
+        <view class="section-subtitle">正在同步完整综合画像</view>
+        <view class="body-text">请稍候，系统正在整理四份必做问卷与辅助结果。</view>
+      </view>
+
+      <block wx:elif="{{loadError}}">
+        <view class="status-banner status-banner--error">{{loadError}}</view>
+        <view class="button-stack">
+          <primary-button label="重新加载完整报告" bind:tap="handleRetryLoad" />
+          <secondary-button label="返回报告页" bind:tap="handleBackSummary" />
+        </view>
+      </block>
+
+      <block wx:else>
+        <safety-banner
+          wx:if="{{safetyBanner}}"
+          title="{{safetyBanner.title}}"
+          message="{{safetyBanner.summary}}"
+          hotline="{{hotlinePhone}}"
+        />
+
+        <view class="surface-card surface-card--soft">
+          <view class="report-page__section-head">
+            <view>
+              <view class="eyebrow">综合结果</view>
+              <view class="section-subtitle">综合结论</view>
+            </view>
+            <result-badge
+              wx:if="{{resultBadge}}"
+              label="{{resultBadge.label}}"
+              tone="{{resultBadge.risk_level}}"
+            />
+          </view>
+          <view class="body-text report-page__summary-text">{{integratedSummary}}</view>
+          <view wx:if="{{unlockStatus}}" class="report-page__progress">
+            <progress-bar
+              label="必做进度"
+              current="{{unlockStatus.required_questions_completed}}"
+              total="{{unlockStatus.required_questions_total}}"
+            />
+          </view>
+        </view>
+
+        <view class="surface-card">
+          <view class="eyebrow">量表摘要</view>
+          <view class="section-subtitle">各量表结果</view>
+          <view class="report-page__card-list">
+            <view wx:for="{{questionnaireSummaries}}" wx:key="code" class="report-page__result-card">
+              <view class="report-page__result-head">
+                <view class="report-page__card-title">{{item.name}}</view>
+                <result-badge label="{{item.riskLabel}}" tone="{{item.riskTone}}" />
+              </view>
+              <view class="caption-text">{{item.scoreSummaryText}}</view>
+              <view class="body-text">{{item.summaryText}}</view>
+              <view wx:if="{{item.hardTriggerHit}}" class="chip chip--danger">命中高风险触发</view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{trendPlaceholder}}" class="surface-card surface-card--warm">
+          <view class="eyebrow">趋势占位</view>
+          <view class="section-subtitle">{{trendPlaceholder.title}}</view>
+          <view class="body-text">{{trendPlaceholder.summary}}</view>
+        </view>
+
+        <view class="surface-card surface-card--muted">
+          <view class="eyebrow">调节建议</view>
+          <view class="section-subtitle">当前更值得优先做的事</view>
+          <view class="inline-list">
+            <view wx:for="{{recommendations}}" wx:key="summary" class="inline-list__item">
+              {{index + 1}}. {{item.title}}：{{item.summary}}
+            </view>
+          </view>
+        </view>
+
+        <view class="surface-card surface-card--soft">
+          <view class="eyebrow">说明</view>
+          <view class="body-text">{{disclaimer}}</view>
+        </view>
+
+        <view class="button-stack">
+          <primary-button label="返回报告页" bind:tap="handleBackSummary" />
+          <secondary-button label="返回首页" bind:tap="handleBackHome" />
+        </view>
+      </block>
+    </view>
+  </view>
+</app-shell>

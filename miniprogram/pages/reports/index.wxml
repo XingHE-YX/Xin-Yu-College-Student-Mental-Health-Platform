@@ -1,0 +1,142 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="{{hero.eyebrow}}"
+        title="{{hero.title}}"
+        summary="{{hero.summary}}"
+        tone="{{hero.surface_tone || 'brand'}}"
+      />
+
+      <view wx:if="{{loading}}" class="surface-card surface-card--soft">
+        <view class="eyebrow">加载中</view>
+        <view class="section-subtitle">正在同步报告状态</view>
+        <view class="body-text">请稍候，系统正在汇总当前量表结果与完整报告解锁状态。</view>
+      </view>
+
+      <block wx:elif="{{loadError}}">
+        <view class="status-banner status-banner--error">{{loadError}}</view>
+        <view class="button-stack">
+          <primary-button label="重新加载报告" bind:tap="handleRetryLoad" />
+          <secondary-button label="返回首页" bind:tap="handleBackHome" />
+        </view>
+      </block>
+
+      <block wx:else>
+        <safety-banner
+          wx:if="{{safetyBanner}}"
+          title="{{safetyBanner.title}}"
+          message="{{safetyBanner.summary}}"
+          hotline="{{hotlinePhone}}"
+        />
+
+        <view class="surface-card surface-card--soft">
+          <view class="report-page__section-head">
+            <view>
+              <view class="eyebrow">解锁进度</view>
+              <view class="section-subtitle">
+                {{progress.required_questions_completed}} / {{progress.required_questions_total}}
+              </view>
+            </view>
+            <result-badge
+              wx:if="{{overviewBadge}}"
+              label="{{overviewBadge.label}}"
+              tone="{{overviewBadge.risk_level}}"
+            />
+          </view>
+          <view class="body-text">
+            {{summaryState === 'unlocked' ? '完整报告已可查看。你可以先看当前摘要，也可以直接进入完整综合画像页。'
+            : summaryState === 'partial' ? '你已经完成了部分量表，当前摘要和最近结果会先展示在这里。'
+            : '当前还没有完整的量表结果，先从快速筛查开始即可。'}}
+          </view>
+          <view class="report-page__progress">
+            <progress-bar
+              label="必做进度"
+              current="{{progress.required_questions_completed}}"
+              total="{{progress.required_questions_total}}"
+            />
+          </view>
+          <view wx:if="{{missingRequiredNames.length}}" class="report-page__chip-wrap">
+            <view class="helper-text">待完成问卷</view>
+            <view class="chip-row">
+              <view wx:for="{{missingRequiredNames}}" wx:key="*this" class="chip chip--muted">
+                {{item}}
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{nextActions.length}}" class="button-stack">
+          <block wx:for="{{nextActions}}" wx:key="label">
+            <danger-button
+              wx:if="{{item.buttonVariant === 'danger-button'}}"
+              label="{{item.label}}"
+              data-index="{{index}}"
+              bind:tap="handleActionTap"
+            />
+            <secondary-button
+              wx:elif="{{item.buttonVariant === 'secondary-button'}}"
+              label="{{item.label}}"
+              data-index="{{index}}"
+              bind:tap="handleActionTap"
+            />
+            <primary-button
+              wx:else
+              label="{{item.label}}"
+              data-index="{{index}}"
+              bind:tap="handleActionTap"
+            />
+          </block>
+        </view>
+
+        <view class="surface-card">
+          <view class="eyebrow">已完成结果</view>
+          <view class="section-subtitle">当前量表摘要</view>
+          <view wx:if="{{scaleResults.length}}" class="report-page__card-list">
+            <view wx:for="{{scaleResults}}" wx:key="code" class="report-page__result-card">
+              <view class="report-page__result-head">
+                <view>
+                  <view class="report-page__card-title">{{item.name}}</view>
+                  <view class="helper-text">{{item.submittedAtLabel}}</view>
+                </view>
+                <result-badge label="{{item.riskLabel}}" tone="{{item.riskTone}}" />
+              </view>
+              <view class="body-text">{{item.summaryText}}</view>
+              <view class="caption-text">{{item.scoreSummaryText}}</view>
+              <view wx:if="{{item.hardTriggerHit}}" class="chip chip--danger">命中高风险触发</view>
+            </view>
+          </view>
+          <view wx:else class="helper-text">
+            暂无量表结果。完成第一份问卷后，这里会开始展示你的最新摘要。
+          </view>
+        </view>
+
+        <view class="surface-card surface-card--warm">
+          <view class="eyebrow">最近测评记录</view>
+          <view class="section-subtitle">历史记录</view>
+          <view wx:if="{{historyRecords.length}}" class="report-page__history-list">
+            <view wx:for="{{historyRecords}}" wx:key="index" class="report-page__history-item">
+              <view class="report-page__result-head">
+                <view>
+                  <view class="report-page__card-title">{{item.resultTitle}}</view>
+                  <view class="helper-text">{{item.submittedAtLabel}}</view>
+                </view>
+                <result-badge label="{{item.riskLabel}}" tone="{{item.riskTone}}" />
+              </view>
+              <view class="caption-text">{{item.scoreSummaryText}}</view>
+              <view class="helper-text">{{item.summaryText}}</view>
+            </view>
+          </view>
+          <view wx:else class="helper-text">
+            暂无历史记录。完成问卷后，最近测评会按时间顺序显示在这里。
+          </view>
+        </view>
+
+        <view class="surface-card surface-card--muted">
+          <view class="eyebrow">说明</view>
+          <view class="body-text">{{disclaimer}}</view>
+        </view>
+      </block>
+    </view>
+  </view>
+</app-shell>

@@ -164,8 +164,20 @@ function buildResultView(pageConfig, submissionResult, progress) {
   const riskLevel = submissionResult.risk_level;
   const resultCopy =
     (pageConfig.resultCopy && pageConfig.resultCopy[riskLevel]) || {};
-  const primaryAction = buildPrimaryAction(pageConfig, riskLevel);
   const safeProgress = progress || buildFallbackProgress();
+  let primaryAction = buildPrimaryAction(pageConfig, riskLevel);
+  if (
+    riskLevel !== "high" &&
+    safeProgress.full_profile_unlocked &&
+    !pageConfig.nextCode
+  ) {
+    primaryAction = {
+      label: "查看完整报告",
+      route: PAGE_ROUTES.REPORT_FULL,
+      mode: "redirectTo",
+      tone: "primary",
+    };
+  }
 
   return {
     questionnaireCode: submissionResult.questionnaire_code,

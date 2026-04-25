@@ -162,8 +162,8 @@ function buildModules(student, progress) {
         : "完整报告仍处于锁定状态。继续完成剩余必做问卷后，可查看综合画像与调节建议。",
       hint:
         missingNames.length > 0
-          ? `还需完成：${missingNames.join("、")}`
-          : "报告页将在 7.4 阶段接入完整展示",
+          ? `还需完成：${missingNames.join("、")}，也可先查看已完成量表结果`
+          : "可进入报告页查看当前摘要与完整画像",
       disabled: false,
     },
     {
@@ -332,8 +332,12 @@ Page({
       return;
     }
 
+    if (key === "report") {
+      wx.navigateTo({ url: PAGE_ROUTES.REPORT_SUMMARY });
+      return;
+    }
+
     const titles = {
-      report: "报告详情将在 7.4 阶段接入",
       treehole: "树洞流程将在后续步骤接入",
       help: "帮助资源页将在后续步骤接入",
     };

@@ -11,6 +11,8 @@ const PAGE_ROUTES = {
   QUESTIONNAIRE_SAS: "/pages/questionnaires/sas/index",
   QUESTIONNAIRE_SLEEP: "/pages/questionnaires/sleep/index",
   QUESTIONNAIRE_UPI: "/pages/questionnaires/upi/index",
+  REPORT_SUMMARY: "/pages/reports/index",
+  REPORT_FULL: "/pages/reports/full/index",
 };
 
 function shouldShowDemoEntry() {

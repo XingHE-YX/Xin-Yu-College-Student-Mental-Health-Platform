@@ -8,7 +8,9 @@
     "pages/questionnaires/sds/index",
     "pages/questionnaires/sas/index",
     "pages/questionnaires/sleep/index",
-    "pages/questionnaires/upi/index"
+    "pages/questionnaires/upi/index",
+    "pages/reports/index",
+    "pages/reports/full/index"
   ],
   "window": {
     "navigationBarTitleText": "心语",
