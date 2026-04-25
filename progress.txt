@@ -90,4 +90,12 @@
 当前状态补充：已新增 `tests/backend/test_questionnaire_api.py`，覆盖问卷列表顺序、问卷详情结构、必做进度去重统计、最新提交摘要透出、未知问卷 404 和未登录拒绝访问等场景；复跑全部后端测试后共 58 项后端测试通过。
 当前状态补充：学生端已新增 `miniprogram/services/questionnaires.js`，首页 `pages/home/` 已从固定占位改为真实请求问卷目录与必做进度，并按 `FRONTEND_GUIDELINES.md` 的平静、可信、低压基调重构“问卷中心”和报告进度卡片；当前首页可展示真实的 70 题完成度、待完成问卷列表、各问卷必做 / 可选状态以及最近一次风险结果标签，同时保留树洞 / 报告 / 帮助资源入口。
 当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 18 个 `json` 文件可成功解析；校验过程中 `python3` 因沙箱环境对 `/tmp` 写入受限出现 `xcrun` 相关警告，但不影响 JSON 解析结果。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已结合后端接口测试和前端代码人工检查完成本步最小验证。
-待办：见 IMPLEMENTATION_PLAN.md 步骤7.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤7.2（问卷提交接口、评分执行、提交记录与答案明细持久化实现）。
+当前状态补充：已在 `backend/src/api/routes/questionnaires.py` 中打通 `POST /api/v1/questionnaires/{code}/submissions`，并在 `backend/src/schemas/questionnaire.py` 中新增问卷提交请求 / 响应结构；接口当前按 `BACKEND_STRUCTURE.md` 合约接收 `answers[{question_code, selected_option}]`，返回 `submission_id`、`questionnaire_code`、`raw_score`、`standardized_score`、`risk_level` 和 `hard_trigger_hit`，可直接供后续 7.3 页面提交后展示结果摘要。
+当前状态补充：已新增 `backend/src/services/questionnaire_submission_service.py`，问卷提交链路现会先根据已冻结题库种子确认问卷编码存在，再校验数据库中的 `questionnaire_templates` / `question_bank` 元数据是否已通过 4.4 导入且与种子保持一致；通过后使用 `QuestionnaireScoringService` 执行漏答校验、非法选项校验、反向计分、标准分换算和硬触发升级，并将结果写入 `questionnaire_submissions` 与 `questionnaire_answers`。
+当前状态补充：`questionnaire_submissions` 当前会在服务端同步写入 `status = scored`、`raw_score`、`standardized_score`、`risk_level`、`hard_trigger_hit` 和完整 `scoring_snapshot_json`；`questionnaire_answers` 会逐题保存 `question_id`、`selected_option`、`raw_value` 与 `normalized_score`，确保后续报告生成、预警闭环和审计链路可直接复用本次提交产物。
+当前状态补充：提交接口已补齐错误分支：漏答时返回 `QUESTIONNAIRE_SUBMISSION_INCOMPLETE` 并带结构化 `errors` 列表，非法或重复作答返回 `QUESTIONNAIRE_ANSWER_INVALID`，未知问卷返回 `QUESTIONNAIRE_NOT_FOUND`，数据库未导入题库或元数据与种子失配时返回 `QUESTIONNAIRE_CATALOG_UNAVAILABLE`；因此前端在 7.3 可同时处理本地漏答拦截和服务端兜底校验。
+当前状态补充：学生端 `miniprogram/services/questionnaires.js` 已补充 `submitQuestionnaire()` 请求封装，为后续 `S05 - S09` 问卷页面直接复用；该改动不提前实现 7.3 页面，但已把提交 API 的调用入口固定下来。
+当前状态补充：已新增 `tests/backend/test_questionnaire_submission_api.py`，覆盖快速筛查持久化、SDS / SAS 标准分返回、睡眠问卷与 UPI 成功提交、UPI 硬触发升级高风险、漏答拒绝、非法选项拒绝、未导入题库时的 503、未登录拒绝访问、未知问卷 404 以及答案明细外键关联等场景；复跑全部后端测试后共 68 项后端测试通过。
+当前状态补充：已额外执行 `ruff check` 校验本次新增与改动的 Python 文件，当前静态检查通过。由于本步只新增后端接口与小程序服务封装，未修改小程序 `json` 配置或页面结构，因此未重复执行微信小程序运行态检查。
+待办：见 IMPLEMENTATION_PLAN.md 步骤7.3。
