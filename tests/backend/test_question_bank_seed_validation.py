@@ -190,16 +190,20 @@ def test_real_custom_question_bank_seed_files_validate() -> None:
         QUESTION_BANK_DIR / "screen_questions.json",
         QUESTION_BANK_DIR / "sleep_questions.json",
         QUESTION_BANK_DIR / "upi_questions.json",
+        QUESTION_BANK_DIR / "sds_questions.json",
+        QUESTION_BANK_DIR / "sas_questions.json",
     ]
 
     seed_files = validate_seed_files(seed_paths)
     seed_by_code = {seed_file.template.code: seed_file for seed_file in seed_files}
 
-    assert set(seed_by_code) == {"SCREEN", "SLEEP", "UPI"}
+    assert set(seed_by_code) == {"SCREEN", "SLEEP", "UPI", "SDS", "SAS"}
 
     screen_seed = seed_by_code["SCREEN"]
     sleep_seed = seed_by_code["SLEEP"]
     upi_seed = seed_by_code["UPI"]
+    sds_seed = seed_by_code["SDS"]
+    sas_seed = seed_by_code["SAS"]
 
     assert screen_seed.template.question_count == 15
     assert screen_seed.template.scoring_mode == "sum_1_5"
@@ -226,3 +230,48 @@ def test_real_custom_question_bank_seed_files_validate() -> None:
     assert upi_seed.questions[1].question_id == "UPI_02"
     assert upi_seed.questions[1].hard_trigger_rule is not None
     assert upi_seed.questions[1].hard_trigger_rule.reason_code == "HT-05"
+
+    assert sds_seed.template.question_count == 20
+    assert sds_seed.template.scoring_mode == "zung_standard"
+    assert sds_seed.template.unlock_required is True
+    assert {
+        question.question_id
+        for question in sds_seed.questions
+        if question.reverse_scored
+    } == {
+        "SDS_02",
+        "SDS_05",
+        "SDS_06",
+        "SDS_11",
+        "SDS_12",
+        "SDS_14",
+        "SDS_16",
+        "SDS_17",
+        "SDS_18",
+        "SDS_20",
+    }
+    assert sds_seed.questions[14].question_id == "SDS_15"
+    assert sds_seed.questions[14].hard_trigger_rule is not None
+    assert sds_seed.questions[14].hard_trigger_rule.operator == ">="
+    assert sds_seed.questions[14].hard_trigger_rule.value == 4
+    assert sds_seed.questions[14].hard_trigger_rule.reason_code == "HT-02"
+
+    assert sas_seed.template.question_count == 20
+    assert sas_seed.template.scoring_mode == "zung_standard"
+    assert sas_seed.template.unlock_required is True
+    assert {
+        question.question_id
+        for question in sas_seed.questions
+        if question.reverse_scored
+    } == {
+        "SAS_05",
+        "SAS_09",
+        "SAS_13",
+        "SAS_17",
+        "SAS_19",
+    }
+    assert sas_seed.questions[12].question_id == "SAS_13"
+    assert sas_seed.questions[12].hard_trigger_rule is not None
+    assert sas_seed.questions[12].hard_trigger_rule.operator == ">="
+    assert sas_seed.questions[12].hard_trigger_rule.value == 4
+    assert sas_seed.questions[12].hard_trigger_rule.reason_code == "HT-03"

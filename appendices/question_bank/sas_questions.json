@@ -1,0 +1,398 @@
+{
+  "template": {
+    "code": "SAS",
+    "name": "SAS 焦虑自评量表",
+    "category": "required",
+    "question_count": 20,
+    "scoring_mode": "zung_standard",
+    "unlock_required": true,
+    "is_active": true
+  },
+  "questions": [
+    {
+      "question_id": "SAS_01",
+      "question_text": "最近一段时间，我比平时更容易感到紧张或焦虑。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_02",
+      "question_text": "最近一段时间，我会在没有明显原因时感到害怕。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_03",
+      "question_text": "最近一段时间，我容易突然慌乱或被惊到。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_04",
+      "question_text": "最近一段时间，我常觉得自己快要撑不住了。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_05",
+      "question_text": "最近一段时间，我觉得事情总体还算平稳，不会发生糟糕结果。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_06",
+      "question_text": "最近一段时间，我的手臂或双腿会发抖。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_07",
+      "question_text": "最近一段时间，我常被头痛、颈肩背酸痛困扰。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_08",
+      "question_text": "最近一段时间，我容易感到虚弱、没力气。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_09",
+      "question_text": "最近一段时间，我通常能保持平静，也能安稳坐着。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_10",
+      "question_text": "最近一段时间，我经常能明显感觉到心跳加快。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_11",
+      "question_text": "最近一段时间，我常常有头晕或快要站不稳的感觉。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_12",
+      "question_text": "最近一段时间，我有过快要晕过去的感觉。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_13",
+      "question_text": "最近一段时间，我呼吸顺畅，不会轻易觉得喘不过气。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": {
+        "operator": ">=",
+        "value": 4,
+        "risk_level": "high",
+        "reason_code": "HT-03"
+      }
+    },
+    {
+      "question_id": "SAS_14",
+      "question_text": "最近一段时间，我手脚会出现发麻或刺痛感。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_15",
+      "question_text": "最近一段时间，我会被胃部不适或消化不好困扰。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_16",
+      "question_text": "最近一段时间，我排尿次数比平时更多。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_17",
+      "question_text": "最近一段时间，我的手通常是温暖干燥的。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_18",
+      "question_text": "最近一段时间，我的脸容易发热或脸红。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_19",
+      "question_text": "最近一段时间，我通常很容易入睡，也能睡得比较安稳。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SAS_20",
+      "question_text": "最近一段时间，我会因为梦境或惊醒而睡不好。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    }
+  ]
+}

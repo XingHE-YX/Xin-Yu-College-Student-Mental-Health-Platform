@@ -1,0 +1,398 @@
+{
+  "template": {
+    "code": "SDS",
+    "name": "SDS 抑郁自评量表",
+    "category": "required",
+    "question_count": 20,
+    "scoring_mode": "zung_standard",
+    "unlock_required": true,
+    "is_active": true
+  },
+  "questions": [
+    {
+      "question_id": "SDS_01",
+      "question_text": "最近一段时间，我常常感到情绪低落或提不起精神。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_02",
+      "question_text": "最近一段时间，我通常在早晨感觉状态最好。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_03",
+      "question_text": "最近一段时间，我容易想哭，或者觉得自己快要哭出来。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_04",
+      "question_text": "最近一段时间，我在夜里经常睡不好或容易失眠。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_05",
+      "question_text": "最近一段时间，我的食欲和以前差不多。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_06",
+      "question_text": "最近一段时间，我仍然能够感受到亲密关系中的愉悦或兴趣。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_07",
+      "question_text": "最近一段时间，我注意到自己的体重在下降。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_08",
+      "question_text": "最近一段时间，我经常受到肠胃不适或排便困难困扰。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_09",
+      "question_text": "最近一段时间，我能明显感觉到自己心跳比平时更快。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_10",
+      "question_text": "最近一段时间，我常常无明显原因地感到疲倦。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_11",
+      "question_text": "最近一段时间，我觉得自己的思路和以前一样清晰。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_12",
+      "question_text": "最近一段时间，我做日常事情仍像以前一样顺手。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_13",
+      "question_text": "最近一段时间，我常觉得坐立不安，难以安稳待着。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_14",
+      "question_text": "最近一段时间，我依然对未来抱有希望。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_15",
+      "question_text": "最近一段时间，我比平时更容易烦躁或被激怒。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": {
+        "operator": ">=",
+        "value": 4,
+        "risk_level": "high",
+        "reason_code": "HT-02"
+      }
+    },
+    {
+      "question_id": "SDS_16",
+      "question_text": "最近一段时间，我仍然能比较轻松地做出决定。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_17",
+      "question_text": "最近一段时间，我觉得自己对他人仍然有价值。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_18",
+      "question_text": "最近一段时间，我觉得自己的生活依然比较充实。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_19",
+      "question_text": "最近一段时间，我曾觉得如果自己不在了，别人会更轻松。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": false,
+      "hard_trigger_rule": null
+    },
+    {
+      "question_id": "SDS_20",
+      "question_text": "最近一段时间，我依然能够从原本喜欢的事情中获得乐趣。",
+      "question_type": "single_choice",
+      "options": [
+        { "value": "1", "label": "很少或没有" },
+        { "value": "2", "label": "少部分时间" },
+        { "value": "3", "label": "相当多时间" },
+        { "value": "4", "label": "大部分或全部时间" }
+      ],
+      "score_mapping": {
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4
+      },
+      "reverse_scored": true,
+      "hard_trigger_rule": null
+    }
+  ]
+}
