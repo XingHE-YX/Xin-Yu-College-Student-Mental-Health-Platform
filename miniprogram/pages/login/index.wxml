@@ -1,0 +1,117 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="S02 Login"
+        title="先完成登录，再进入自助功能"
+        summary="我们会先获取微信登录状态，再用手机号创建学生会话。当前开发联调阶段，手机号授权使用受控表单完成。"
+        tone="brand"
+      />
+
+      <view wx:if="{{errorMessage}}" class="status-banner status-banner--error">
+        {{errorMessage}}
+      </view>
+
+      <view wx:if="{{statusMessage}}" class="status-banner status-banner--success">
+        {{statusMessage}}
+      </view>
+
+      <view class="surface-card surface-card--soft">
+        <view class="eyebrow">Step 1</view>
+        <view class="section-subtitle">获取微信登录状态</view>
+        <view class="body-text">
+          点击后会调用 <text class="login-page__inline-code">wx.login</text> 获取本次登录 code。
+        </view>
+        <view class="button-stack login-page__button-stack">
+          <primary-button
+            label="{{loginCodeReady ? '重新获取微信登录状态' : '使用微信登录'}}"
+            loading="{{wechatLoading}}"
+            bind:tap="handleWechatLogin"
+          />
+        </view>
+      </view>
+
+      <view
+        class="surface-card surface-card--warm"
+        wx:if="{{loginCodeReady}}"
+      >
+        <view class="eyebrow">Step 2</view>
+        <view class="section-subtitle">手机号授权（开发联调模式）</view>
+        <view class="body-text">
+          为了跑通 MVP 登录链路，请输入本次授权手机号。该手机号仅用于创建校园会话，不会展示给其他学生。
+        </view>
+
+        <view class="screen__stack login-page__form-stack">
+          <view class="field">
+            <view class="field__label">手机号</view>
+            <input
+              class="field__input"
+              placeholder="请输入已授权手机号"
+              type="text"
+              maxlength="20"
+              value="{{form.phoneNumber}}"
+              data-field="phoneNumber"
+              bindinput="handleInputChange"
+            />
+            <view class="field__hint">支持 `13812345678` 或 `+8613812345678`。</view>
+          </view>
+
+          <view class="field">
+            <view class="field__label">学院（可选）</view>
+            <input
+              class="field__input"
+              placeholder="如暂未填写，将使用默认占位"
+              maxlength="64"
+              value="{{form.collegeName}}"
+              data-field="collegeName"
+              bindinput="handleInputChange"
+            />
+          </view>
+
+          <view class="field">
+            <view class="field__label">班级（可选）</view>
+            <input
+              class="field__input"
+              placeholder="如暂未填写，将使用默认占位"
+              maxlength="64"
+              value="{{form.className}}"
+              data-field="className"
+              bindinput="handleInputChange"
+            />
+          </view>
+
+          <view wx:if="{{phoneRefused}}" class="status-banner status-banner--warning">
+            当前仍停留在登录页。若要进入学生端，请重新完成手机号授权。
+          </view>
+
+          <view class="button-stack">
+            <primary-button
+              label="授权手机号并登录"
+              loading="{{loginLoading}}"
+              bind:tap="handleWechatSubmit"
+            />
+            <secondary-button
+              label="拒绝手机号授权"
+              bind:tap="handlePhoneRefuse"
+            />
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{showDemoEntry}}" class="surface-card surface-card--muted">
+        <view class="eyebrow">Demo</view>
+        <view class="section-subtitle">开发演示入口</view>
+        <view class="body-text">
+          仅在开发或试运行环境显示。若后端未开启演示模式，点击后会明确提示并自动隐藏入口。
+        </view>
+        <view class="button-stack login-page__button-stack">
+          <secondary-button
+            label="使用演示账号进入"
+            loading="{{demoLoading}}"
+            bind:tap="handleDemoLogin"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
+</app-shell>

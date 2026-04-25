@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "心语",
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index"
+  }
+}

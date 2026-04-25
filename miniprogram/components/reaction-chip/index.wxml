@@ -1,0 +1,7 @@
+<view
+  class="reaction-chip {{active ? 'reaction-chip--active' : ''}} {{disabled ? 'reaction-chip--disabled' : ''}}"
+  bindtap="handleTap"
+>
+  <view>{{label}}</view>
+  <view class="reaction-chip__count">{{count}}</view>
+</view>

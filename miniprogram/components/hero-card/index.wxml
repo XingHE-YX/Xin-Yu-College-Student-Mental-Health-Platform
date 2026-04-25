@@ -1,0 +1,6 @@
+<view class="hero-card hero-card--{{tone}}">
+  <view wx:if="{{eyebrow}}" class="hero-card__eyebrow">{{eyebrow}}</view>
+  <view class="hero-card__title">{{title}}</view>
+  <view wx:if="{{summary}}" class="hero-card__summary">{{summary}}</view>
+  <slot></slot>
+</view>

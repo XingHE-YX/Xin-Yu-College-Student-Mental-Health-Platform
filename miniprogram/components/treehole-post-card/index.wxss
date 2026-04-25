@@ -1,0 +1,36 @@
+.treehole-post-card {
+  background: #ffffff;
+  border-radius: 36rpx;
+  padding: 32rpx;
+  border: 2rpx solid #e3eae7;
+  box-shadow: 0 14rpx 36rpx rgba(18, 63, 58, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.treehole-post-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.treehole-post-card__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1f2a28;
+}
+
+.treehole-post-card__time {
+  font-size: 24rpx;
+  line-height: 1.4;
+  color: #70807c;
+}
+
+.treehole-post-card__content {
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #41504c;
+}

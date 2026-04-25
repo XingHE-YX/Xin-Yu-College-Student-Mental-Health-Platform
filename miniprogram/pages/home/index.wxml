@@ -1,0 +1,57 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="S04 Home"
+        title="欢迎回来，{{student.display_nickname}}"
+        summary="学生端主流程已经打通到首页。你可以从这里继续进入测评、报告、树洞和帮助资源模块。"
+        tone="brand"
+      />
+
+      <view wx:if="{{consentDeclined}}" class="status-banner status-banner--warning">
+        你已拒绝危机干预授权。树洞入口会保持禁用，但基础测评与报告链路不受影响。
+      </view>
+
+      <view class="surface-card surface-card--soft">
+        <view class="eyebrow">当前状态</view>
+        <view class="section-subtitle">完整报告仍需完成 70 道必做题</view>
+        <view class="body-text">
+          当前首页先展示固定进度占位。等问卷页与提交接口接入后，这里会显示真实完成度。
+        </view>
+        <view class="chip-row home-page__chip-row">
+          <view class="chip">{{student.college_name}}</view>
+          <view class="chip chip--warm">
+            {{student.consent_status === 'granted' ? '授权已完成' : '授权已拒绝'}}
+          </view>
+        </view>
+        <view class="home-page__progress">
+          <progress-bar label="必做进度" current="0" total="70"></progress-bar>
+        </view>
+      </view>
+
+      <view class="module-grid">
+        <view
+          wx:for="{{modules}}"
+          wx:key="key"
+          class="module-card {{item.disabled ? 'module-card--disabled' : ''}}"
+          data-key="{{item.key}}"
+          data-disabled="{{item.disabled}}"
+          bindtap="handleModuleTap"
+        >
+          <view class="module-card__head">
+            <view class="module-card__title">{{item.title}}</view>
+            <view
+              class="module-card__meta
+              {{item.metaTone === 'warning' ? 'module-card__meta--warning' : ''}}
+              {{item.metaTone === 'disabled' ? 'module-card__meta--disabled' : ''}}"
+            >
+              {{item.meta}}
+            </view>
+          </view>
+          <view class="body-text">{{item.summary}}</view>
+          <view class="helper-text">{{item.hint}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</app-shell>

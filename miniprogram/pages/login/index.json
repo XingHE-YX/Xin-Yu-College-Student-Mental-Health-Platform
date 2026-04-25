@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "登录",
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index"
+  }
+}

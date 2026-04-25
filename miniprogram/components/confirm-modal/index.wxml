@@ -1,0 +1,18 @@
+<view wx:if="{{visible}}" class="confirm-modal">
+  <view class="confirm-modal__mask" bindtap="handleMaskTap"></view>
+  <view class="confirm-modal__panel">
+    <view class="confirm-modal__title">{{title}}</view>
+    <view class="confirm-modal__message">{{message}}</view>
+    <view class="confirm-modal__actions">
+      <button class="confirm-modal__button confirm-modal__button--ghost" bindtap="handleCancel">
+        {{cancelText}}
+      </button>
+      <button
+        class="confirm-modal__button confirm-modal__button--{{tone}}"
+        bindtap="handleConfirm"
+      >
+        {{confirmText}}
+      </button>
+    </view>
+  </view>
+</view>

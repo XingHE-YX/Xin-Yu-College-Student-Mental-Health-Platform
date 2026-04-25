@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "授权说明",
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index",
+    "confirm-modal": "/components/confirm-modal/index"
+  }
+}

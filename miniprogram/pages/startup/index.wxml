@@ -1,0 +1,18 @@
+<app-shell>
+  <view class="screen startup-screen">
+    <view class="screen__stack startup-screen__stack">
+      <hero-card
+        eyebrow="Campus Care"
+        title="心语"
+        summary="正在检查本地会话与授权状态，请稍候。"
+        tone="brand"
+      />
+
+      <view class="surface-card surface-card--soft startup-status">
+        <view class="startup-status__spinner"></view>
+        <view class="section-subtitle">准备进入学生端主流程</view>
+        <view class="body-text">{{statusText}}</view>
+      </view>
+    </view>
+  </view>
+</app-shell>

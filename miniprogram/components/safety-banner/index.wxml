@@ -1,0 +1,7 @@
+<view class="safety-banner">
+  <view class="safety-banner__title">{{title}}</view>
+  <view class="safety-banner__message">{{message}}</view>
+  <view wx:if="{{hotline}}" class="safety-banner__hotline">
+    求助热线：{{hotline}}
+  </view>
+</view>

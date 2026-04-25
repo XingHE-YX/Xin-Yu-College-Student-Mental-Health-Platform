@@ -1,0 +1,8 @@
+<view class="treehole-post-card">
+  <view class="treehole-post-card__head">
+    <view class="treehole-post-card__name">{{anonymousName}}</view>
+    <view class="treehole-post-card__time">{{relativeTime}}</view>
+  </view>
+  <view class="treehole-post-card__content">{{content}}</view>
+  <slot></slot>
+</view>

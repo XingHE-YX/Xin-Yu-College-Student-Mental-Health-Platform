@@ -1,8 +1,13 @@
 {
-  "pages": [],
+  "pages": [
+    "pages/startup/index",
+    "pages/login/index",
+    "pages/consent/index",
+    "pages/home/index"
+  ],
   "window": {
     "navigationBarTitleText": "心语",
-    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarBackgroundColor": "#EEF7F5",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#F8FAFA",
     "backgroundTextStyle": "light"

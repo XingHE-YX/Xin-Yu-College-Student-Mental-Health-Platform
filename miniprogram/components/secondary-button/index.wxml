@@ -1,0 +1,8 @@
+<button
+  class="btn-base btn-base--secondary"
+  loading="{{loading}}"
+  disabled="{{disabled}}"
+  bindtap="handleTap"
+>
+  {{label}}
+</button>

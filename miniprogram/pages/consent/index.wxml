@@ -1,0 +1,71 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="S03 Consent"
+        title="在进入首页前，请先完成危机干预授权"
+        summary="授权页会记录你的决策。无论同意还是拒绝，你都仍然可以进入首页并继续完成测评。"
+        tone="warm"
+      />
+
+      <view wx:if="{{errorMessage}}" class="status-banner status-banner--error">
+        {{errorMessage}}
+      </view>
+
+      <view wx:if="{{statusMessage}}" class="status-banner status-banner--success">
+        {{statusMessage}}
+      </view>
+
+      <view class="surface-card surface-card--soft">
+        <view class="eyebrow">当前会话</view>
+        <view class="section-subtitle">{{student.display_nickname}}</view>
+        <view class="body-text">
+          当前账号来自 {{student.college_name}} · {{student.class_name}}。授权结果会绑定到本次学生会话。
+        </view>
+      </view>
+
+      <view class="surface-card">
+        <view class="eyebrow">隐私说明</view>
+        <view class="section-subtitle">我们会记录你的授权决策，并只在受控后台保留映射信息</view>
+        <view class="inline-list">
+          <view class="inline-list__item">1. 前台仅展示匿名昵称和头像，不强制采集真实姓名。</view>
+          <view class="inline-list__item">2. 手机号只用于创建学生账户，不会向其他学生公开。</view>
+          <view class="inline-list__item">3. 你的授权记录会以不可变历史的形式保存，便于事后追溯。</view>
+        </view>
+      </view>
+
+      <view class="surface-card surface-card--warm">
+        <view class="eyebrow">危机干预授权</view>
+        <view class="section-subtitle">仅在出现高风险信号时，用于支持后台人工复核闭环</view>
+        <view class="inline-list">
+          <view class="inline-list__item">1. 同意后，如系统识别到高风险内容，后台可进入人工复核流程。</view>
+          <view class="inline-list__item">2. 拒绝后，你仍可完成基础测评，但树洞功能会保持禁用。</view>
+          <view class="inline-list__item">3. 如你当下情绪非常急迫，请优先联系可信赖的人或拨打求助热线 {{hotlinePhone}}。</view>
+        </view>
+      </view>
+
+      <view class="button-stack">
+        <primary-button
+          label="同意并进入首页"
+          loading="{{submitting}}"
+          bind:tap="handleAgree"
+        />
+        <secondary-button
+          label="拒绝授权并继续"
+          disabled="{{submitting}}"
+          bind:tap="handleDeclineTap"
+        />
+      </view>
+    </view>
+  </view>
+
+  <confirm-modal
+    visible="{{showDeclineConfirm}}"
+    title="确认拒绝危机干预授权？"
+    message="拒绝后你仍可进入首页和完成测评，但树洞入口会保持禁用。若之后需要变更，可在后续版本重新提交授权决策。"
+    confirmText="确认拒绝"
+    cancelText="返回继续阅读"
+    bind:cancel="handleDeclineCancel"
+    bind:confirm="handleDeclineConfirm"
+  />
+</app-shell>

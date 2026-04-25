@@ -1,0 +1,29 @@
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  min-height: 56rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid #d7e1de;
+  background: #ffffff;
+  color: #1e645c;
+  font-size: 24rpx;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.reaction-chip--active {
+  background: #eef7f5;
+  border-color: #8fc9bd;
+}
+
+.reaction-chip--disabled {
+  background: #f8fafa;
+  color: #98a4a1;
+  border-color: #e6ecea;
+}
+
+.reaction-chip__count {
+  font-family: "DIN Alternate", "PingFang SC", sans-serif;
+}

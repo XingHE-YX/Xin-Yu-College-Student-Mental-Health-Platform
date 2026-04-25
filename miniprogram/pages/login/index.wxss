@@ -1,0 +1,15 @@
+@import "../../styles/page.wxss";
+
+.login-page__button-stack {
+  margin-top: 28rpx;
+}
+
+.login-page__form-stack {
+  margin-top: 24rpx;
+  gap: 24rpx;
+}
+
+.login-page__inline-code {
+  font-family: "DIN Alternate", "PingFang SC", sans-serif;
+  color: #1e645c;
+}

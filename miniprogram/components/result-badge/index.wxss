@@ -1,0 +1,26 @@
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+.result-badge--low {
+  background: #e9f6ed;
+  color: #2f7d49;
+}
+
+.result-badge--watch {
+  background: #fff3df;
+  color: #a86a14;
+}
+
+.result-badge--high {
+  background: #fbe7e7;
+  color: #a92a2a;
+}

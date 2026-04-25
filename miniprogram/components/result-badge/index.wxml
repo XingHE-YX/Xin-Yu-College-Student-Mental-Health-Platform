@@ -1,0 +1,1 @@
+<view class="result-badge result-badge--{{tone}}">{{label}}</view>

@@ -1,0 +1,8 @@
+<view class="question-card">
+  <view class="question-card__badge">{{questionNumber}}</view>
+  <view class="question-card__title">{{title}}</view>
+  <view wx:if="{{description}}" class="question-card__description">{{description}}</view>
+  <view class="question-card__body">
+    <slot></slot>
+  </view>
+</view>

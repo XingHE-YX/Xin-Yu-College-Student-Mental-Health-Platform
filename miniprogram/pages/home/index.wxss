@@ -1,0 +1,9 @@
+@import "../../styles/page.wxss";
+
+.home-page__chip-row {
+  margin-top: 20rpx;
+}
+
+.home-page__progress {
+  margin-top: 24rpx;
+}

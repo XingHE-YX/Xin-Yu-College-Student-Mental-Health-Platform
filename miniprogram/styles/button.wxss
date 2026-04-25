@@ -1,0 +1,40 @@
+.btn-base {
+  min-height: 96rpx;
+  border-radius: 28rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.btn-base::after {
+  border: none;
+}
+
+.btn-base--primary {
+  background: #2f8f83;
+  color: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(47, 143, 131, 0.22);
+}
+
+.btn-base--secondary {
+  background: #eef7f5;
+  color: #1e645c;
+}
+
+.btn-base--danger {
+  background: #d84c4c;
+  color: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(216, 76, 76, 0.2);
+}
+
+.btn-base[disabled] {
+  background: #e6ecea;
+  color: #98a4a1;
+  box-shadow: none;
+}
