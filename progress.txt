@@ -40,4 +40,9 @@
 当前状态补充：快速筛查题目统一采用 1-5 分频率量表，睡眠问卷统一采用 0-3 分频率量表，UPI 统一采用 `yes/no` 选项；三份种子均可直接通过 4.1 中定义的校验结构。
 当前状态补充：已按冻结规则写入硬触发定义：`SCREEN_15 >= 4` 对应 `HT-01`，`UPI_01 = yes` 对应 `HT-04`，`UPI_02 = yes` 对应 `HT-05`；睡眠问卷不设置额外硬触发。
 当前状态补充：已通过本地校验脚本验证三份真实种子文件，并新增 pytest 覆盖真实文件存在性、题量、评分模式、解锁标记和硬触发规则，复跑全部后端测试后共 23 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤4.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤4.3（`appendices/question_bank/sds_questions.json`、`sas_questions.json` 创建）。
+当前状态补充：已补齐两份 20 题 Zung 量表种子文件，模板元数据对齐冻结需求，SDS 与 SAS 均设为 `required`、`question_count = 20`、`scoring_mode = zung_standard`、`unlock_required = true`，可供后续评分服务直接复用。
+当前状态补充：已按 PRD 固定题号写入反向计分定义：SDS 反向题为 `2、5、6、11、12、14、16、17、18、20`，SAS 反向题为 `5、9、13、17、19`；反向信息已落到每道题的 `reverse_scored` 元数据中。
+当前状态补充：已按冻结规则写入硬触发定义：`SDS_15 >= 4` 对应 `HT-02`，`SAS_13 >= 4` 对应 `HT-03`；两份种子均保持 4 级评分选项和完整 `score_mapping`，后续标准分计算可完全依赖题库元数据。
+当前状态补充：已通过本地校验脚本验证五份真实题库种子文件，并扩展 pytest 覆盖 SDS / SAS 的题量、评分模式、解锁标记、反向计分题号集合和硬触发配置；复跑全部后端测试后共 23 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤4.4。
