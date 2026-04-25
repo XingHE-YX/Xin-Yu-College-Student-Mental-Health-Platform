@@ -90,6 +90,19 @@ class ScoredQuestionAnswer:
 
 
 @dataclass(frozen=True, slots=True)
+class HardTriggerMatch:
+    """A matched hard-trigger rule that upgrades questionnaire risk."""
+
+    question_code: str
+    question_order: int
+    reason_code: str
+    operator: str
+    expected_value: int | str
+    matched_value: int | str
+    risk_level: QuestionnaireRiskLevel
+
+
+@dataclass(frozen=True, slots=True)
 class QuestionnaireScoreResult:
     """Structured result returned by questionnaire scorers."""
 
@@ -100,6 +113,8 @@ class QuestionnaireScoreResult:
     raw_score: int
     standardized_score: int | None
     risk_level: QuestionnaireRiskLevel
+    hard_trigger_hit: bool
+    hard_trigger_matches: list[HardTriggerMatch]
     scored_answers: list[ScoredQuestionAnswer]
 
     def to_snapshot(self) -> dict[str, Any]:
@@ -112,6 +127,19 @@ class QuestionnaireScoreResult:
             "raw_score": self.raw_score,
             "standardized_score": self.standardized_score,
             "risk_level": self.risk_level.value,
+            "hard_trigger_hit": self.hard_trigger_hit,
+            "hard_trigger_matches": [
+                {
+                    "question_code": match.question_code,
+                    "question_order": match.question_order,
+                    "reason_code": match.reason_code,
+                    "operator": match.operator,
+                    "expected_value": match.expected_value,
+                    "matched_value": match.matched_value,
+                    "risk_level": match.risk_level.value,
+                }
+                for match in self.hard_trigger_matches
+            ],
             "answers": [
                 {
                     "question_code": answer.question_code,
@@ -192,11 +220,21 @@ class QuestionnaireScoringService:
             if scoring_mode is QuestionnaireScoringMode.ZUNG_STANDARD
             else None
         )
-        risk_level = self._determine_risk_level(
+        hard_trigger_matches = [
+            match
+            for question, scored_answer in zip(
+                ordered_questions, scored_answers, strict=True
+            )
+            if (match := self._evaluate_hard_trigger(question, scored_answer))
+            is not None
+        ]
+        risk_level = self._determine_base_risk_level(
             questionnaire_code=questionnaire_code,
             raw_score=raw_score,
             standardized_score=standardized_score,
         )
+        if hard_trigger_matches:
+            risk_level = QuestionnaireRiskLevel.HIGH
 
         return QuestionnaireScoreResult(
             questionnaire_code=questionnaire_code,
@@ -206,6 +244,8 @@ class QuestionnaireScoringService:
             raw_score=raw_score,
             standardized_score=standardized_score,
             risk_level=risk_level,
+            hard_trigger_hit=bool(hard_trigger_matches),
+            hard_trigger_matches=hard_trigger_matches,
             scored_answers=scored_answers,
         )
 
@@ -306,7 +346,75 @@ class QuestionnaireScoringService:
             reverse_scored=question.reverse_scored,
         )
 
-    def _determine_risk_level(
+    def _evaluate_hard_trigger(
+        self,
+        question: ScoringQuestion,
+        scored_answer: ScoredQuestionAnswer,
+    ) -> HardTriggerMatch | None:
+        """Evaluate one question-level hard trigger against the submitted answer."""
+        rule = question.hard_trigger_rule
+        if rule is None:
+            return None
+
+        operator = rule.get("operator")
+        expected_value = rule.get("value")
+        reason_code = rule.get("reason_code")
+        risk_level_value = rule.get("risk_level")
+
+        if operator not in {">=", "=="}:
+            raise QuestionnaireConfigurationError(
+                f"unsupported hard trigger operator '{operator}' for {question.question_code}"
+            )
+        if not isinstance(reason_code, str) or not reason_code:
+            raise QuestionnaireConfigurationError(
+                f"hard trigger reason_code is missing for {question.question_code}"
+            )
+        if risk_level_value != QuestionnaireRiskLevel.HIGH.value:
+            raise QuestionnaireConfigurationError(
+                "unsupported hard trigger risk_level "
+                f"'{risk_level_value}' for {question.question_code}"
+            )
+
+        if question.question_type is QuestionType.YES_NO:
+            if operator != "==":
+                raise QuestionnaireConfigurationError(
+                    f"yes_no hard triggers must use '==' for {question.question_code}"
+                )
+            matched_value: int | str = scored_answer.raw_value
+            is_match = matched_value == expected_value
+        else:
+            if operator == ">=":
+                if not isinstance(expected_value, int):
+                    raise QuestionnaireConfigurationError(
+                        f"hard trigger '>=' expects an integer for {question.question_code}"
+                    )
+                matched_value = scored_answer.mapped_score
+                is_match = matched_value >= expected_value
+            elif isinstance(expected_value, int):
+                matched_value = scored_answer.mapped_score
+                is_match = matched_value == expected_value
+            elif isinstance(expected_value, str):
+                matched_value = scored_answer.raw_value
+                is_match = matched_value == expected_value
+            else:
+                raise QuestionnaireConfigurationError(
+                    f"unsupported hard trigger value for {question.question_code}"
+                )
+
+        if not is_match:
+            return None
+
+        return HardTriggerMatch(
+            question_code=question.question_code,
+            question_order=question.question_order,
+            reason_code=reason_code,
+            operator=operator,
+            expected_value=expected_value,
+            matched_value=matched_value,
+            risk_level=QuestionnaireRiskLevel.HIGH,
+        )
+
+    def _determine_base_risk_level(
         self,
         *,
         questionnaire_code: str,

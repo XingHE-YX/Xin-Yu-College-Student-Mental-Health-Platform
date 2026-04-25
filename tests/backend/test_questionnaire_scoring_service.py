@@ -28,6 +28,41 @@ def load_seed(questionnaire_code: str):
     return load_seed_file(QUESTION_BANK_DIR / SEED_FILE_BY_CODE[questionnaire_code])
 
 
+def matches_hard_trigger(question_seed, raw_value: str) -> bool:
+    """Return whether one raw answer value would hit the question's hard trigger."""
+    rule = question_seed.hard_trigger_rule
+    if rule is None:
+        return False
+
+    if question_seed.question_type.value == "yes_no":
+        return rule.operator == "==" and raw_value == rule.value
+
+    mapped_score = question_seed.score_mapping[raw_value]
+    if rule.operator == ">=":
+        return mapped_score >= rule.value
+    if isinstance(rule.value, int):
+        return mapped_score == rule.value
+    return raw_value == rule.value
+
+
+def build_non_trigger_score_options(question_seed) -> dict[int, str]:
+    """Return normalized-score -> raw-value choices that avoid hard triggers."""
+    score_options: dict[int, str] = {}
+    for raw_value, mapped_score in question_seed.score_mapping.items():
+        if matches_hard_trigger(question_seed, raw_value):
+            continue
+        normalized_score = (
+            5 - mapped_score if question_seed.reverse_scored else mapped_score
+        )
+        score_options[normalized_score] = raw_value
+
+    if not score_options:
+        raise AssertionError(
+            f"no non-trigger score options for {question_seed.question_id}"
+        )
+    return score_options
+
+
 def build_answers_for_target_total(
     questionnaire_code: str,
     *,
@@ -37,15 +72,23 @@ def build_answers_for_target_total(
 ) -> dict[str, str]:
     """Build a complete answer mapping that yields the requested normalized total."""
     seed_file = load_seed(questionnaire_code)
-    question_count = len(seed_file.questions)
-    minimum_total = question_count * min_score
-    maximum_total = question_count * max_score
+    score_options_by_question = [
+        build_non_trigger_score_options(question_seed)
+        for question_seed in seed_file.questions
+    ]
+    minimum_total = sum(
+        min(score_options) for score_options in score_options_by_question
+    )
+    maximum_total = sum(
+        max(score_options) for score_options in score_options_by_question
+    )
     assert minimum_total <= target_total <= maximum_total
 
-    desired_scores = [min_score] * question_count
+    desired_scores = [min(score_options) for score_options in score_options_by_question]
     remaining = target_total - minimum_total
-    for index in range(question_count):
-        increment = min(max_score - min_score, remaining)
+    for index, score_options in enumerate(score_options_by_question):
+        max_increment = max(score_options) - desired_scores[index]
+        increment = min(max_increment, remaining)
         desired_scores[index] += increment
         remaining -= increment
 
@@ -55,16 +98,25 @@ def build_answers_for_target_total(
     for question_seed, desired_score in zip(
         seed_file.questions, desired_scores, strict=True
     ):
-        mapped_score = (
-            5 - desired_score if question_seed.reverse_scored else desired_score
-        )
-        raw_value = next(
-            option_value
-            for option_value, score in question_seed.score_mapping.items()
-            if score == mapped_score
-        )
+        raw_value = build_non_trigger_score_options(question_seed)[desired_score]
         answers[question_seed.question_id] = raw_value
 
+    return answers
+
+
+def build_low_risk_answers(questionnaire_code: str) -> dict[str, str]:
+    """Build a complete answer set that minimizes normalized questionnaire risk."""
+    seed_file = load_seed(questionnaire_code)
+    answers: dict[str, str] = {}
+    for question_seed in seed_file.questions:
+        if question_seed.question_type.value == "yes_no":
+            answers[question_seed.question_id] = "no"
+            continue
+
+        score_options = build_non_trigger_score_options(question_seed)
+        desired_score = min(score_options)
+        raw_value = score_options[desired_score]
+        answers[question_seed.question_id] = raw_value
     return answers
 
 
@@ -101,9 +153,11 @@ def test_score_screen_threshold_boundary() -> None:
     assert low_result.raw_score == 44
     assert low_result.standardized_score is None
     assert low_result.risk_level is QuestionnaireRiskLevel.LOW
+    assert low_result.hard_trigger_hit is False
     assert watch_result.raw_score == 45
     assert watch_result.standardized_score is None
     assert watch_result.risk_level is QuestionnaireRiskLevel.WATCH
+    assert watch_result.hard_trigger_hit is False
 
 
 def test_score_sleep_threshold_boundaries() -> None:
@@ -137,9 +191,13 @@ def test_score_sleep_threshold_boundaries() -> None:
     )
 
     assert result_7.risk_level is QuestionnaireRiskLevel.LOW
+    assert result_7.hard_trigger_hit is False
     assert result_8.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result_8.hard_trigger_hit is False
     assert result_14.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result_14.hard_trigger_hit is False
     assert result_15.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result_15.hard_trigger_hit is False
 
 
 def test_score_sds_threshold_boundaries() -> None:
@@ -174,12 +232,16 @@ def test_score_sds_threshold_boundaries() -> None:
 
     assert result_42.standardized_score == 52
     assert result_42.risk_level is QuestionnaireRiskLevel.LOW
+    assert result_42.hard_trigger_hit is False
     assert result_43.standardized_score == 53
     assert result_43.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result_43.hard_trigger_hit is False
     assert result_50.standardized_score == 62
     assert result_50.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result_50.hard_trigger_hit is False
     assert result_51.standardized_score == 63
     assert result_51.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result_51.hard_trigger_hit is False
 
 
 def test_score_sas_threshold_boundaries() -> None:
@@ -214,16 +276,20 @@ def test_score_sas_threshold_boundaries() -> None:
 
     assert result_39.standardized_score == 48
     assert result_39.risk_level is QuestionnaireRiskLevel.LOW
+    assert result_39.hard_trigger_hit is False
     assert result_40.standardized_score == 50
     assert result_40.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result_40.hard_trigger_hit is False
     assert result_47.standardized_score == 58
     assert result_47.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result_47.hard_trigger_hit is False
     assert result_48.standardized_score == 60
     assert result_48.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result_48.hard_trigger_hit is False
 
 
-def test_score_upi_keeps_auxiliary_results_low_without_hard_trigger_upgrade() -> None:
-    """UPI scoring should stay auxiliary until hard-trigger logic is applied later."""
+def test_score_upi_no_trigger_stays_low() -> None:
+    """UPI without hard triggers should remain a low-risk auxiliary result."""
     service = QuestionnaireScoringService()
     seed_file = load_seed("UPI")
 
@@ -231,16 +297,101 @@ def test_score_upi_keeps_auxiliary_results_low_without_hard_trigger_upgrade() ->
         seed_file,
         build_upi_answers(upi_01="no", upi_02="no", upi_03="no", upi_04="no"),
     )
-    auxiliary_result = service.score_seed_file(
-        seed_file,
-        build_upi_answers(upi_01="yes", upi_02="yes", upi_03="no", upi_04="no"),
-    )
 
     assert low_result.raw_score == 0
     assert low_result.risk_level is QuestionnaireRiskLevel.LOW
-    assert auxiliary_result.raw_score == 2
-    assert auxiliary_result.standardized_score is None
-    assert auxiliary_result.risk_level is QuestionnaireRiskLevel.LOW
+    assert low_result.hard_trigger_hit is False
+    assert low_result.hard_trigger_matches == []
+
+
+def test_screen_hard_trigger_upgrades_result_to_high() -> None:
+    """SCREEN_15 >= 4 should upgrade the result to high risk."""
+    service = QuestionnaireScoringService()
+    seed_file = load_seed("SCREEN")
+    answers = build_low_risk_answers("SCREEN")
+    answers["SCREEN_15"] = "4"
+
+    result = service.score_seed_file(seed_file, answers)
+
+    assert result.raw_score == 18
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.hard_trigger_hit is True
+    assert len(result.hard_trigger_matches) == 1
+    assert result.hard_trigger_matches[0].question_code == "SCREEN_15"
+    assert result.hard_trigger_matches[0].reason_code == "HT-01"
+    assert result.to_snapshot()["hard_trigger_hit"] is True
+
+
+def test_sds_hard_trigger_upgrades_result_to_high() -> None:
+    """SDS_15 >= 4 should upgrade a low base score to high risk."""
+    service = QuestionnaireScoringService()
+    seed_file = load_seed("SDS")
+    answers = build_low_risk_answers("SDS")
+    answers["SDS_15"] = "4"
+
+    result = service.score_seed_file(seed_file, answers)
+
+    assert result.standardized_score == 28
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.hard_trigger_hit is True
+    assert result.hard_trigger_matches[0].question_code == "SDS_15"
+    assert result.hard_trigger_matches[0].matched_value == 4
+    assert result.hard_trigger_matches[0].reason_code == "HT-02"
+
+
+def test_sas_hard_trigger_upgrades_result_to_high_even_on_reverse_scored_question() -> (
+    None
+):
+    """SAS_13 >= 4 should trigger before reverse scoring lowers the normalized score."""
+    service = QuestionnaireScoringService()
+    seed_file = load_seed("SAS")
+    answers = build_low_risk_answers("SAS")
+    answers["SAS_13"] = "4"
+
+    result = service.score_seed_file(seed_file, answers)
+
+    assert result.standardized_score == 25
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.hard_trigger_hit is True
+    assert result.hard_trigger_matches[0].question_code == "SAS_13"
+    assert result.hard_trigger_matches[0].matched_value == 4
+    assert result.hard_trigger_matches[0].reason_code == "HT-03"
+
+
+def test_upi_hard_trigger_on_upi_01_upgrades_result_to_high() -> None:
+    """UPI_01 = yes should upgrade the auxiliary questionnaire to high risk."""
+    service = QuestionnaireScoringService()
+    seed_file = load_seed("UPI")
+
+    result = service.score_seed_file(
+        seed_file,
+        build_upi_answers(upi_01="yes", upi_02="no", upi_03="no", upi_04="no"),
+    )
+
+    assert result.raw_score == 1
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.hard_trigger_hit is True
+    assert result.hard_trigger_matches[0].question_code == "UPI_01"
+    assert result.hard_trigger_matches[0].matched_value == "yes"
+    assert result.hard_trigger_matches[0].reason_code == "HT-04"
+
+
+def test_upi_hard_trigger_on_upi_02_upgrades_result_to_high() -> None:
+    """UPI_02 = yes should also upgrade the auxiliary questionnaire to high risk."""
+    service = QuestionnaireScoringService()
+    seed_file = load_seed("UPI")
+
+    result = service.score_seed_file(
+        seed_file,
+        build_upi_answers(upi_01="no", upi_02="yes", upi_03="no", upi_04="no"),
+    )
+
+    assert result.raw_score == 1
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.hard_trigger_hit is True
+    assert result.hard_trigger_matches[0].question_code == "UPI_02"
+    assert result.hard_trigger_matches[0].matched_value == "yes"
+    assert result.hard_trigger_matches[0].reason_code == "HT-05"
 
 
 def test_score_zung_questionnaire_applies_reverse_scoring() -> None:

@@ -5,6 +5,7 @@ from src.services.question_bank_seed_service import (
     QuestionBankSeedService,
 )
 from src.services.questionnaire_scoring_service import (
+    HardTriggerMatch,
     IncompleteQuestionnaireAnswersError,
     InvalidQuestionnaireAnswerError,
     QuestionnaireConfigurationError,
@@ -18,6 +19,7 @@ from src.services.questionnaire_scoring_service import (
 __all__ = [
     "IncompleteQuestionnaireAnswersError",
     "InvalidQuestionnaireAnswerError",
+    "HardTriggerMatch",
     "QuestionBankImportSummary",
     "QuestionBankSeedService",
     "QuestionnaireConfigurationError",
