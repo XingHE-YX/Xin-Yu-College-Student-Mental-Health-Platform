@@ -79,3 +79,14 @@ class StudentUserRepository:
         student.last_login_at = last_login_at
         self.session.flush()
         return student
+
+    def update_consent_status(
+        self,
+        student: StudentUser,
+        *,
+        consent_status: ConsentStatus,
+    ) -> StudentUser:
+        """Persist the latest derived crisis-intervention consent status."""
+        student.consent_status = consent_status
+        self.session.flush()
+        return student

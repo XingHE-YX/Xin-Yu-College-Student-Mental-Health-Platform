@@ -31,6 +31,10 @@ from src.services.student_auth_service import (
     StudentLoginConflictError,
     StudentLoginResult,
 )
+from src.services.student_consent_service import (
+    StudentConsentResult,
+    StudentConsentService,
+)
 from src.services.wechat_session_service import (
     WeChatSession,
     WeChatSessionExchangeError,
@@ -57,6 +61,8 @@ __all__ = [
     "QuestionnaireScoringService",
     "ScoredQuestionAnswer",
     "ScoringQuestion",
+    "StudentConsentResult",
+    "StudentConsentService",
     "StudentAuthError",
     "StudentAuthService",
     "StudentLoginConflictError",
