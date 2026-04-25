@@ -1,0 +1,140 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="S12 Treehole"
+        title="{{heroTitle}}"
+        summary="{{heroSummary}}"
+        tone="{{heroTone}}"
+      />
+
+      <view wx:if="{{pageMode === 'disabled'}}" class="surface-card surface-card--warm">
+        <view class="eyebrow">当前不可用</view>
+        <view class="section-subtitle">你还没有开放危机干预授权，因此不能发帖</view>
+        <view class="body-text">
+          你仍然可以继续完成问卷和查看报告。若之后开放授权，树洞发布入口会自动恢复。
+        </view>
+        <view class="button-stack treehole-page__actions">
+          <secondary-button label="返回首页" bind:tap="handleBackHome" />
+        </view>
+      </view>
+
+      <block wx:elif="{{pageMode === 'success' && createdPost}}">
+        <view class="status-banner status-banner--success">{{successMessage}}</view>
+
+        <view class="surface-card surface-card--soft">
+          <view class="treehole-page__section-head">
+            <view>
+              <view class="eyebrow">发布结果</view>
+              <view class="section-subtitle">{{successTitle}}</view>
+            </view>
+            <result-badge
+              label="{{successBadgeLabel}}"
+              tone="{{createdPost.riskLevel}}"
+            />
+          </view>
+          <view class="body-text">{{successSummary}}</view>
+          <view class="helper-text">公开展示前已自动隐藏手机号与邮箱等明显联系方式。</view>
+        </view>
+
+        <treehole-post-card
+          anonymousName="{{createdPost.anonymousName}}"
+          anonymousAvatarKey="{{createdPost.anonymousAvatarKey}}"
+          relativeTime="{{createdPost.relativeTime}}"
+          content="{{createdPost.content}}"
+          fullContent="{{true}}"
+        >
+          <view slot="head-extra" class="chip-row">
+            <view class="chip chip--success">已公开</view>
+            <view class="chip chip--warm">匿名发布</view>
+          </view>
+          <view class="chip-row">
+            <view class="chip chip--muted">{{createdPost.publishedAtLabel}}</view>
+          </view>
+        </treehole-post-card>
+
+        <view class="button-stack">
+          <primary-button label="返回广场" bind:tap="handleBackToFeed" />
+          <secondary-button label="查看我的帖子" bind:tap="handleViewMyPost" />
+        </view>
+      </block>
+
+      <block wx:elif="{{pageMode === 'intercept'}}">
+        <safety-banner
+          title="这条内容暂不适合公开发布"
+          message="系统识别到当前内容可能需要优先关注安全与支持，因此不会进入公开广场。请先照顾好当下状态。"
+          hotline="{{hotlinePhone}}"
+        />
+
+        <view class="surface-card surface-card--warm">
+          <view class="eyebrow">安全提醒</view>
+          <view class="section-subtitle">请先联系可信赖的人，或及时使用求助热线</view>
+          <view class="body-text">
+            当前拦截页是严肃提醒，不代表诊断结论；如果你现在感到明显急迫，请优先联系身边可信赖的人，并尽快寻求校园支持。
+          </view>
+        </view>
+
+        <view class="button-stack">
+          <danger-button label="拨打求助热线" bind:tap="handleCallHotline" />
+          <secondary-button label="返回广场" bind:tap="handleBackToFeed" />
+        </view>
+      </block>
+
+      <block wx:else>
+        <view wx:if="{{submitError}}" class="status-banner status-banner--error">
+          {{submitError}}
+        </view>
+
+        <view class="surface-card surface-card--soft">
+          <view class="treehole-page__section-head">
+            <view>
+              <view class="eyebrow">Anonymous Composer</view>
+              <view class="section-subtitle">写下当下的感受、压力或想说的话</view>
+            </view>
+            <view class="helper-text">最多 2000 字</view>
+          </view>
+          <textarea
+            class="treehole-page__textarea {{contentError ? 'treehole-page__textarea--error' : ''}}"
+            value="{{content}}"
+            maxlength="2000"
+            auto-height="{{true}}"
+            placeholder="这里适合写下想说但又不想暴露真实身份的心情。公开展示前，系统会自动隐藏明显的联系方式。"
+            placeholder-class="helper-text"
+            bindinput="handleContentInput"
+          ></textarea>
+          <view class="treehole-page__composer-foot">
+            <view class="field__hint">
+              仅支持匿名公开与预设互动，不开放评论、私信和联系方式交换。
+            </view>
+            <view class="treehole-page__count">{{contentLength}} / 2000</view>
+          </view>
+          <view wx:if="{{contentError}}" class="caption-text treehole-page__error-text">
+            {{contentError}}
+          </view>
+        </view>
+
+        <view class="surface-card">
+          <view class="eyebrow">发布守则</view>
+          <view class="treehole-page__principles">
+            <view class="treehole-page__principle">1. 前台只展示匿名昵称与头像标识，不公开真实身份。</view>
+            <view class="treehole-page__principle">2. 公开正文会自动隐藏手机号、邮箱等明显联系方式。</view>
+            <view class="treehole-page__principle">3. 如内容包含高风险信号，系统会优先进入安全提示流程而不是直接公开。</view>
+          </view>
+        </view>
+
+        <view class="button-stack">
+          <primary-button
+            label="匿名发布"
+            loading="{{submitting}}"
+            bind:tap="handleSubmit"
+          />
+          <secondary-button
+            label="返回广场"
+            disabled="{{submitting}}"
+            bind:tap="handleBackToFeed"
+          />
+        </view>
+      </block>
+    </view>
+  </view>
+</app-shell>

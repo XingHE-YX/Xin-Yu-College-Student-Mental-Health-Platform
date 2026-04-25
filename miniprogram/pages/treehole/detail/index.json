@@ -1,0 +1,13 @@
+{
+  "navigationBarTitleText": "帖子详情",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "secondary-button": "/components/secondary-button/index",
+    "danger-button": "/components/danger-button/index",
+    "confirm-modal": "/components/confirm-modal/index",
+    "treehole-post-card": "/components/treehole-post-card/index",
+    "reaction-chip": "/components/reaction-chip/index"
+  }
+}

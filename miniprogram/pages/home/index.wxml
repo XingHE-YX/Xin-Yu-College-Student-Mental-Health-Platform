@@ -4,7 +4,7 @@
       <hero-card
         eyebrow="S04 Home"
         title="欢迎回来，{{student.display_nickname}}"
-        summary="你可以从这里继续查看问卷目录、当前必做进度，以及后续会接入的报告、树洞和帮助资源模块。"
+        summary="你可以从这里继续查看问卷目录、当前必做进度，以及已经接入的报告与树洞模块。"
         tone="brand"
       />
 

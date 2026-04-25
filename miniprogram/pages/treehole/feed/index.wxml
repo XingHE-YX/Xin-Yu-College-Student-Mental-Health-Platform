@@ -1,0 +1,126 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="S11 Treehole"
+        title="匿名树洞广场"
+        summary="这里展示已公开的匿名表达。你可以用预设互动传递支持，也可以写下一条自己的心情。"
+        tone="brand"
+      />
+
+      <view wx:if="{{feedDisabled}}" class="surface-card surface-card--warm">
+        <view class="eyebrow">当前不可用</view>
+        <view class="section-subtitle">你尚未开放危机干预授权，因此不能进入树洞发布链路</view>
+        <view class="body-text">
+          你仍然可以继续完成问卷与查看报告；若之后开放授权，树洞入口会自动恢复可用。
+        </view>
+        <view class="button-stack treehole-page__actions">
+          <secondary-button label="返回首页" bind:tap="handleBackHome" />
+        </view>
+      </view>
+
+      <block wx:else>
+        <view class="surface-card surface-card--soft">
+          <view class="treehole-page__section-head">
+            <view>
+              <view class="eyebrow">Public Feed</view>
+              <view class="section-subtitle">只展示匿名昵称、头像和脱敏正文</view>
+            </view>
+            <view class="helper-text">不开放评论和私信</view>
+          </view>
+          <view class="body-text">
+            广场里的每条内容都以匿名形式公开呈现。互动只保留“抱抱 / 点亮 / 陪伴”三种支持反馈，避免讨论区失控和身份暴露。
+          </view>
+          <view class="treehole-page__metric-row">
+            <view class="treehole-page__metric">
+              <view class="treehole-page__metric-label">公开帖子</view>
+              <view class="treehole-page__metric-value">{{metrics.publicCount}}</view>
+            </view>
+            <view class="treehole-page__metric">
+              <view class="treehole-page__metric-label">我的帖子</view>
+              <view class="treehole-page__metric-value">{{metrics.myCount}}</view>
+            </view>
+            <view class="treehole-page__metric">
+              <view class="treehole-page__metric-label">支持反馈</view>
+              <view class="treehole-page__metric-value">{{metrics.supportCount}}</view>
+            </view>
+          </view>
+          <view class="button-stack treehole-page__actions">
+            <primary-button label="发布一条匿名心情" bind:tap="handleCreateTap" />
+          </view>
+        </view>
+
+        <view wx:if="{{loadError}}" class="status-banner status-banner--error">
+          {{loadError}}
+        </view>
+
+        <view wx:if="{{loading}}" class="surface-card">
+          <view class="eyebrow">加载中</view>
+          <view class="section-subtitle">正在同步树洞广场</view>
+          <view class="body-text">请稍候，系统正在加载已公开的匿名内容与最新互动状态。</view>
+        </view>
+
+        <view wx:elif="{{posts.length}}" class="treehole-page__feed-list">
+          <treehole-post-card
+            wx:for="{{posts}}"
+            wx:key="postId"
+            anonymousName="{{item.anonymousName}}"
+            anonymousAvatarKey="{{item.anonymousAvatarKey}}"
+            relativeTime="{{item.relativeTime}}"
+            content="{{item.content}}"
+          >
+            <view slot="head-extra" class="chip-row">
+              <view wx:if="{{item.isMine}}" class="chip">我的帖子</view>
+              <view class="chip chip--muted">{{item.totalReactionCount}} 条支持</view>
+            </view>
+
+            <view class="treehole-page__reaction-row">
+              <reaction-chip
+                wx:for="{{item.reactions}}"
+                wx:for-item="reaction"
+                wx:key="reactionType"
+                label="{{reaction.label}}"
+                count="{{reaction.count}}"
+                active="{{reaction.reactedByMe}}"
+                disabled="{{reaction.busy}}"
+                data-post-id="{{item.postId}}"
+                data-reaction-type="{{reaction.reactionType}}"
+                bind:tap="handleReactionTap"
+              />
+            </view>
+
+            <view class="treehole-page__post-foot">
+              <view class="helper-text">
+                {{item.isMine ? '这条帖子来自你自己。可进入详情查看完整内容并执行删除。' : '当前阶段只开放预设互动，不开放评论和私信。'}}
+              </view>
+              <view
+                class="treehole-page__detail-link"
+                data-post-id="{{item.postId}}"
+                bindtap="handlePostTap"
+              >
+                {{item.detailLinkLabel}}
+              </view>
+            </view>
+          </treehole-post-card>
+        </view>
+
+        <view wx:elif="{{!loadError}}" class="surface-card surface-card--warm">
+          <view class="treehole-page__empty-state">
+            <view class="treehole-page__empty-mark">匿</view>
+            <view class="section-subtitle">广场还没有公开帖子</view>
+            <view class="body-text">
+              你可以先发布一条自己的匿名心情。公开前会自动去除手机号和邮箱等明显联系方式。
+            </view>
+            <view class="button-stack">
+              <primary-button label="写下第一条树洞" bind:tap="handleCreateTap" />
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{loadError}}" class="button-stack">
+          <secondary-button label="重新加载广场" bind:tap="handleRetryLoad" />
+        </view>
+      </block>
+    </view>
+  </view>
+</app-shell>

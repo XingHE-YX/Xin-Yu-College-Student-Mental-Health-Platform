@@ -1,0 +1,13 @@
+{
+  "navigationBarTitleText": "发布树洞",
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index",
+    "danger-button": "/components/danger-button/index",
+    "result-badge": "/components/result-badge/index",
+    "safety-banner": "/components/safety-banner/index",
+    "treehole-post-card": "/components/treehole-post-card/index"
+  }
+}

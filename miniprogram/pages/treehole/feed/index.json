@@ -1,0 +1,12 @@
+{
+  "navigationBarTitleText": "树洞广场",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "primary-button": "/components/primary-button/index",
+    "secondary-button": "/components/secondary-button/index",
+    "treehole-post-card": "/components/treehole-post-card/index",
+    "reaction-chip": "/components/reaction-chip/index"
+  }
+}

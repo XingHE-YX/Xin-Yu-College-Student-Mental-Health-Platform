@@ -173,10 +173,10 @@ function buildModules(student, progress) {
       metaTone: treeholeDisabled ? "disabled" : "default",
       summary: treeholeDisabled
         ? "你当前拒绝了危机干预授权，因此树洞入口会保持禁用。"
-        : "授权已完成，后续可继续接入匿名表达、广场浏览与预设互动。",
+        : "授权已完成，你现在可以进入匿名广场、发布树洞内容，并查看自己的帖子详情。",
       hint: treeholeDisabled
         ? "拒绝授权不会影响测评与报告功能"
-        : "将在第 8 阶段接入树洞流程",
+        : "支持浏览广场、提交预设互动，以及进入我的帖子详情页",
       disabled: treeholeDisabled,
     },
     {
@@ -337,8 +337,12 @@ Page({
       return;
     }
 
+    if (key === "treehole") {
+      wx.navigateTo({ url: PAGE_ROUTES.TREEHOLE_FEED });
+      return;
+    }
+
     const titles = {
-      treehole: "树洞流程将在后续步骤接入",
       help: "帮助资源页将在后续步骤接入",
     };
 

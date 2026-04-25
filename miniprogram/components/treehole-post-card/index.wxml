@@ -1,8 +1,16 @@
 <view class="treehole-post-card">
   <view class="treehole-post-card__head">
-    <view class="treehole-post-card__name">{{anonymousName}}</view>
-    <view class="treehole-post-card__time">{{relativeTime}}</view>
+    <view class="treehole-post-card__profile">
+      <view class="treehole-post-card__avatar {{avatarToneClass}}">{{avatarText}}</view>
+      <view class="treehole-post-card__meta">
+        <view class="treehole-post-card__name">{{anonymousName}}</view>
+        <view class="treehole-post-card__time">{{relativeTime}}</view>
+      </view>
+    </view>
+    <slot name="head-extra"></slot>
   </view>
-  <view class="treehole-post-card__content">{{content}}</view>
+  <view class="treehole-post-card__content {{fullContent ? '' : 'treehole-post-card__content--clamped'}}">
+    {{content}}
+  </view>
   <slot></slot>
 </view>
