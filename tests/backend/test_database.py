@@ -7,7 +7,6 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-
 from src.core.database import (
     check_database_connection,
     create_database_engine,

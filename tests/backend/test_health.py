@@ -1,7 +1,6 @@
 """Smoke tests for the initial FastAPI application skeleton."""
 
 from fastapi.testclient import TestClient
-
 from src.main import app
 
 

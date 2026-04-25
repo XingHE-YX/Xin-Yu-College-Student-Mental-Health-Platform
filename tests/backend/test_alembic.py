@@ -63,6 +63,10 @@ def test_alembic_upgrade_head_applies_current_revision(
         consent_foreign_keys = inspector.get_foreign_keys("consent_records")
         treehole_foreign_keys = inspector.get_foreign_keys("treehole_posts")
         analysis_foreign_keys = inspector.get_foreign_keys("ai_analysis_records")
+        alert_foreign_keys = inspector.get_foreign_keys("alert_cases")
+        intervention_foreign_keys = inspector.get_foreign_keys("intervention_logs")
+        focus_foreign_keys = inspector.get_foreign_keys("focus_list_entries")
+        audit_foreign_keys = inspector.get_foreign_keys("audit_logs")
         submission_foreign_keys = inspector.get_foreign_keys(
             "questionnaire_submissions"
         )
@@ -75,8 +79,12 @@ def test_alembic_upgrade_head_applies_current_revision(
         "admin_users",
         "ai_analysis_records",
         "alembic_version",
+        "alert_cases",
         "assessment_reports",
+        "audit_logs",
         "consent_records",
+        "focus_list_entries",
+        "intervention_logs",
         "post_reactions",
         "question_bank",
         "questionnaire_answers",
@@ -97,6 +105,20 @@ def test_alembic_upgrade_head_applies_current_revision(
     assert treehole_foreign_keys[0]["constrained_columns"] == ["student_id"]
     assert analysis_foreign_keys[0]["referred_table"] == "treehole_posts"
     assert analysis_foreign_keys[0]["constrained_columns"] == ["target_id"]
+    assert sorted(
+        foreign_key["referred_table"] for foreign_key in alert_foreign_keys
+    ) == [
+        "admin_users",
+        "questionnaire_submissions",
+        "student_users",
+        "treehole_posts",
+    ]
+    assert sorted(
+        foreign_key["referred_table"] for foreign_key in intervention_foreign_keys
+    ) == ["admin_users", "alert_cases"]
+    assert focus_foreign_keys[0]["referred_table"] == "student_users"
+    assert focus_foreign_keys[0]["constrained_columns"] == ["student_id"]
+    assert audit_foreign_keys == []
     assert sorted(
         foreign_key["referred_table"] for foreign_key in submission_foreign_keys
     ) == [

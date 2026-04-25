@@ -23,6 +23,7 @@ from src.models.base import (
 )
 
 if TYPE_CHECKING:
+    from src.models.alert_case import AlertCase
     from src.models.questionnaire_answer import QuestionnaireAnswer
     from src.models.questionnaire_template import QuestionnaireTemplate
     from src.models.student_user import StudentUser
@@ -69,6 +70,13 @@ class QuestionnaireSubmission(PrimaryKeyMixin, CreatedAtMixin, Base):
     hard_trigger_hit: Mapped[bool] = mapped_column(default=False, nullable=False)
     scoring_snapshot_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
 
-    student: Mapped[StudentUser] = relationship(back_populates="questionnaire_submissions")
+    student: Mapped[StudentUser] = relationship(
+        back_populates="questionnaire_submissions"
+    )
     template: Mapped[QuestionnaireTemplate] = relationship(back_populates="submissions")
-    answers: Mapped[list[QuestionnaireAnswer]] = relationship(back_populates="submission")
+    answers: Mapped[list[QuestionnaireAnswer]] = relationship(
+        back_populates="submission"
+    )
+    alert_cases: Mapped[list[AlertCase]] = relationship(
+        back_populates="source_submission"
+    )

@@ -24,6 +24,7 @@ from src.models.base import (
 
 if TYPE_CHECKING:
     from src.models.ai_analysis_record import AIAnalysisRecord
+    from src.models.alert_case import AlertCase
     from src.models.post_reaction import PostReaction
     from src.models.student_user import StudentUser
 
@@ -80,3 +81,4 @@ class TreeholePost(PrimaryKeyMixin, TimestampMixin, Base):
         back_populates="post"
     )
     reactions: Mapped[list[PostReaction]] = relationship(back_populates="post")
+    alert_cases: Mapped[list[AlertCase]] = relationship(back_populates="source_post")

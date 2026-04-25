@@ -19,8 +19,10 @@ from src.models.base import (
 )
 
 if TYPE_CHECKING:
+    from src.models.alert_case import AlertCase
     from src.models.assessment_report import AssessmentReport
     from src.models.consent_record import ConsentRecord
+    from src.models.focus_list_entry import FocusListEntry
     from src.models.post_reaction import PostReaction
     from src.models.questionnaire_submission import QuestionnaireSubmission
     from src.models.treehole_post import TreeholePost
@@ -72,3 +74,7 @@ class StudentUser(PrimaryKeyMixin, TimestampMixin, Base):
     )
     treehole_posts: Mapped[list[TreeholePost]] = relationship(back_populates="student")
     post_reactions: Mapped[list[PostReaction]] = relationship(back_populates="student")
+    alert_cases: Mapped[list[AlertCase]] = relationship(back_populates="student")
+    focus_list_entries: Mapped[list[FocusListEntry]] = relationship(
+        back_populates="student"
+    )

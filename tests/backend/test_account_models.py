@@ -6,7 +6,6 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import Session
 from sqlalchemy.schema import CreateTable
-
 from src.constants.account_enums import (
     AdminRoleCode,
     ConsentStatus,
@@ -18,8 +17,12 @@ from src.models import AdminUser, Base, ConsentRecord, StudentUser
 
 def test_core_account_tables_compile_to_mysql_contract() -> None:
     """The account models should compile to the MySQL-oriented schema contract."""
-    student_sql = str(CreateTable(StudentUser.__table__).compile(dialect=mysql.dialect()))
-    consent_sql = str(CreateTable(ConsentRecord.__table__).compile(dialect=mysql.dialect()))
+    student_sql = str(
+        CreateTable(StudentUser.__table__).compile(dialect=mysql.dialect())
+    )
+    consent_sql = str(
+        CreateTable(ConsentRecord.__table__).compile(dialect=mysql.dialect())
+    )
     admin_sql = str(CreateTable(AdminUser.__table__).compile(dialect=mysql.dialect()))
 
     assert "BIGINT UNSIGNED NOT NULL AUTO_INCREMENT" in student_sql
