@@ -25,4 +25,9 @@
 当前状态补充：`treehole_posts` 已在数据库层表达 AI 处理状态、发布状态机、软删除字段和公开发布控制；`ai_analysis_records` 已持久化请求快照、原始响应、结构化风险结果与推荐动作；`post_reactions` 已限制为抱抱 / 点亮 / 陪伴三种预设互动并落实唯一约束。
 当前状态补充：已生成 Alembic revision `84d79874b9ff_create_treehole_tables.py`，并实际执行 `alembic upgrade head` 验证三张树洞与 AI 相关表可成功迁移。
 当前状态补充：已通过本地 pytest 验证树洞表 DDL 编译、默认值、关系持久化、复合唯一约束以及最新 Alembic head，共 16 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤3.4。
+已完成：IMPLEMENTATION_PLAN.md 步骤3.4（`alert_cases`、`intervention_logs`、`focus_list_entries`、`audit_logs` 模型与迁移创建）。
+当前状态补充：已新增预警工单、干预日志、重点关注和审计日志的 ORM 模型与枚举，并接入学生账户、管理员账户、树洞帖子和问卷提交关系；按 MySQL 规范落实 `BIGINT UNSIGNED`、`DATETIME(3)`、JSON 字段、TEXT 字段、多外键关系和 `utf8mb4` 表配置。
+当前状态补充：`alert_cases` 已在数据库层表达来源类型、案例级别、队列状态、复核优先级、复核人和模拟通知日志；`intervention_logs` 已形成与工单和管理员的时间线关系；`focus_list_entries` 已支持需关注来源追踪与生命周期状态；`audit_logs` 已支持对学生 / 管理员 / 系统敏感操作的通用追踪。
+当前状态补充：已生成 Alembic revision `5295854b6475_create_review_and_audit_tables.py`，并实际执行 `alembic upgrade head` 验证四张复核与审计相关表可成功迁移。
+当前状态补充：已通过本地 pytest 验证复核与审计表 DDL 编译、默认值、关系持久化、外键约束以及最新 Alembic head，共 18 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤4.1。
