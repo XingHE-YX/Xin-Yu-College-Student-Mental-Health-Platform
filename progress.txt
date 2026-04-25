@@ -30,4 +30,9 @@
 当前状态补充：`alert_cases` 已在数据库层表达来源类型、案例级别、队列状态、复核优先级、复核人和模拟通知日志；`intervention_logs` 已形成与工单和管理员的时间线关系；`focus_list_entries` 已支持需关注来源追踪与生命周期状态；`audit_logs` 已支持对学生 / 管理员 / 系统敏感操作的通用追踪。
 当前状态补充：已生成 Alembic revision `5295854b6475_create_review_and_audit_tables.py`，并实际执行 `alembic upgrade head` 验证四张复核与审计相关表可成功迁移。
 当前状态补充：已通过本地 pytest 验证复核与审计表 DDL 编译、默认值、关系持久化、外键约束以及最新 Alembic head，共 18 项后端测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤4.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤4.1（统一题库种子 JSON 结构定义与校验脚本创建）。
+当前状态补充：已新增 `backend/src/schemas/question_bank_seed.py`，使用 Pydantic 定义题库种子文件统一结构，覆盖模板元数据、题目选项、分值映射、反向计分和硬触发规则，并校验 `question_id` 前缀、数组顺序、题量一致性、`yes_no` 题型约束和 `score_mapping` 完整性。
+当前状态补充：已新增 `backend/src/utils/validate_question_bank_seeds.py` 作为本地校验脚本，可按文件或目录验证 `appendices/question_bank/` 下的题库 JSON；当目录中暂无题库文件时会返回可读提示而非异常中断。
+当前状态补充：已新增 `appendices/question_bank/README.md`，明确统一种子文件顶层结构、必填字段、硬触发规则格式、`question_order` 与数组顺序映射关系，以及脚本运行方式，为后续 4.2 / 4.3 录入题库提供固定契约。
+当前状态补充：已通过本地 pytest 验证题库种子结构校验、题量一致性、`yes_no` 硬触发约束和目录扫描逻辑，并复跑全部后端测试，共 22 项后端测试通过。
+待办：见 IMPLEMENTATION_PLAN.md 步骤4.2。
