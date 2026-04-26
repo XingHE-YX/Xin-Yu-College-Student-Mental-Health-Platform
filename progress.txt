@@ -130,4 +130,9 @@
 当前状态补充：学生在 `S16` 删除帖子后，详情页会先切换为“已从学生端移除”状态并写入本地 tombstone 缓存，再返回 `S11` 广场；广场页会消费一次性成功提示并重新拉取 `feed`，因此该帖子会从学生端列表与详情入口中消失，同时保留“后台仍保留记录”的明确文案，符合 `APP_FLOW.md` 与 PRD 删除规则。
 当前状态补充：`miniprogram/utils/treehole.js` 已补充 `deleted_at` 标准化、`deleted_by_user` 展示标签、本地软删除快照构建和一次性删除提示存储；若用户再次进入已删除帖子的旧详情路由，页面会显示软删除状态而不再展示正文或删除按钮，避免学生端继续暴露已移除内容，同时不影响后台后续查询软删除记录。
 当前状态补充：已执行 `git diff --check` 验证本次受影响的小程序文件无基础格式问题。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此未执行小程序 JS 语法自动检查或运行态验证；本步通过代码人工检查与状态流转回读完成最小验证。
-待办：见 IMPLEMENTATION_PLAN.md 步骤9.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤9.1（DeepSeek 客户端实现）。
+当前状态补充：已新增 `backend/src/services/deepseek_service.py`，使用 `httpx` 直连 `https://api.deepseek.com/chat/completions`，固定模型为 `deepseek-chat`，并通过 `response_format = {"type": "json_object"}` 与系统提示词双重约束模型只返回 JSON；客户端当前会返回标准化的 `request_payload`、原始响应体、首个 choice 的 `content_text` 以及解析后的 `content_json`，为后续 9.2 回退路径和 9.3 风险聚合直接复用。
+当前状态补充：`backend/src/main.py` 现已在应用启动时实例化并挂载 `app.state.deepseek_service`，与既有 `access_token_service`、`wechat_session_service` 保持同一注入模式；当前树洞发布仍维持 8.x 的 bootstrap 占位链路，不提前切换到正式 AI 审核，以避免把 9.2 模拟回退和 9.3 风险聚合职责混入本步。
+当前状态补充：已新增 `tests/backend/test_deepseek_service.py`，覆盖正常 JSON 返回、非 2xx 响应、非 JSON 文本和非对象 JSON 四类场景；并扩展 `tests/backend/test_database.py` 校验 `create_app()` 已暴露 `deepseek_service`。本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，随后复跑全部后端测试，当前共 83 项后端测试通过。
+当前状态补充：本步未修改小程序页面、样式或路由，因此无需新增前端视觉实现；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中 `S12` 中的“AI 调用失败 -> 走模拟回退路径”仍待 9.2 正式接入。
+待办：见 IMPLEMENTATION_PLAN.md 步骤9.2。
