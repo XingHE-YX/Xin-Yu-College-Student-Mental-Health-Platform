@@ -8,6 +8,11 @@ from src.services.assessment_report_service import (
     GeneratedAssessmentReport,
     QuestionnaireCatalogEntry,
 )
+from src.services.deepseek_service import (
+    DeepSeekJsonCompletionResult,
+    DeepSeekService,
+    DeepSeekServiceError,
+)
 from src.services.question_bank_seed_service import (
     QuestionBankImportSummary,
     QuestionBankSeedService,
@@ -21,11 +26,6 @@ from src.services.questionnaire_query_service import (
     QuestionnaireQueryService,
     QuestionnaireQuestionEntry,
 )
-from src.services.questionnaire_submission_service import (
-    QuestionnaireSubmissionService,
-    SubmittedQuestionAnswerInput,
-    SubmittedQuestionnaireResult,
-)
 from src.services.questionnaire_scoring_service import (
     HardTriggerMatch,
     IncompleteQuestionnaireAnswersError,
@@ -36,6 +36,11 @@ from src.services.questionnaire_scoring_service import (
     QuestionnaireScoringService,
     ScoredQuestionAnswer,
     ScoringQuestion,
+)
+from src.services.questionnaire_submission_service import (
+    QuestionnaireSubmissionService,
+    SubmittedQuestionAnswerInput,
+    SubmittedQuestionnaireResult,
 )
 from src.services.student_auth_service import (
     DemoLoginDisabledError,
@@ -63,6 +68,9 @@ __all__ = [
     "AssessmentReportConfigurationError",
     "AssessmentReportGenerationError",
     "AssessmentReportService",
+    "DeepSeekJsonCompletionResult",
+    "DeepSeekService",
+    "DeepSeekServiceError",
     "DemoLoginDisabledError",
     "FullProfileLockedError",
     "GeneratedAssessmentReport",

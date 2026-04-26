@@ -102,6 +102,7 @@ def test_create_app_exposes_database_objects_on_app_state() -> None:
 
     assert app.state.db_engine.url.drivername == "sqlite+pysqlite"
     assert app.state.db_session_factory is not None
+    assert app.state.deepseek_service is not None
     assert Base.metadata.naming_convention["pk"] == "pk_%(table_name)s"
 
 

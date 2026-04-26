@@ -13,6 +13,7 @@ from src.core.database import (
 )
 from src.core.security import AccessTokenService
 from src.core.settings import Settings, get_settings
+from src.services.deepseek_service import DeepSeekService
 from src.services.wechat_session_service import WeChatSessionService
 
 
@@ -22,6 +23,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     db_engine = create_database_engine(runtime_settings)
     db_session_factory = create_session_factory(db_engine)
     access_token_service = AccessTokenService(runtime_settings)
+    deepseek_service = DeepSeekService(runtime_settings)
     wechat_session_service = WeChatSessionService(runtime_settings)
 
     @asynccontextmanager
@@ -45,6 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.db_engine = db_engine
     app.state.db_session_factory = db_session_factory
     app.state.access_token_service = access_token_service
+    app.state.deepseek_service = deepseek_service
     app.state.wechat_session_service = wechat_session_service
     app.include_router(health_router)
     app.include_router(api_router, prefix=runtime_settings.api_v1_prefix)
