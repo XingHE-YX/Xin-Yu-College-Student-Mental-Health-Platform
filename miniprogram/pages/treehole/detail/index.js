@@ -9,9 +9,11 @@ const {
   loadStudentSession,
 } = require("../../../utils/session");
 const {
+  buildDeletedTreeholePost,
+  cacheTreeholePost,
   loadCachedTreeholePost,
   normalizeTreeholePost,
-  removeCachedTreeholePost,
+  setRecentTreeholeDeleteNotice,
 } = require("../../../utils/treehole");
 
 function ensureAuthenticatedSession(pageInstance) {
@@ -45,6 +47,15 @@ function buildHeroCopy(post) {
     };
   }
 
+  if (post.publishStatus === "deleted_by_user") {
+    return {
+      title: "帖子已从学生端移除",
+      summary:
+        "这条内容已经按软删除规则从学生端广场和详情链路中移除，后台仍会保留记录。",
+      tone: "warm",
+    };
+  }
+
   if (post.isMine) {
     return {
       title: "我的帖子详情",
@@ -68,6 +79,7 @@ Page({
     post: null,
     loading: true,
     loadError: "",
+    statusMessage: "",
     deleting: false,
     showDeleteConfirm: false,
     heroTitle: "帖子详情",
@@ -97,6 +109,7 @@ Page({
     this.setData({
       loading: true,
       loadError: "",
+      statusMessage: "",
     });
     this.loadDetail(session, options);
   },
@@ -104,9 +117,10 @@ Page({
   async loadDetail(session, options = {}) {
     try {
       const forceRemote = options.forceRemote === true;
-      let post = !forceRemote
+      const cachedPost = this.data.postId
         ? loadCachedTreeholePost(this.data.postId)
         : null;
+      let post = !forceRemote ? cachedPost : null;
 
       if (!post && this.data.postId) {
         const feedResponse = await fetchTreeholeFeed({
@@ -118,6 +132,11 @@ Page({
         );
         if (matchedPost) {
           post = normalizeTreeholePost(matchedPost);
+        } else if (
+          cachedPost &&
+          cachedPost.publishStatus === "deleted_by_user"
+        ) {
+          post = cachedPost;
         }
       }
 
@@ -126,6 +145,10 @@ Page({
         post,
         loading: false,
         loadError: "",
+        statusMessage:
+          post && post.publishStatus === "deleted_by_user"
+            ? "这条帖子已从学生端移除。后台仍会保留记录，以满足审计与复核需要。"
+            : "",
         heroTitle: heroCopy.title,
         heroSummary: heroCopy.summary,
         heroTone: heroCopy.tone,
@@ -178,13 +201,28 @@ Page({
     });
 
     try {
-      await deleteTreeholePost({
+      const deleteResult = await deleteTreeholePost({
         accessToken: currentSession.accessToken,
         postId: this.data.post.postId,
       });
-      removeCachedTreeholePost(this.data.post.postId);
+      const deletedPost = buildDeletedTreeholePost(this.data.post, {
+        deletedAt: deleteResult.deleted_at,
+      });
+      const heroCopy = buildHeroCopy(deletedPost);
+      cacheTreeholePost(deletedPost);
+      setRecentTreeholeDeleteNotice(deletedPost);
+      this.setData({
+        post: deletedPost,
+        deleting: false,
+        loadError: "",
+        statusMessage:
+          "这条帖子已从学生端移除。后台仍会保留记录，以满足审计与复核需要。",
+        heroTitle: heroCopy.title,
+        heroSummary: heroCopy.summary,
+        heroTone: heroCopy.tone,
+      });
       wx.showToast({
-        title: "帖子已从广场移除",
+        title: "已从学生端移除",
         icon: "success",
       });
       setTimeout(() => {

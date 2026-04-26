@@ -8,6 +8,10 @@
         tone="{{heroTone}}"
       />
 
+      <view wx:if="{{statusMessage}}" class="status-banner status-banner--success">
+        {{statusMessage}}
+      </view>
+
       <view wx:if="{{loading}}" class="surface-card">
         <view class="eyebrow">加载中</view>
         <view class="section-subtitle">正在同步帖子详情</view>
@@ -32,6 +36,24 @@
             </view>
           </view>
         </view>
+        <view class="button-stack">
+          <secondary-button label="返回广场" bind:tap="handleBackToFeed" />
+        </view>
+      </block>
+
+      <block wx:elif="{{post.publishStatus === 'deleted_by_user'}}">
+        <view class="surface-card surface-card--warm">
+          <view class="eyebrow">删除已完成</view>
+          <view class="section-subtitle">这条帖子已经从学生端移除</view>
+          <view class="body-text">
+            删除采用软删除方式：广场和学生端详情不再公开显示这条内容，但后台仍会保留记录，用于后续审计与复核。
+          </view>
+          <view class="chip-row treehole-page__detail-meta">
+            <view class="chip chip--muted">{{post.deletedAtChipLabel}}</view>
+            <view class="chip chip--warm">后台仍保留记录</view>
+          </view>
+        </view>
+
         <view class="button-stack">
           <secondary-button label="返回广场" bind:tap="handleBackToFeed" />
         </view>

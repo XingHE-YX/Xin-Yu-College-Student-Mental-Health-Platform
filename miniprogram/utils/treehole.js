@@ -1,6 +1,7 @@
 const { PAGE_ROUTES } = require("../constants/config");
 
 const TREEHOLE_POST_CACHE_PREFIX = "xinyu_treehole_post_";
+const TREEHOLE_RECENT_DELETE_NOTICE_KEY = "xinyu_treehole_recent_delete_notice";
 const REACTION_ORDER = ["hug", "light", "accompany"];
 const REACTION_LABELS = {
   hug: "抱抱",
@@ -106,6 +107,7 @@ function normalizeTreeholeReactions(reactions = []) {
 
 function normalizeTreeholePost(rawPost, extras = {}) {
   const publishedAt = rawPost.publishedAt || rawPost.published_at || "";
+  const deletedAt = rawPost.deletedAt || rawPost.deleted_at || "";
   const reactions = normalizeTreeholeReactions(rawPost.reactions || []);
   const totalReactionCount = Number(
     rawPost.totalReactionCount ||
@@ -128,6 +130,11 @@ function normalizeTreeholePost(rawPost, extras = {}) {
     publishedAt,
     publishedAtLabel: formatTreeholeAbsoluteTime(publishedAt),
     relativeTime: formatTreeholeRelativeTime(publishedAt),
+    deletedAt,
+    deletedAtLabel: deletedAt ? formatTreeholeAbsoluteTime(deletedAt) : "",
+    deletedAtChipLabel: deletedAt
+      ? `删除时间：${formatTreeholeAbsoluteTime(deletedAt)}`
+      : "删除时间已记录",
     isMine: rawPost.isMine === true || rawPost.is_mine === true || extras.isMine === true,
     totalReactionCount,
     reactions,
@@ -143,7 +150,11 @@ function normalizeTreeholePost(rawPost, extras = {}) {
         ? rawPost.allow_publication
         : true,
     detailLinkLabel:
-      rawPost.isMine === true || rawPost.is_mine === true || extras.isMine === true
+      publishStatus === "deleted_by_user"
+        ? "已从学生端移除"
+        : rawPost.isMine === true ||
+          rawPost.is_mine === true ||
+          extras.isMine === true
         ? "查看详情与删除"
         : "查看完整内容",
   };
@@ -155,6 +166,30 @@ function buildCreatedTreeholePost(rawPost) {
     publishStatus: rawPost.publish_status || "published",
     riskLevel: rawPost.risk_level || "low",
   });
+}
+
+function buildDeletedTreeholePost(rawPost, options = {}) {
+  const deletedAt =
+    options.deletedAt ||
+    rawPost.deletedAt ||
+    rawPost.deleted_at ||
+    new Date().toISOString();
+
+  return normalizeTreeholePost(
+    {
+      ...rawPost,
+      content: "",
+      content_masked: "",
+      publish_status: "deleted_by_user",
+      allow_publication: false,
+      deleted_at: deletedAt,
+    },
+    {
+      isMine: true,
+      publishStatus: "deleted_by_user",
+      riskLevel: rawPost.riskLevel || rawPost.risk_level || "low",
+    }
+  );
 }
 
 function cacheTreeholePost(post) {
@@ -199,6 +234,35 @@ function removeCachedTreeholePost(postId) {
 
 function buildTreeholeDetailRoute(postId) {
   return `${PAGE_ROUTES.TREEHOLE_DETAIL}?postId=${encodeURIComponent(postId)}`;
+}
+
+function setRecentTreeholeDeleteNotice(post) {
+  if (!post || !post.postId) {
+    return;
+  }
+
+  try {
+    wx.setStorageSync(TREEHOLE_RECENT_DELETE_NOTICE_KEY, {
+      postId: post.postId,
+      deletedAt: post.deletedAt || "",
+      message:
+        "你删除的帖子已从学生端广场移除。后台仍会保留记录，以满足审计与复核需要。",
+    });
+  } catch (error) {}
+}
+
+function consumeRecentTreeholeDeleteNotice() {
+  try {
+    const storedNotice = wx.getStorageSync(TREEHOLE_RECENT_DELETE_NOTICE_KEY);
+    wx.removeStorageSync(TREEHOLE_RECENT_DELETE_NOTICE_KEY);
+    if (!storedNotice || typeof storedNotice !== "object") {
+      return "";
+    }
+
+    return String(storedNotice.message || "").trim();
+  } catch (error) {
+    return "";
+  }
 }
 
 function hasReactedToTreehole(post, reactionType) {
@@ -261,8 +325,10 @@ function mergeTreeholeReactionResult(post, reactionData) {
 module.exports = {
   applyOptimisticTreeholeReaction,
   buildCreatedTreeholePost,
+  buildDeletedTreeholePost,
   buildTreeholeDetailRoute,
   cacheTreeholePost,
+  consumeRecentTreeholeDeleteNotice,
   formatTreeholeAbsoluteTime,
   formatTreeholeRelativeTime,
   hasReactedToTreehole,
@@ -270,4 +336,5 @@ module.exports = {
   mergeTreeholeReactionResult,
   normalizeTreeholePost,
   removeCachedTreeholePost,
+  setRecentTreeholeDeleteNotice,
 };

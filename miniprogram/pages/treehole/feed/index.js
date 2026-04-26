@@ -12,6 +12,7 @@ const {
   applyOptimisticTreeholeReaction,
   buildTreeholeDetailRoute,
   cacheTreeholePost,
+  consumeRecentTreeholeDeleteNotice,
   hasReactedToTreehole,
   mergeTreeholeReactionResult,
   normalizeTreeholePost,
@@ -57,6 +58,7 @@ Page({
     feedDisabled: false,
     loading: true,
     loadError: "",
+    deleteNotice: "",
     posts: [],
     metrics: buildFeedMetrics(),
   },
@@ -76,10 +78,13 @@ Page({
       return;
     }
 
+    const deleteNotice = consumeRecentTreeholeDeleteNotice();
+
     if (session.student.consent_status !== "granted") {
       this.setData({
         loading: false,
         loadError: "",
+        deleteNotice,
         posts: [],
         metrics: buildFeedMetrics(),
       });
@@ -90,6 +95,7 @@ Page({
     this.setData({
       loading: true,
       loadError: "",
+      deleteNotice,
     });
     this.loadFeed(session);
   },

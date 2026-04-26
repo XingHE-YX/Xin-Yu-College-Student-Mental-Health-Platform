@@ -108,12 +108,7 @@
         >
           <view class="module-card__head">
             <view class="module-card__title">{{item.title}}</view>
-            <view
-              class="module-card__meta
-              {{item.metaTone === 'success' ? 'module-card__meta--success' : ''}}
-              {{item.metaTone === 'warning' ? 'module-card__meta--warning' : ''}}
-              {{item.metaTone === 'disabled' ? 'module-card__meta--disabled' : ''}}"
-            >
+            <view class="module-card__meta {{item.metaTone === 'success' ? 'module-card__meta--success' : ''}} {{item.metaTone === 'warning' ? 'module-card__meta--warning' : ''}} {{item.metaTone === 'disabled' ? 'module-card__meta--disabled' : ''}}">
               {{item.meta}}
             </view>
           </view>
