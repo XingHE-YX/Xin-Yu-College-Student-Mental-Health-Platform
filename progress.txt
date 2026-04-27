@@ -162,4 +162,13 @@
 当前状态补充：已扩展 `tests/backend/test_questionnaire_submission_api.py` 与 `tests/backend/test_treehole_api.py`，新增覆盖 `UPI` 硬触发创建最高优先级量表工单、`SLEEP` 高风险创建 `urgent` 工单，以及“历史高风险 + 当前中性树洞 -> focus list、不建工单”等场景；同时新增并通过 `ruff check --no-cache` 对受影响 Python 文件的静态检查。
 当前状态补充：本地已先后执行定向 pytest（`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_treehole_api.py`）和完整后端回归（`tests/backend`），当前共 98 项后端测试通过。
 当前状态补充：本步未修改学生端页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中前端 `S14` / 后台 `A03-A04` 的实际展示与处置界面仍待后续 10.2 / 11.x 实现。
-待办：见 IMPLEMENTATION_PLAN.md 步骤10.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤10.2（干预记录实现）。
+当前状态补充：已扩展 `backend/src/repositories/review_workflow_repository.py`，新增 `alert_cases` 查询、`intervention_logs` 写入和 `audit_logs` 写入能力，为后续管理员复核动作提供统一持久化入口；同时新增 `backend/src/services/alert_review_service.py`，集中实现 `confirm_high_risk`、`dismiss_false_positive`、`close_case` 和 `add_intervention_note` 四类后台处置动作。
+当前状态补充：高风险工单的人工处置状态机现已按 `PRD.md` 与 `APP_FLOW.md` 固化：`pending_review -> confirmed_pending_intervention / dismissed_false_positive -> closed`。其中确认与驳回只能从 `pending_review` 发起，结案只能从已确认或已驳回状态发起，避免待复核工单被直接跳过复核而进入 `closed`。
+当前状态补充：确认高风险时，服务层现在会同步完成四件事：更新 `alert_cases.queue_status = confirmed_pending_intervention`、写入管理员复核说明、生成 `simulated_notice_log`、并向 `intervention_logs` 追加 `confirm_high_risk` 与 `simulate_contact` 两条时间线记录；因此“确认时写入模拟通知日志”与“处置动作进入干预时间线”已形成同一笔事务内的稳定闭环。
+当前状态补充：驳回误报与结案动作也已分别写入 `intervention_logs`：驳回会追加 `dismiss_false_positive` 日志，结案会追加 `close_case` 日志；另外已补充 `add_note` 作为独立干预记录能力，为后续 `A04 预警详情页` 中“添加干预记录”动作保留直接可复用的后端实现。
+当前状态补充：本步额外按 `BACKEND_STRUCTURE.md` 的审计规则补齐了后台处置审计：管理员确认、驳回、结案、补充干预记录会分别写入 `audit_logs`，确认动作触发的系统模拟通知也会追加 `SYSTEM_CREATE_SIMULATED_NOTICE_LOG` 审计事件；因此 `10.2` 完成后，`intervention_logs` 与 `audit_logs` 两条追踪链路已同时打通。
+当前状态补充：已新增 `tests/backend/test_alert_review_service.py`，覆盖确认高风险写入双干预日志与双审计日志、驳回误报写入单日志、结案写入关闭日志、补充干预记录不改状态，以及待复核工单禁止直接结案等场景；配合既有 `tests/backend/test_review_workflow_models.py`，已验证本步服务层状态机、日志落库和模型关系均符合预期。
+当前状态补充：本地已执行新增相关测试（`tests/backend/test_alert_review_service.py`、`tests/backend/test_review_workflow_models.py`）、两轮完整后端回归（`tests/backend`）以及 `ruff check --no-cache` 静态检查，当前共 103 项后端测试通过。
+当前状态补充：本步未修改学生端小程序或 Streamlit 页面，因此 `FRONTEND_GUIDELINES.md` 的视觉规范与 `APP_FLOW.md` 的页面表现尚未在代码层新增界面实现；本次仅完成后台复核动作的后端服务与日志规则，为后续 `11.3 实现预警队列与详情页` 提供可直接接入的处置能力。
+待办：见 IMPLEMENTATION_PLAN.md 步骤10.3。
