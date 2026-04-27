@@ -141,4 +141,11 @@
 当前状态补充：为避免提前混入 9.3 / 9.4 的风险聚合与发布决策，本步仍保留现阶段树洞的低风险公开主流程：即使远端 DeepSeek 已返回结构化风险结果，`treehole_posts.publish_status` 与学生端 `S12` 返回分支仍维持当前 bootstrap 低风险发布行为；真正的 `watch / high` 决策切换、重点关注与安全拦截仍待后续步骤实现。
 当前状态补充：已新增 / 扩展 `tests/backend/test_deepseek_service.py` 与 `tests/backend/test_treehole_api.py`，覆盖超时回退、非 200 回退、非法 JSON 回退、错误 mock 文件、树洞发帖在 mock 回退下成功落库，以及远端 AI 成功时分析记录持久化等场景；本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，并复跑全部后端测试，当前共 88 项后端测试通过。
 当前状态补充：本步未修改小程序页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中 `S12` 的前端页面结构无需变更即可承接后续 9.3 / 9.4 的正式风险分流结果。
-待办：见 IMPLEMENTATION_PLAN.md 步骤9.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤9.3（风险聚合器实现）。
+当前状态补充：已新增 `backend/src/services/risk_aggregation_service.py`，实现 `RiskAggregationService` 与 `AggregatedRiskResult`；当前聚合器会统一汇总 AI 文本风险、最新问卷结果、量表硬触发和历史高风险状态，并输出稳定的 `low / watch / high` 结论、`reason_codes`、`history_elevated`、`hard_trigger_hit`、`required_chain_complete` 与 `latest_questionnaire_codes` 等结构化字段，便于后续 9.4 直接接入树洞发布决策。
+当前状态补充：聚合规则已按 PRD 与 `BACKEND_STRUCTURE.md` 固化：任意问卷硬触发、`AI high`、`SDS high` 或 `SAS high` 直接判定为高风险；`AI watch`、`SDS/SAS 阳性` 判定为需关注；睡眠风险仅在 `SCREEN + SDS + SAS + SLEEP` 四份必做问卷齐全时才会把综合结果提升为需关注，以避免不完整数据场景被单一睡眠量表过度放大；若用户存在历史高风险但当前 AI 与最新问卷信号均为中性，则聚合器会把本次结果提升为 `watch` 并标记 `HISTORY_HIGH_REVIEW`。
+当前状态补充：聚合器同时支持数据库上下文加载：`aggregate_treehole_risk(student=..., ai_risk_level=...)` 会自动读取该学生每份问卷的最新提交，并从 `student_users.risk_status`、历史高风险问卷提交以及历史树洞 `ai_analysis_records.parsed_risk_level = high` 中识别“历史高风险状态”；因此即使当前账户 `risk_status` 仍未在前序步骤中主动回写，高风险历史也能在 9.3 阶段被正确识别并用于复查提升。
+当前状态补充：为避免提前把 9.4 的发布决策逻辑混入本步，当前树洞 `POST /api/v1/treehole/posts` 仍保持 9.2 阶段的 bootstrap 返回分支，不在本步直接修改学生端 `S12` 的拦截 / 发布响应；这样可以避免出现“前端已按高风险拦截，但后端仍未切换 `publish_status`”的状态错位。9.4 将基于本步聚合器结果统一接入 `published / focus list / blocked_high_risk` 决策。
+当前状态补充：已新增 `tests/backend/test_risk_aggregation_service.py`，覆盖只有树洞时 `AI watch -> watch`、完整必做链路下睡眠高分映射为 `watch`、不完整链路下睡眠单独不提升、问卷硬触发直接判高、历史高风险 + 当前中性提升为 `watch`，以及数据库上下文下“最新提交选择”与“历史高风险来源查询”两类场景；本地已执行 `ruff check --no-cache` 校验新增 / 改动 Python 文件，并复跑全部后端测试，当前共 95 项后端测试通过。
+当前状态补充：本步未修改小程序页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中树洞发布页 `S12` 的前端状态分流将在 9.4 接入正式发布决策后再切换到真实高风险拦截流。
+待办：见 IMPLEMENTATION_PLAN.md 步骤9.4。
