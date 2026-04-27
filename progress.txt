@@ -148,4 +148,10 @@
 当前状态补充：为避免提前把 9.4 的发布决策逻辑混入本步，当前树洞 `POST /api/v1/treehole/posts` 仍保持 9.2 阶段的 bootstrap 返回分支，不在本步直接修改学生端 `S12` 的拦截 / 发布响应；这样可以避免出现“前端已按高风险拦截，但后端仍未切换 `publish_status`”的状态错位。9.4 将基于本步聚合器结果统一接入 `published / focus list / blocked_high_risk` 决策。
 当前状态补充：已新增 `tests/backend/test_risk_aggregation_service.py`，覆盖只有树洞时 `AI watch -> watch`、完整必做链路下睡眠高分映射为 `watch`、不完整链路下睡眠单独不提升、问卷硬触发直接判高、历史高风险 + 当前中性提升为 `watch`，以及数据库上下文下“最新提交选择”与“历史高风险来源查询”两类场景；本地已执行 `ruff check --no-cache` 校验新增 / 改动 Python 文件，并复跑全部后端测试，当前共 95 项后端测试通过。
 当前状态补充：本步未修改小程序页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中树洞发布页 `S12` 的前端状态分流将在 9.4 接入正式发布决策后再切换到真实高风险拦截流。
-待办：见 IMPLEMENTATION_PLAN.md 步骤9.4。
+已完成：IMPLEMENTATION_PLAN.md 步骤9.4（树洞发布决策逻辑实现）。
+当前状态补充：`backend/src/services/treehole_service.py` 现已从“固定低风险公开”切换为真实发布决策：系统会先完成 AI 分析与 9.3 风险聚合，再按最终聚合等级执行 `low -> published`、`watch -> published + focus_list_entries`、`high -> blocked_high_risk + alert_cases`；因此高风险树洞当前已不会进入公开广场，满足 `APP_FLOW.md` 中 `S12 -> S13 / S14` 分流和 PRD 对树洞拦截规则的要求。
+当前状态补充：本步已新增 `backend/src/repositories/review_workflow_repository.py`，并扩展 `backend/src/repositories/student_user_repository.py` 支持 `risk_status` 更新；树洞发布时若聚合结果为 `watch`，系统会写入 `focus_list_entries` 并保持帖子公开；若为 `high`，系统会创建 `alert_cases`，设置 `case_level = high`、`queue_status = pending_review`、`review_priority = highest`，同时阻止公开发布。学生 `risk_status` 现会在 `watch / high` 场景被同步上调，而不会在本步被自动降级，给后续 10.x 人工复核与处置流程保留状态连续性。
+当前状态补充：树洞创建接口当前会根据最终决策返回真实前端分支：普通和需关注内容仍返回 `message = success`；高风险内容返回 `message = safety_intercepted`、`publish_status = blocked_high_risk` 与热线电话。为匹配这一变化，学生端 `miniprogram/pages/treehole/create/index.js` 已移除“当前阶段仅打通低风险链路”的旧文案，改为真实“公开发布 / 温和提醒 / 安全拦截”说明，并在拦截态优先使用后端返回的热线字段，视觉上继续沿用 `hero-card`、`result-badge`、`safety-banner` 与危险按钮语义色，不引入额外组件或违背前端规范的高风险表达。
+当前状态补充：已调整并扩展 `tests/backend/test_treehole_api.py`，覆盖 `low` 不产生后台复核记录、`watch` 公开发布并写入 `focus_list_entries`、`high` 拦截并创建 `alert_cases`、拦截内容不出现在 `feed`、以及学生 `risk_status` 同步变化等场景；同时复用 9.3 风险聚合测试验证完整链路决策输入。当前本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，并复跑全部后端测试，现共 96 项后端测试通过。
+当前状态补充：本步涉及学生端树洞发布页行为文案调整，但当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此未执行小程序运行态自动校验；已通过代码人工检查完成最小前端验证，且未修改小程序 `json` 路由或共享样式结构。
+待办：见 IMPLEMENTATION_PLAN.md 步骤10.1。
