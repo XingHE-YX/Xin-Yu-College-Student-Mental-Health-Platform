@@ -180,4 +180,15 @@
 当前状态补充：已扩展 `tests/backend/test_questionnaire_submission_api.py`，新增覆盖 `SDS watch -> focus_list_entries`、完整必做链路下 `SLEEP watch -> focus_list_entries`、`SCREEN watch` 不制造后台关注噪音，以及“历史高风险 + 当前量表中性 -> HISTORY_HIGH_REVIEW`”等场景；同时保持既有 `UPI` / `SLEEP high` 工单回归与树洞 `watch` / `high` 行为测试通过。
 当前状态补充：本地已执行定向后端回归（`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_risk_aggregation_service.py`）、完整后端回归（`tests/backend`）以及 `ruff check --no-cache` 静态检查，当前共 107 项后端测试通过。
 当前状态补充：本步未修改学生端小程序或 Streamlit 页面，因此 `FRONTEND_GUIDELINES.md` 的设计规范与 `APP_FLOW.md` 中“管理员从重点关注列表进入案例详情”的页面表现尚未落到界面代码；本次只完成了重点关注列表的后端写入与降噪规则，为后续 `11.2 / 11.3` 的后台总览与列表页提供真实数据来源。
-待办：见 IMPLEMENTATION_PLAN.md 步骤11.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤11.1（管理员登录实现）。
+当前状态补充：已新增 `backend/src/repositories/admin_user_repository.py`、`backend/src/services/admin_auth_service.py`、`backend/src/schemas/admin_auth.py` 与路由 `backend/src/api/routes/admin_auth.py`，打通 `POST /api/v1/admin/auth/login` 和 `GET /api/v1/admin/auth/me`；管理员认证现按 `BACKEND_STRUCTURE.md` 约定使用“用户名 + 密码 -> `pwdlib` + Argon2 校验 -> JWT 会话”链路，且仅 `is_active = 1` 的管理员允许登录。
+当前状态补充：`backend/src/core/security.py` 已扩展管理员 JWT 签发能力，`backend/src/core/auth.py` 已新增 `get_current_admin()` 依赖；管理员令牌当前会携带 `admin_id`、`username`、`role_code` 与 `role = admin`，后续 `11.2 - 11.5` 的后台受保护接口可直接复用同一套 Bearer 认证入口，而不需要再单独发明 Streamlit 专用会话协议。
+当前状态补充：管理员登录成功现已按 `BACKEND_STRUCTURE.md` 审计规则写入 `audit_logs`：`AdminAuthService.login()` 会同步刷新 `admin_users.last_login_at` 并追加 `ADMIN_LOGIN_SUCCESS` 审计事件，记录角色编码、用户名和来源 IP；因此 `11.1` 完成后，“管理员登录成功”这一敏感动作已具备可追溯性。
+当前状态补充：管理后台 `admin/app.py` 已从初始化占位页升级为真实 `A01 管理员登录页`：当前会渲染用户名 / 密码表单，调用后端 `admin/auth/login` 获取 JWT，并根据返回结果对“用户名或密码错误”“账户被禁用”“后台暂时不可达”三类失败情况给出行内提示；登录成功后会立即切换到 `A02` 的占位总览壳页。
+当前状态补充：已新增 `admin/services/auth.py`、`admin/state/session.py`、`admin/utils/config.py` 与 `admin/utils/styles.py`，分别承载后台认证 API 调用、`st.session_state` 会话持久化、后台 API Base URL 配置和统一样式注入；当前 Streamlit 会在 session state 中保存 `admin_access_token` 与 `admin_profile`，并在页面重跑时优先使用 `/api/v1/admin/auth/me` 验证现有会话，满足“管理员会话在 Streamlit 中可正常持久化”的标准。
+当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端要求，`A01` 当前采用克制、高信息密度的 Streamlit 登录卡片风格：整体延续品牌青绿色与中性色卡片体系，避免学生端式情绪化表达；`A02` 在 `11.1` 阶段仅作为已登录后的占位壳页，展示当前管理员身份、退出登录入口和四个 KPI 占位卡片，为后续 `11.2 实现总览页` 继续接入真实指标保留结构。
+当前状态补充：后台 API Base URL 当前支持通过 `XINYU_ADMIN_API_BASE_URL` 或 `ADMIN_API_BASE_URL` 覆盖，默认回退到 `http://127.0.0.1:8000/api/v1`；因此本地 `streamlit run admin/app.py` 时可直接联到默认 FastAPI 开发地址，也可在演示或部署环境通过环境变量切换到其他后端地址。
+当前状态补充：已新增 `tests/backend/test_admin_auth_api.py`，覆盖管理员登录成功签发 JWT、`last_login_at` 更新、登录审计写入、错误密码拒绝、禁用账户拒绝、`GET /api/v1/admin/auth/me` 成功与未登录拒绝等场景；同时新增 `tests/admin/test_session_state.py`，验证 Streamlit 管理员 session state 的设置、清理和鉴权状态切换逻辑。
+当前状态补充：本地已执行新增相关测试（`tests/backend/test_admin_auth_api.py`、`tests/admin/test_session_state.py`）、包含后台辅助测试在内的完整回归（`tests/backend tests/admin`）以及 `ruff check --no-cache` 静态检查，当前共 113 项测试通过；同时额外执行了 `backend/.venv/bin/python` 对 `admin/app.py` 和新增 `admin/` 模块的导入检查，当前导入正常。
+当前状态补充：本步尚未实现真实 `A02 总览 KPI` 数据拉取、后台导航、预警队列页或详情页；当前已登录后的总览内容仍是结构化占位壳，不提前混入 `11.2` 及之后步骤的真实业务数据渲染。
+待办：见 IMPLEMENTATION_PLAN.md 步骤11.2。
