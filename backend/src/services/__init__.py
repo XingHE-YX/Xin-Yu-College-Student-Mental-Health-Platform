@@ -23,6 +23,10 @@ from src.services.deepseek_service import (
     DeepSeekService,
     DeepSeekServiceError,
 )
+from src.services.focus_list_service import (
+    CreatedFocusListEntryResult,
+    FocusListService,
+)
 from src.services.question_bank_seed_service import (
     QuestionBankImportSummary,
     QuestionBankSeedService,
@@ -91,10 +95,12 @@ __all__ = [
     "AdminUserInactiveError",
     "AdminUserNotFoundError",
     "CreatedAlertCaseResult",
+    "CreatedFocusListEntryResult",
     "DeepSeekJsonCompletionResult",
     "DeepSeekService",
     "DeepSeekServiceError",
     "DemoLoginDisabledError",
+    "FocusListService",
     "FullProfileLockedError",
     "GeneratedAssessmentReport",
     "LatestSubmissionSummary",

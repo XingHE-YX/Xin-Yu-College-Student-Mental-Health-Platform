@@ -29,6 +29,21 @@ class ReviewWorkflowRepository:
         self.session.flush()
         return focus_entry
 
+    def get_focus_list_entry_by_source(
+        self,
+        *,
+        source_type,
+        source_id: int,
+        reason_code: str,
+    ) -> FocusListEntry | None:
+        """Return one focus-list entry for the same concrete source and reason."""
+        statement = select(FocusListEntry).where(
+            FocusListEntry.source_type == source_type,
+            FocusListEntry.source_id == source_id,
+            FocusListEntry.reason_code == reason_code,
+        )
+        return self.session.scalar(statement.limit(1))
+
     def get_alert_case_by_id(self, alert_case_id: int) -> AlertCase | None:
         """Return one alert case by primary key."""
         statement = select(AlertCase).where(AlertCase.id == alert_case_id)

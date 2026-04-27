@@ -19,6 +19,7 @@ from src.models.questionnaire_submission import QuestionnaireSubmission
 from src.models.questionnaire_template import QuestionnaireTemplate
 from src.repositories.student_user_repository import StudentUserRepository
 from src.services.alert_case_service import AlertCaseService
+from src.services.focus_list_service import FocusListService
 from src.services.questionnaire_query_service import (
     QuestionnaireCatalogUnavailableError,
     QuestionnaireNotFoundError,
@@ -29,6 +30,7 @@ from src.services.questionnaire_scoring_service import (
     QuestionnaireScoringService,
     ScoringQuestion,
 )
+from src.services.risk_aggregation_service import RiskAggregationService
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +62,8 @@ class QuestionnaireSubmissionService:
         self.scoring_service = scoring_service or QuestionnaireScoringService()
         self.catalog_by_code = QuestionnaireQueryService(session).catalog_by_code
         self.alert_case_service = AlertCaseService(session)
+        self.focus_list_service = FocusListService(session)
+        self.risk_aggregation_service = RiskAggregationService(session)
         self.student_repository = StudentUserRepository(session)
 
     def submit_questionnaire(
@@ -140,24 +144,70 @@ class QuestionnaireSubmissionService:
         submission: QuestionnaireSubmission,
         score_result: QuestionnaireScoreResult,
     ) -> None:
-        """Create assessment alert cases for high-risk results and persist student risk."""
-        if score_result.risk_level is not QuestionnaireRiskLevel.HIGH:
-            return
-
+        """Create watch/high follow-up records without turning watch signals into alert noise."""
         student = self.student_repository.get_by_id(student_id)
         if student is None:
             raise ValueError(f"student '{student_id}' does not exist")
 
-        self.alert_case_service.create_assessment_high_risk_case(
-            student_id=student_id,
-            submission=submission,
-            score_result=score_result,
+        if score_result.risk_level is QuestionnaireRiskLevel.HIGH:
+            self.alert_case_service.create_assessment_high_risk_case(
+                student_id=student_id,
+                submission=submission,
+                score_result=score_result,
+            )
+            if student.risk_status is not StudentRiskStatus.HIGH:
+                self.student_repository.update_risk_status(
+                    student,
+                    risk_status=StudentRiskStatus.HIGH,
+                )
+            return
+
+        aggregated_risk = self.risk_aggregation_service.aggregate_assessment_risk(
+            student=student
         )
-        if student.risk_status is not StudentRiskStatus.HIGH:
+        if (
+            reason_code := self._resolve_focus_list_reason_code(
+                score_result=score_result,
+                aggregated_reason_codes=aggregated_risk.reason_codes,
+            )
+        ) is not None:
+            self.focus_list_service.create_assessment_watch_entry(
+                student_id=student_id,
+                submission=submission,
+                score_result=score_result,
+                reason_code=reason_code,
+            )
+        if (
+            aggregated_risk.risk_level is QuestionnaireRiskLevel.WATCH
+            and student.risk_status is StudentRiskStatus.NORMAL
+        ):
             self.student_repository.update_risk_status(
                 student,
-                risk_status=StudentRiskStatus.HIGH,
+                risk_status=StudentRiskStatus.WATCH,
             )
+
+    def _resolve_focus_list_reason_code(
+        self,
+        *,
+        score_result: QuestionnaireScoreResult,
+        aggregated_reason_codes: list[str],
+    ) -> str | None:
+        """Return the watch-level reason code that should create one focus-list entry."""
+        supported_reason_codes = {"SDS_POSITIVE", "SAS_POSITIVE", "SLEEP_CONCERN"}
+        for reason_code in aggregated_reason_codes:
+            if reason_code in supported_reason_codes:
+                return reason_code
+
+        if aggregated_reason_codes == ["HISTORY_HIGH_REVIEW"]:
+            return "HISTORY_HIGH_REVIEW"
+
+        # Screening-only watch results stay local to the student flow unless
+        # stronger latest-scale context or historical risk lifts them into a
+        # backend review signal. This keeps the focus list from becoming noisy.
+        if score_result.questionnaire_code == "SCREEN":
+            return None
+
+        return None
 
     def _load_runtime_questionnaire(
         self,

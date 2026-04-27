@@ -16,6 +16,7 @@ from src.constants.questionnaire_enums import (
 from src.constants.workflow_enums import (
     AlertQueueStatus,
     CaseSourceType,
+    FocusListStatus,
     ReviewPriority,
 )
 from src.core.settings import Settings
@@ -23,6 +24,7 @@ from src.main import create_app
 from src.models import (
     AlertCase,
     Base,
+    FocusListEntry,
     QuestionBank,
     QuestionnaireAnswer,
     QuestionnaireSubmission,
@@ -73,7 +75,11 @@ def create_questionnaire_submission_test_app(
     return app
 
 
-def create_student_with_token(app) -> tuple[StudentUser, str]:
+def create_student_with_token(
+    app,
+    *,
+    risk_status: StudentRiskStatus = StudentRiskStatus.NORMAL,
+) -> tuple[StudentUser, str]:
     """Create one student row and issue an access token for API tests."""
     with app.state.db_session_factory() as session:
         student = StudentUser(
@@ -84,6 +90,7 @@ def create_student_with_token(app) -> tuple[StudentUser, str]:
             college_name="计算机学院",
             class_name="2026级1班",
             consent_status=ConsentStatus.GRANTED,
+            risk_status=risk_status,
         )
         session.add(student)
         session.commit()
@@ -267,6 +274,162 @@ def test_submit_sleep_and_upi_both_persist_valid_results(tmp_path) -> None:
         assert payload["questionnaire_code"] == questionnaire_code
         assert payload["standardized_score"] is None
         assert payload["hard_trigger_hit"] is False
+
+
+def test_submit_sds_watch_result_writes_focus_list_entry(tmp_path) -> None:
+    """Watch-level SDS submissions should enter the focus list without creating alert cases."""
+    app = create_questionnaire_submission_test_app(
+        tmp_path / "questionnaire-submit-sds-watch.db",
+        import_question_bank=True,
+    )
+    _, token = create_student_with_token(app)
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/questionnaires/sds/submissions",
+        json=build_request_payload(build_uniform_answers("SDS", "3")),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["questionnaire_code"] == "SDS"
+    assert payload["risk_level"] == "watch"
+    assert payload["hard_trigger_hit"] is False
+
+    with app.state.db_session_factory() as session:
+        submission = session.get(QuestionnaireSubmission, payload["submission_id"])
+        assert submission is not None
+        focus_entry = session.scalar(select(FocusListEntry))
+        assert focus_entry is not None
+        assert focus_entry.student_id == submission.student_id
+        assert focus_entry.source_type is CaseSourceType.ASSESSMENT
+        assert focus_entry.source_id == submission.id
+        assert focus_entry.reason_code == "SDS_POSITIVE"
+        assert focus_entry.status is FocusListStatus.ACTIVE
+        assert "SDS" in focus_entry.reason_text
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+        student = session.get(StudentUser, submission.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.WATCH
+
+
+def test_submit_screen_watch_result_does_not_create_focus_noise(tmp_path) -> None:
+    """SCREEN watch results should stay local and avoid creating backend focus noise alone."""
+    app = create_questionnaire_submission_test_app(
+        tmp_path / "questionnaire-submit-screen-watch.db",
+        import_question_bank=True,
+    )
+    _, token = create_student_with_token(app)
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/questionnaires/screen/submissions",
+        json=build_request_payload(build_uniform_answers("SCREEN", "3")),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["questionnaire_code"] == "SCREEN"
+    assert payload["risk_level"] == "watch"
+
+    with app.state.db_session_factory() as session:
+        assert session.scalar(select(func.count()).select_from(FocusListEntry)) == 0
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+        student = session.scalar(select(StudentUser))
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.NORMAL
+
+
+def test_submit_sleep_watch_creates_focus_entry_after_required_chain_completion(
+    tmp_path,
+) -> None:
+    """Sleep watch should only reach the focus list after the fixed required chain is complete."""
+    app = create_questionnaire_submission_test_app(
+        tmp_path / "questionnaire-submit-sleep-watch.db",
+        import_question_bank=True,
+    )
+    _, token = create_student_with_token(app)
+    client = TestClient(app)
+
+    for questionnaire_code in ("SCREEN", "SDS", "SAS"):
+        response = client.post(
+            f"/api/v1/questionnaires/{questionnaire_code.lower()}/submissions",
+            json=build_request_payload(build_low_risk_answers(questionnaire_code)),
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+    sleep_seed = load_seed("SLEEP")
+    sleep_answers = {
+        question_seed.question_id: ("1" if index < 8 else "0")
+        for index, question_seed in enumerate(sleep_seed.questions)
+    }
+    response = client.post(
+        "/api/v1/questionnaires/sleep/submissions",
+        json=build_request_payload(sleep_answers),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["questionnaire_code"] == "SLEEP"
+    assert payload["risk_level"] == "watch"
+
+    with app.state.db_session_factory() as session:
+        submission = session.get(QuestionnaireSubmission, payload["submission_id"])
+        assert submission is not None
+        focus_entry = session.scalar(select(FocusListEntry))
+        assert focus_entry is not None
+        assert focus_entry.source_type is CaseSourceType.ASSESSMENT
+        assert focus_entry.source_id == submission.id
+        assert focus_entry.reason_code == "SLEEP_CONCERN"
+        assert "睡眠" in focus_entry.reason_text
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+        student = session.get(StudentUser, submission.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.WATCH
+
+
+def test_submit_low_risk_assessment_with_high_history_writes_review_focus_entry(
+    tmp_path,
+) -> None:
+    """Historically high-risk students should still enter review focus when current assessment is neutral."""
+    app = create_questionnaire_submission_test_app(
+        tmp_path / "questionnaire-submit-history-review.db",
+        import_question_bank=True,
+    )
+    _, token = create_student_with_token(
+        app,
+        risk_status=StudentRiskStatus.HIGH,
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/questionnaires/sds/submissions",
+        json=build_request_payload(build_low_risk_answers("SDS")),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["questionnaire_code"] == "SDS"
+    assert payload["risk_level"] == "low"
+
+    with app.state.db_session_factory() as session:
+        submission = session.get(QuestionnaireSubmission, payload["submission_id"])
+        assert submission is not None
+        focus_entry = session.scalar(select(FocusListEntry))
+        assert focus_entry is not None
+        assert focus_entry.source_type is CaseSourceType.ASSESSMENT
+        assert focus_entry.source_id == submission.id
+        assert focus_entry.reason_code == "HISTORY_HIGH_REVIEW"
+        assert "历史高风险记录" in focus_entry.reason_text
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+        student = session.get(StudentUser, submission.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.HIGH
 
 
 def test_submit_upi_hard_trigger_returns_high_risk(tmp_path) -> None:

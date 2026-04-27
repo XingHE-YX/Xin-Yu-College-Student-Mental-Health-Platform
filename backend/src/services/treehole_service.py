@@ -17,18 +17,16 @@ from src.constants.treehole_enums import (
     TreeholeAIStatus,
     TreeholePublishStatus,
 )
-from src.constants.workflow_enums import CaseSourceType
 from src.models.ai_analysis_record import AIAnalysisRecord
 from src.models.base import utc_now
-from src.models.focus_list_entry import FocusListEntry
 from src.models.post_reaction import PostReaction
 from src.models.student_user import StudentUser
 from src.models.treehole_post import TreeholePost
-from src.repositories.review_workflow_repository import ReviewWorkflowRepository
 from src.repositories.student_user_repository import StudentUserRepository
 from src.repositories.treehole_repository import TreeholeRepository
 from src.services.alert_case_service import AlertCaseService
 from src.services.deepseek_service import DeepSeekJsonCompletionResult, DeepSeekService
+from src.services.focus_list_service import FocusListService
 from src.services.risk_aggregation_service import (
     AggregatedRiskResult,
     RiskAggregationService,
@@ -139,7 +137,7 @@ class TreeholeService:
         self.session = session
         self.repository = TreeholeRepository(session)
         self.alert_case_service = AlertCaseService(session)
-        self.review_repository = ReviewWorkflowRepository(session)
+        self.focus_list_service = FocusListService(session)
         self.student_repository = StudentUserRepository(session)
         self.risk_aggregation_service = RiskAggregationService(session)
         self.deepseek_service = deepseek_service
@@ -402,17 +400,14 @@ class TreeholeService:
     ) -> None:
         """Create watch-list or alert records from the final publication decision."""
         if aggregated_risk.risk_level is QuestionnaireRiskLevel.WATCH:
-            self.review_repository.add_focus_list_entry(
-                FocusListEntry(
-                    student_id=student.id,
-                    source_type=CaseSourceType.TREEHOLE,
-                    source_id=post.id,
-                    reason_code=aggregated_risk.reason_codes[0],
-                    reason_text=self._build_follow_up_reason_text(
-                        analysis_snapshot=analysis_snapshot,
-                        aggregated_risk=aggregated_risk,
-                    ),
-                )
+            self.focus_list_service.create_treehole_watch_entry(
+                student_id=student.id,
+                post_id=post.id,
+                reason_code=aggregated_risk.reason_codes[0],
+                reason_text=self._build_follow_up_reason_text(
+                    analysis_snapshot=analysis_snapshot,
+                    aggregated_risk=aggregated_risk,
+                ),
             )
             return
 

@@ -66,6 +66,25 @@ class RiskAggregationService:
             history_high_risk=history_high_risk,
         )
 
+    def aggregate_assessment_risk(
+        self,
+        *,
+        student: StudentUser,
+    ) -> AggregatedRiskResult:
+        """Load the student's latest questionnaire context and aggregate assessment-only risk."""
+        if self.session is None:
+            raise RiskAggregationServiceError(
+                "database session is required to aggregate assessment risk"
+            )
+
+        latest_submissions = self._load_latest_submissions(student.id)
+        history_high_risk = self._has_historical_high_risk(student)
+        return self.aggregate_signals(
+            ai_risk_level=None,
+            questionnaire_submissions=latest_submissions,
+            history_high_risk=history_high_risk,
+        )
+
     def aggregate_signals(
         self,
         *,
