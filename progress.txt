@@ -192,3 +192,10 @@
 当前状态补充：本地已执行新增相关测试（`tests/backend/test_admin_auth_api.py`、`tests/admin/test_session_state.py`）、包含后台辅助测试在内的完整回归（`tests/backend tests/admin`）以及 `ruff check --no-cache` 静态检查，当前共 113 项测试通过；同时额外执行了 `backend/.venv/bin/python` 对 `admin/app.py` 和新增 `admin/` 模块的导入检查，当前导入正常。
 当前状态补充：本步尚未实现真实 `A02 总览 KPI` 数据拉取、后台导航、预警队列页或详情页；当前已登录后的总览内容仍是结构化占位壳，不提前混入 `11.2` 及之后步骤的真实业务数据渲染。
 待办：见 IMPLEMENTATION_PLAN.md 步骤11.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤11.2（总览页实现）。
+当前状态补充：已新增 `backend/src/repositories/admin_dashboard_repository.py`、`backend/src/services/admin_dashboard_service.py`、`backend/src/schemas/admin_dashboard.py` 与路由 `backend/src/api/routes/admin_dashboard.py`，打通 `GET /api/v1/admin/dashboard/summary`；接口当前返回 `generated_at`、A02 主 KPI（待复核工单、高风险工单、已确认高风险、重点关注人数、已发布帖子数）以及基础统计（最高优先级待处理、已拦截帖子、高风险学生档案、量表提交总数）。
+当前状态补充：管理后台 `admin/app.py` 已从 11.1 的总览占位壳升级为真实 `A02 总览页`。管理员登录后会调用 summary API 渲染 4 张 KPI 卡片、4 张基础统计卡片和 `A03 / A05 / A06 / A07` 模块入口卡片；页面顶部会展示 UTC 数据快照时间，接口暂时不可达时会显示降级提示，而令牌失效或账户被禁用时会清理会话并回到登录态。
+当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端要求，本步继续采用品牌青绿色与中性色卡片体系、`Inter / PingFang SC` 正文字体和 `DIN Alternate / SF Mono` 数字强调字体；总览页仅使用 Streamlit 原生布局与局部 CSS 注入实现，保持克制、高信息密度且可审计的后台观感。
+当前状态补充：已新增 `tests/backend/test_admin_dashboard_api.py` 与 `tests/admin/test_admin_api_client.py`，覆盖总览聚合口径、Bearer 鉴权要求、Streamlit 客户端 summary 拉取以及 `detail` 型鉴权错误映射；本地已执行定向 pytest、完整后端回归（`tests/backend`）以及 `ruff check --no-cache`，当前 `tests/backend` 共 114 项测试通过，`tests/admin` 共 3 项测试通过，合计已验证 117 项。
+当前状态补充：本步已经为 `A02` 建立通往 `A03 预警队列`、`A05 帖子管理`、`A06 用户目录` 与 `A07 审计日志` 的模块入口卡片，但没有提前实现这些页面的完整交互；后续仍按 `IMPLEMENTATION_PLAN.md` 的 `11.3 / 11.4 / 11.5` 继续补齐队列、内容管理和敏感审计界面。
+待办：见 IMPLEMENTATION_PLAN.md 步骤11.3。
