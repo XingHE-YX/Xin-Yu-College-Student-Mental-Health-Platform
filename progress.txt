@@ -171,4 +171,13 @@
 当前状态补充：已新增 `tests/backend/test_alert_review_service.py`，覆盖确认高风险写入双干预日志与双审计日志、驳回误报写入单日志、结案写入关闭日志、补充干预记录不改状态，以及待复核工单禁止直接结案等场景；配合既有 `tests/backend/test_review_workflow_models.py`，已验证本步服务层状态机、日志落库和模型关系均符合预期。
 当前状态补充：本地已执行新增相关测试（`tests/backend/test_alert_review_service.py`、`tests/backend/test_review_workflow_models.py`）、两轮完整后端回归（`tests/backend`）以及 `ruff check --no-cache` 静态检查，当前共 103 项后端测试通过。
 当前状态补充：本步未修改学生端小程序或 Streamlit 页面，因此 `FRONTEND_GUIDELINES.md` 的视觉规范与 `APP_FLOW.md` 的页面表现尚未在代码层新增界面实现；本次仅完成后台复核动作的后端服务与日志规则，为后续 `11.3 实现预警队列与详情页` 提供可直接接入的处置能力。
-待办：见 IMPLEMENTATION_PLAN.md 步骤10.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤10.3（重点关注列表实现）。
+当前状态补充：已新增 `backend/src/services/focus_list_service.py`，统一封装 `focus_list_entries` 的自动写入逻辑与来源级幂等校验；树洞 `watch` 内容现已从 `TreeholeService` 改为复用该服务写入重点关注，避免后续量表 `watch` 与树洞 `watch` 分别维护两套写入口径。
+当前状态补充：问卷提交链路现已接入重点关注写入：`backend/src/services/questionnaire_submission_service.py` 在高风险结果之外，会进一步基于 `RiskAggregationService.aggregate_assessment_risk()` 判断最新量表上下文是否达到后台 `watch` 级别；命中时会为对应 `questionnaire_submissions` 创建 `source_type = assessment` 的 `focus_list_entries`，而不会误创建 `alert_cases`，从而落实“需关注级别不会制造过量高风险工单噪音”的要求。
+当前状态补充：重点关注规则当前按更高优先级文档口径固化为以下行为：`SDS / SAS` 阳性结果写入重点关注；`SLEEP` 仅在 `SCREEN + SDS + SAS + SLEEP` 四份必做问卷链路齐全后，才会以 `SLEEP_CONCERN` 写入重点关注；若学生存在历史高风险而本次量表结果中性，则会以 `HISTORY_HIGH_REVIEW` 写入复查提示。对应地，`SCREEN >= 45` 的单次快速筛查结果仍会在学生端显示 `watch`，但不会单独制造后台重点关注噪音，除非后续聚合上下文或历史风险把它提升为后台复查信号。
+当前状态补充：为支持上述聚合口径，`backend/src/services/risk_aggregation_service.py` 已新增 `aggregate_assessment_risk()`，复用既有“最新提交 + 历史风险”聚合规则判断量表侧 `watch / high`；`review_workflow_repository.py` 也已补充按 `source_type + source_id + reason_code` 查询既有重点关注记录的能力，确保同一来源记录不会被重复写入列表。
+当前状态补充：学生 `risk_status` 现会在量表聚合为 `watch` 且当前仍为 `normal` 时上调为 `watch`，但不会因为单次低风险结果被提前降级；高风险仍沿用 10.1 的工单创建逻辑上调为 `high`。因此重点关注列表、学生风险态和高风险工单三者现在形成了清晰分层：`watch -> focus_list_entries`，`high -> alert_cases`，互不混淆。
+当前状态补充：已扩展 `tests/backend/test_questionnaire_submission_api.py`，新增覆盖 `SDS watch -> focus_list_entries`、完整必做链路下 `SLEEP watch -> focus_list_entries`、`SCREEN watch` 不制造后台关注噪音，以及“历史高风险 + 当前量表中性 -> HISTORY_HIGH_REVIEW`”等场景；同时保持既有 `UPI` / `SLEEP high` 工单回归与树洞 `watch` / `high` 行为测试通过。
+当前状态补充：本地已执行定向后端回归（`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_risk_aggregation_service.py`）、完整后端回归（`tests/backend`）以及 `ruff check --no-cache` 静态检查，当前共 107 项后端测试通过。
+当前状态补充：本步未修改学生端小程序或 Streamlit 页面，因此 `FRONTEND_GUIDELINES.md` 的设计规范与 `APP_FLOW.md` 中“管理员从重点关注列表进入案例详情”的页面表现尚未落到界面代码；本次只完成了重点关注列表的后端写入与降噪规则，为后续 `11.2 / 11.3` 的后台总览与列表页提供真实数据来源。
+待办：见 IMPLEMENTATION_PLAN.md 步骤11.1。
