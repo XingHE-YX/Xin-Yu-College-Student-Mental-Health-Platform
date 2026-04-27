@@ -1,5 +1,15 @@
 """Service package exports."""
 
+from src.services.alert_case_service import AlertCaseService, CreatedAlertCaseResult
+from src.services.alert_review_service import (
+    AdminUserInactiveError,
+    AdminUserNotFoundError,
+    AlertCaseNotFoundError,
+    AlertReviewActionResult,
+    AlertReviewService,
+    AlertReviewServiceError,
+    InvalidAlertCaseTransitionError,
+)
 from src.services.assessment_report_service import (
     AssessmentReportConfigurationError,
     AssessmentReportGenerationError,
@@ -8,7 +18,6 @@ from src.services.assessment_report_service import (
     GeneratedAssessmentReport,
     QuestionnaireCatalogEntry,
 )
-from src.services.alert_case_service import AlertCaseService, CreatedAlertCaseResult
 from src.services.deepseek_service import (
     DeepSeekJsonCompletionResult,
     DeepSeekService,
@@ -75,6 +84,12 @@ __all__ = [
     "AssessmentReportGenerationError",
     "AssessmentReportService",
     "AlertCaseService",
+    "AlertCaseNotFoundError",
+    "AlertReviewActionResult",
+    "AlertReviewService",
+    "AlertReviewServiceError",
+    "AdminUserInactiveError",
+    "AdminUserNotFoundError",
     "CreatedAlertCaseResult",
     "DeepSeekJsonCompletionResult",
     "DeepSeekService",
@@ -85,6 +100,7 @@ __all__ = [
     "LatestSubmissionSummary",
     "IncompleteQuestionnaireAnswersError",
     "InvalidPhoneTicketError",
+    "InvalidAlertCaseTransitionError",
     "InvalidQuestionnaireAnswerError",
     "HardTriggerMatch",
     "QuestionBankImportSummary",
