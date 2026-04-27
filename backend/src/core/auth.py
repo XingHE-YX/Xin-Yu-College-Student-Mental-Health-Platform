@@ -1,4 +1,4 @@
-"""Authentication dependencies for student-protected API routes."""
+"""Authentication dependencies for student- and admin-protected API routes."""
 
 from __future__ import annotations
 
@@ -14,10 +14,13 @@ from src.core.security import (
     ExpiredAccessTokenError,
     InvalidAccessTokenError,
 )
+from src.models.admin_user import AdminUser
 from src.models.student_user import StudentUser
+from src.repositories.admin_user_repository import AdminUserRepository
 from src.repositories.student_user_repository import StudentUserRepository
 
 student_bearer_scheme = HTTPBearer(auto_error=False)
+admin_bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_student(
@@ -63,6 +66,54 @@ def get_current_student(
     return student
 
 
+def get_current_admin(
+    request: Request,
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(admin_bearer_scheme),
+    ],
+    session: Annotated[Session, Depends(get_db_session)],
+) -> AdminUser:
+    """Resolve the authenticated administrator from the bearer access token."""
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="admin access token is required",
+        )
+    if credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="admin access token must use the Bearer scheme",
+        )
+
+    token_service: AccessTokenService = request.app.state.access_token_service
+    try:
+        payload = token_service.decode_access_token(
+            credentials.credentials,
+            expected_role="admin",
+        )
+    except (ExpiredAccessTokenError, InvalidAccessTokenError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+
+    admin_user_id = _extract_admin_id(payload)
+    repository = AdminUserRepository(session)
+    admin = repository.get_by_id(admin_user_id)
+    if admin is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="admin account no longer exists",
+        )
+    if not admin.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="admin account is inactive",
+        )
+    return admin
+
+
 def _extract_student_id(payload: dict[str, Any]) -> int:
     """Read `student_id` from a verified student token payload."""
     student_id = payload.get("student_id")
@@ -72,3 +123,14 @@ def _extract_student_id(payload: dict[str, Any]) -> int:
             detail="student access token payload is invalid",
         )
     return student_id
+
+
+def _extract_admin_id(payload: dict[str, Any]) -> int:
+    """Read `admin_id` from a verified administrator token payload."""
+    admin_user_id = payload.get("admin_id")
+    if not isinstance(admin_user_id, int):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="admin access token payload is invalid",
+        )
+    return admin_user_id

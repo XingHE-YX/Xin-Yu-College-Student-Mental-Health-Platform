@@ -1,5 +1,12 @@
 """Service package exports."""
 
+from src.services.admin_auth_service import (
+    AdminAccountInactiveError,
+    AdminAuthError,
+    AdminAuthService,
+    AdminLoginResult,
+    InvalidAdminCredentialsError,
+)
 from src.services.alert_case_service import AlertCaseService, CreatedAlertCaseResult
 from src.services.alert_review_service import (
     AdminUserInactiveError,
@@ -87,8 +94,12 @@ __all__ = [
     "AssessmentReportConfigurationError",
     "AssessmentReportGenerationError",
     "AssessmentReportService",
+    "AdminAccountInactiveError",
+    "AdminAuthError",
+    "AdminAuthService",
     "AlertCaseService",
     "AlertCaseNotFoundError",
+    "AdminLoginResult",
     "AlertReviewActionResult",
     "AlertReviewService",
     "AlertReviewServiceError",
@@ -138,6 +149,7 @@ __all__ = [
     "StudentReportService",
     "SubmittedQuestionAnswerInput",
     "SubmittedQuestionnaireResult",
+    "InvalidAdminCredentialsError",
     "WeChatSession",
     "WeChatSessionExchangeError",
     "WeChatSessionService",

@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 from src.core.settings import Settings
+from src.models.admin_user import AdminUser
 from src.models.student_user import StudentUser
 
 
@@ -46,6 +47,26 @@ class AccessTokenService:
             "role": "student",
             "is_demo": student.is_demo,
             "consent_status": student.consent_status.value,
+            "iat": issued_at,
+            "exp": issued_at + expires_in_seconds,
+            "iss": self._issuer,
+        }
+        return self._encode_token(payload)
+
+    def issue_admin_access_token(
+        self,
+        admin: AdminUser,
+        *,
+        expires_in_seconds: int = 12 * 60 * 60,
+    ) -> str:
+        """Issue an access token for the authenticated administrator."""
+        issued_at = int(time.time())
+        payload = {
+            "sub": f"admin:{admin.id}",
+            "admin_id": admin.id,
+            "role": "admin",
+            "username": admin.username,
+            "role_code": admin.role_code.value,
             "iat": issued_at,
             "exp": issued_at + expires_in_seconds,
             "iss": self._issuer,
