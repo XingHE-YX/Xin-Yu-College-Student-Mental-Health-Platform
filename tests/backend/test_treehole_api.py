@@ -528,6 +528,53 @@ def test_create_treehole_post_blocks_high_risk_content_and_creates_alert_case(
     assert feed_response.json()["data"]["posts"] == []
 
 
+def test_create_treehole_post_uses_focus_list_for_history_only_review_hint(
+    tmp_path,
+) -> None:
+    """Historical high risk with neutral current content should stay on the watch list."""
+    app = create_treehole_api_test_app(
+        tmp_path / "treehole-history-watch.db",
+        deepseek_result=build_mock_treehole_ai_result(
+            fallback_used=False,
+            risk_level="low",
+            risk_score="0.1200",
+            recommended_action="publish",
+            emotion_tags=["fatigue"],
+            trigger_phrases=[],
+            reason_text="当前文本未见明确高风险信号。",
+        ),
+    )
+    _, token = create_student_with_token(
+        app,
+        suffix="014",
+        risk_status=StudentRiskStatus.HIGH,
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/treehole/posts",
+        json={"content": "今天有点累，想找个地方说说话。"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["message"] == "success"
+    assert payload["data"]["risk_level"] == "watch"
+    assert payload["data"]["publish_status"] == "published"
+    assert payload["data"]["allow_publication"] is True
+
+    with app.state.db_session_factory() as session:
+        focus_entry = session.scalar(select(FocusListEntry))
+        assert focus_entry is not None
+        assert focus_entry.reason_code == "HISTORY_HIGH_REVIEW"
+        assert "历史高风险记录" in focus_entry.reason_text
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+        student = session.get(StudentUser, focus_entry.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.HIGH
+
+
 def test_create_treehole_post_rejects_students_without_granted_consent(
     tmp_path,
 ) -> None:

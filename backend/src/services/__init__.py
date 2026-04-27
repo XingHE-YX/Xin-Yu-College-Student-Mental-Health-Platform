@@ -8,6 +8,7 @@ from src.services.assessment_report_service import (
     GeneratedAssessmentReport,
     QuestionnaireCatalogEntry,
 )
+from src.services.alert_case_service import AlertCaseService, CreatedAlertCaseResult
 from src.services.deepseek_service import (
     DeepSeekJsonCompletionResult,
     DeepSeekService,
@@ -73,6 +74,8 @@ __all__ = [
     "AssessmentReportConfigurationError",
     "AssessmentReportGenerationError",
     "AssessmentReportService",
+    "AlertCaseService",
+    "CreatedAlertCaseResult",
     "DeepSeekJsonCompletionResult",
     "DeepSeekService",
     "DeepSeekServiceError",

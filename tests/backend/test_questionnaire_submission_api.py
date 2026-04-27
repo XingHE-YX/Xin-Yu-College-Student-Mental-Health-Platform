@@ -8,14 +8,20 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
-from src.constants.account_enums import ConsentStatus
+from src.constants.account_enums import ConsentStatus, StudentRiskStatus
 from src.constants.questionnaire_enums import (
     QuestionnaireRiskLevel,
     QuestionnaireSubmissionStatus,
 )
+from src.constants.workflow_enums import (
+    AlertQueueStatus,
+    CaseSourceType,
+    ReviewPriority,
+)
 from src.core.settings import Settings
 from src.main import create_app
 from src.models import (
+    AlertCase,
     Base,
     QuestionBank,
     QuestionnaireAnswer,
@@ -131,6 +137,15 @@ def build_low_risk_answers(questionnaire_code: str) -> dict[str, str]:
     return answers
 
 
+def build_uniform_answers(questionnaire_code: str, selected_option: str) -> dict[str, str]:
+    """Build an answer mapping that reuses the same raw option for every question."""
+    seed_file = load_seed(questionnaire_code)
+    return {
+        question_seed.question_id: selected_option
+        for question_seed in seed_file.questions
+    }
+
+
 def build_request_payload(answers: dict[str, str], *, reverse_order: bool = False) -> dict:
     """Build the API request payload from a question-code mapping."""
     items = [
@@ -202,6 +217,10 @@ def test_submit_screen_persists_submission_and_answers(tmp_path) -> None:
         assert {
             answer.question.question_code for answer in submission.answers
         } == set(answers)
+        assert count_rows(session, AlertCase) == 0
+        refreshed_student = session.get(StudentUser, student.id)
+        assert refreshed_student is not None
+        assert refreshed_student.risk_status is StudentRiskStatus.NORMAL
 
 
 def test_submit_sds_and_sas_return_standardized_scores(tmp_path) -> None:
@@ -251,7 +270,7 @@ def test_submit_sleep_and_upi_both_persist_valid_results(tmp_path) -> None:
 
 
 def test_submit_upi_hard_trigger_returns_high_risk(tmp_path) -> None:
-    """UPI hard triggers should still upgrade submission risk through the API."""
+    """UPI hard triggers should upgrade risk and create a highest-priority alert case."""
     app = create_questionnaire_submission_test_app(
         tmp_path / "questionnaire-submit-upi-trigger.db",
         import_question_bank=True,
@@ -283,6 +302,55 @@ def test_submit_upi_hard_trigger_returns_high_risk(tmp_path) -> None:
         assert submission.risk_level is QuestionnaireRiskLevel.HIGH
         assert submission.hard_trigger_hit is True
         assert submission.scoring_snapshot_json["hard_trigger_hit"] is True
+        alert_case = session.scalar(select(AlertCase))
+        assert alert_case is not None
+        assert alert_case.student_id == submission.student_id
+        assert alert_case.source_type is CaseSourceType.ASSESSMENT
+        assert alert_case.source_submission_id == submission.id
+        assert alert_case.queue_status is AlertQueueStatus.PENDING_REVIEW
+        assert alert_case.review_priority is ReviewPriority.HIGHEST
+        assert "UPI" in (alert_case.ai_reason_text or "")
+        assert "HT-04" in (alert_case.ai_reason_text or "")
+        student = session.get(StudentUser, submission.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.HIGH
+
+
+def test_submit_sleep_high_risk_creates_urgent_alert_case(tmp_path) -> None:
+    """Sleep-only high risk should create an urgent assessment alert without hard triggers."""
+    app = create_questionnaire_submission_test_app(
+        tmp_path / "questionnaire-submit-sleep-high.db",
+        import_question_bank=True,
+    )
+    _, token = create_student_with_token(app)
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/questionnaires/sleep/submissions",
+        json=build_request_payload(build_uniform_answers("SLEEP", "3")),
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["questionnaire_code"] == "SLEEP"
+    assert payload["risk_level"] == "high"
+    assert payload["hard_trigger_hit"] is False
+
+    with app.state.db_session_factory() as session:
+        submission = session.get(QuestionnaireSubmission, payload["submission_id"])
+        assert submission is not None
+        alert_case = session.scalar(select(AlertCase))
+        assert alert_case is not None
+        assert alert_case.student_id == submission.student_id
+        assert alert_case.source_type is CaseSourceType.ASSESSMENT
+        assert alert_case.source_submission_id == submission.id
+        assert alert_case.queue_status is AlertQueueStatus.PENDING_REVIEW
+        assert alert_case.review_priority is ReviewPriority.URGENT
+        assert "SLEEP" in (alert_case.ai_reason_text or "")
+        student = session.get(StudentUser, submission.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.HIGH
 
 
 def test_submit_questionnaire_rejects_incomplete_answers_without_persistence(

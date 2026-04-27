@@ -7,12 +7,18 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from src.constants.questionnaire_enums import QuestionnaireSubmissionStatus
+from src.constants.account_enums import StudentRiskStatus
+from src.constants.questionnaire_enums import (
+    QuestionnaireRiskLevel,
+    QuestionnaireSubmissionStatus,
+)
 from src.models.base import utc_now
 from src.models.question_bank import QuestionBank
 from src.models.questionnaire_answer import QuestionnaireAnswer
 from src.models.questionnaire_submission import QuestionnaireSubmission
 from src.models.questionnaire_template import QuestionnaireTemplate
+from src.repositories.student_user_repository import StudentUserRepository
+from src.services.alert_case_service import AlertCaseService
 from src.services.questionnaire_query_service import (
     QuestionnaireCatalogUnavailableError,
     QuestionnaireNotFoundError,
@@ -53,6 +59,8 @@ class QuestionnaireSubmissionService:
         self.session = session
         self.scoring_service = scoring_service or QuestionnaireScoringService()
         self.catalog_by_code = QuestionnaireQueryService(session).catalog_by_code
+        self.alert_case_service = AlertCaseService(session)
+        self.student_repository = StudentUserRepository(session)
 
     def submit_questionnaire(
         self,
@@ -113,12 +121,43 @@ class QuestionnaireSubmissionService:
                 )
             )
 
+        self._create_follow_up_records(
+            student_id=student_id,
+            submission=submission,
+            score_result=score_result,
+        )
         self.session.commit()
         self.session.refresh(submission)
         return SubmittedQuestionnaireResult(
             submission=submission,
             score_result=score_result,
         )
+
+    def _create_follow_up_records(
+        self,
+        *,
+        student_id: int,
+        submission: QuestionnaireSubmission,
+        score_result: QuestionnaireScoreResult,
+    ) -> None:
+        """Create assessment alert cases for high-risk results and persist student risk."""
+        if score_result.risk_level is not QuestionnaireRiskLevel.HIGH:
+            return
+
+        student = self.student_repository.get_by_id(student_id)
+        if student is None:
+            raise ValueError(f"student '{student_id}' does not exist")
+
+        self.alert_case_service.create_assessment_high_risk_case(
+            student_id=student_id,
+            submission=submission,
+            score_result=score_result,
+        )
+        if student.risk_status is not StudentRiskStatus.HIGH:
+            self.student_repository.update_risk_status(
+                student,
+                risk_status=StudentRiskStatus.HIGH,
+            )
 
     def _load_runtime_questionnaire(
         self,

@@ -17,14 +17,8 @@ from src.constants.treehole_enums import (
     TreeholeAIStatus,
     TreeholePublishStatus,
 )
-from src.constants.workflow_enums import (
-    AlertCaseLevel,
-    AlertQueueStatus,
-    CaseSourceType,
-    ReviewPriority,
-)
+from src.constants.workflow_enums import CaseSourceType
 from src.models.ai_analysis_record import AIAnalysisRecord
-from src.models.alert_case import AlertCase
 from src.models.base import utc_now
 from src.models.focus_list_entry import FocusListEntry
 from src.models.post_reaction import PostReaction
@@ -33,6 +27,7 @@ from src.models.treehole_post import TreeholePost
 from src.repositories.review_workflow_repository import ReviewWorkflowRepository
 from src.repositories.student_user_repository import StudentUserRepository
 from src.repositories.treehole_repository import TreeholeRepository
+from src.services.alert_case_service import AlertCaseService
 from src.services.deepseek_service import DeepSeekJsonCompletionResult, DeepSeekService
 from src.services.risk_aggregation_service import (
     AggregatedRiskResult,
@@ -143,6 +138,7 @@ class TreeholeService:
     ) -> None:
         self.session = session
         self.repository = TreeholeRepository(session)
+        self.alert_case_service = AlertCaseService(session)
         self.review_repository = ReviewWorkflowRepository(session)
         self.student_repository = StudentUserRepository(session)
         self.risk_aggregation_service = RiskAggregationService(session)
@@ -421,19 +417,13 @@ class TreeholeService:
             return
 
         if aggregated_risk.risk_level is QuestionnaireRiskLevel.HIGH:
-            self.review_repository.add_alert_case(
-                AlertCase(
-                    student_id=student.id,
-                    source_type=CaseSourceType.TREEHOLE,
-                    source_post_id=post.id,
-                    case_level=AlertCaseLevel.HIGH,
-                    queue_status=AlertQueueStatus.PENDING_REVIEW,
-                    review_priority=ReviewPriority.HIGHEST,
-                    ai_reason_text=self._build_follow_up_reason_text(
-                        analysis_snapshot=analysis_snapshot,
-                        aggregated_risk=aggregated_risk,
-                    ),
-                )
+            self.alert_case_service.create_treehole_high_risk_case(
+                student_id=student.id,
+                post_id=post.id,
+                reason_text=self._build_follow_up_reason_text(
+                    analysis_snapshot=analysis_snapshot,
+                    aggregated_risk=aggregated_risk,
+                ),
             )
 
     def _build_follow_up_reason_text(
