@@ -154,4 +154,12 @@
 当前状态补充：树洞创建接口当前会根据最终决策返回真实前端分支：普通和需关注内容仍返回 `message = success`；高风险内容返回 `message = safety_intercepted`、`publish_status = blocked_high_risk` 与热线电话。为匹配这一变化，学生端 `miniprogram/pages/treehole/create/index.js` 已移除“当前阶段仅打通低风险链路”的旧文案，改为真实“公开发布 / 温和提醒 / 安全拦截”说明，并在拦截态优先使用后端返回的热线字段，视觉上继续沿用 `hero-card`、`result-badge`、`safety-banner` 与危险按钮语义色，不引入额外组件或违背前端规范的高风险表达。
 当前状态补充：已调整并扩展 `tests/backend/test_treehole_api.py`，覆盖 `low` 不产生后台复核记录、`watch` 公开发布并写入 `focus_list_entries`、`high` 拦截并创建 `alert_cases`、拦截内容不出现在 `feed`、以及学生 `risk_status` 同步变化等场景；同时复用 9.3 风险聚合测试验证完整链路决策输入。当前本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，并复跑全部后端测试，现共 96 项后端测试通过。
 当前状态补充：本步涉及学生端树洞发布页行为文案调整，但当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此未执行小程序运行态自动校验；已通过代码人工检查完成最小前端验证，且未修改小程序 `json` 路由或共享样式结构。
-待办：见 IMPLEMENTATION_PLAN.md 步骤10.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤10.1（工单创建实现）。
+当前状态补充：已新增 `backend/src/services/alert_case_service.py`，统一封装自动工单创建逻辑、来源级幂等检查与优先级分配规则；树洞高风险工单与量表高风险工单现统一经该服务落库，避免后续 10.2 / 11.x 再分别维护多套创建口径。
+当前状态补充：问卷提交链路现已接入高风险工单创建：`backend/src/services/questionnaire_submission_service.py` 在提交结果达到 `high` 时，会为对应 `questionnaire_submissions` 创建 `source_type = assessment` 的 `alert_cases`，并同步将学生 `risk_status` 上调为 `high`，从而使“高风险量表结果 -> 后台待复核工单”形成闭环。
+当前状态补充：工单优先级当前按风险急迫度分层：高风险树洞保持 `review_priority = highest`；高风险量表中，命中硬触发的结果以及 `SDS / SAS` 的高风险结果写为 `highest`，`SLEEP` 这类无硬触发但达到高风险阈值的结果写为 `urgent`；因此后台后续 `A03 预警队列` 可按 `APP_FLOW.md` 要求先处理最危险案例。
+当前状态补充：已按 `CODEX.md` 规定处理文档冲突：`IMPLEMENTATION_PLAN.md 10.1` 提到“历史高风险复查场景”创建工单，但更高优先级的 `PRD.md` 与 `BACKEND_STRUCTURE.md` 明确要求“历史高风险但本次中性”仅标记为需关注并进入重点关注列表。因此本步保留 `history` 作为数据模型来源枚举，但没有把该场景错误升级成高风险工单；相关回归测试已验证该场景仍只写 `focus_list_entries`，不会制造额外高风险工单噪音。
+当前状态补充：已扩展 `tests/backend/test_questionnaire_submission_api.py` 与 `tests/backend/test_treehole_api.py`，新增覆盖 `UPI` 硬触发创建最高优先级量表工单、`SLEEP` 高风险创建 `urgent` 工单，以及“历史高风险 + 当前中性树洞 -> focus list、不建工单”等场景；同时新增并通过 `ruff check --no-cache` 对受影响 Python 文件的静态检查。
+当前状态补充：本地已先后执行定向 pytest（`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_treehole_api.py`）和完整后端回归（`tests/backend`），当前共 98 项后端测试通过。
+当前状态补充：本步未修改学生端页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中前端 `S14` / 后台 `A03-A04` 的实际展示与处置界面仍待后续 10.2 / 11.x 实现。
+待办：见 IMPLEMENTATION_PLAN.md 步骤10.2。
