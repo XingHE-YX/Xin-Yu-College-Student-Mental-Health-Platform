@@ -86,7 +86,7 @@ class TreeholeCreatePostSuccessResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     code: Literal["OK"] = "OK"
-    message: Literal["success"] = "success"
+    message: Literal["success", "safety_intercepted"] = "success"
     request_id: str
     data: TreeholeCreatePostData
 

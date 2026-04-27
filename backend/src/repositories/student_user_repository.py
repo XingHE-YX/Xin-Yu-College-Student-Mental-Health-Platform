@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.constants.account_enums import ConsentStatus
+from src.constants.account_enums import ConsentStatus, StudentRiskStatus
 from src.models.student_user import StudentUser
 
 
@@ -88,5 +88,16 @@ class StudentUserRepository:
     ) -> StudentUser:
         """Persist the latest derived crisis-intervention consent status."""
         student.consent_status = consent_status
+        self.session.flush()
+        return student
+
+    def update_risk_status(
+        self,
+        student: StudentUser,
+        *,
+        risk_status: StudentRiskStatus,
+    ) -> StudentUser:
+        """Persist the latest aggregated student risk status."""
+        student.risk_status = risk_status
         self.session.flush()
         return student

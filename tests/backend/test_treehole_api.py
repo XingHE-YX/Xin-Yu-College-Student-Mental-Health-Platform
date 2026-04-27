@@ -10,7 +10,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
-from src.constants.account_enums import ConsentStatus
+from src.constants.account_enums import ConsentStatus, StudentRiskStatus
 from src.constants.questionnaire_enums import QuestionnaireRiskLevel
 from src.constants.treehole_enums import (
     AIRecommendedAction,
@@ -18,9 +18,23 @@ from src.constants.treehole_enums import (
     TreeholeAIStatus,
     TreeholePublishStatus,
 )
+from src.constants.workflow_enums import (
+    AlertCaseLevel,
+    AlertQueueStatus,
+    FocusListStatus,
+    ReviewPriority,
+)
 from src.core.settings import Settings
 from src.main import create_app
-from src.models import AIAnalysisRecord, Base, PostReaction, StudentUser, TreeholePost
+from src.models import (
+    AIAnalysisRecord,
+    AlertCase,
+    Base,
+    FocusListEntry,
+    PostReaction,
+    StudentUser,
+    TreeholePost,
+)
 from src.services.deepseek_service import (
     DEEPSEEK_MODEL_NAME,
     DeepSeekJsonCompletionResult,
@@ -121,6 +135,7 @@ def create_student_with_token(
     *,
     suffix: str,
     consent_status: ConsentStatus = ConsentStatus.GRANTED,
+    risk_status: StudentRiskStatus = StudentRiskStatus.NORMAL,
 ) -> tuple[StudentUser, str]:
     """Create one student row and issue an access token for API tests."""
     with app.state.db_session_factory() as session:
@@ -132,6 +147,7 @@ def create_student_with_token(
             college_name="计算机学院",
             class_name="2026级1班",
             consent_status=consent_status,
+            risk_status=risk_status,
         )
         session.add(student)
         session.commit()
@@ -354,6 +370,7 @@ def test_create_treehole_post_persists_masked_public_post_and_mock_fallback_anal
         assert post.content_masked == payload["data"]["content_masked"]
         assert post.ai_status is TreeholeAIStatus.MOCKED
         assert post.publish_status is TreeholePublishStatus.PUBLISHED
+        assert post.risk_level is QuestionnaireRiskLevel.LOW
         assert post.allow_publication is True
         assert post.published_at is not None
 
@@ -368,12 +385,17 @@ def test_create_treehole_post_persists_masked_public_post_and_mock_fallback_anal
         assert analysis.provider.value == "deepseek"
         assert analysis.model_name == DEEPSEEK_MODEL_NAME
         assert analysis.response_raw_json["source"] == "mock_response.json"
+        student = session.get(StudentUser, post.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.NORMAL
+        assert session.scalar(select(func.count()).select_from(FocusListEntry)) == 0
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
 
 
-def test_create_treehole_post_records_remote_ai_analysis_without_interrupting_publish_flow(
+def test_create_treehole_post_publishes_watch_content_and_writes_focus_list_entry(
     tmp_path,
 ) -> None:
-    """Remote AI success should be persisted even though publish decisions stay on the bootstrap path."""
+    """Watch-level content should stay public but enter the administrative focus list."""
     app = create_treehole_api_test_app(
         tmp_path / "treehole-create-remote.db",
         deepseek_result=build_mock_treehole_ai_result(
@@ -398,14 +420,17 @@ def test_create_treehole_post_records_remote_ai_analysis_without_interrupting_pu
     assert response.status_code == 200
     payload = response.json()
     assert payload["data"]["publish_status"] == "published"
-    assert payload["data"]["risk_level"] == "low"
+    assert payload["data"]["risk_level"] == "watch"
+    assert payload["data"]["allow_publication"] is True
 
     with app.state.db_session_factory() as session:
         post = session.get(TreeholePost, payload["data"]["post_id"])
         assert post is not None
         assert post.ai_status is TreeholeAIStatus.ANALYZED
         assert post.publish_status is TreeholePublishStatus.PUBLISHED
-        assert post.risk_level is QuestionnaireRiskLevel.LOW
+        assert post.risk_level is QuestionnaireRiskLevel.WATCH
+        assert post.content_masked is not None
+        assert post.published_at is not None
 
         analysis = session.scalar(
             select(AIAnalysisRecord).where(AIAnalysisRecord.target_id == post.id)
@@ -416,6 +441,91 @@ def test_create_treehole_post_records_remote_ai_analysis_without_interrupting_pu
         assert analysis.recommended_action is AIRecommendedAction.FOCUS_LIST
         assert analysis.fallback_used is False
         assert analysis.trigger_phrases_json == ["撑不住了"]
+        focus_entry = session.scalar(select(FocusListEntry))
+        assert focus_entry is not None
+        assert focus_entry.student_id == post.student_id
+        assert focus_entry.source_id == post.id
+        assert focus_entry.reason_code == "TREEHOLE_AI_WATCH"
+        assert focus_entry.status is FocusListStatus.ACTIVE
+        assert "TREEHOLE_AI_WATCH" in focus_entry.reason_text
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+        student = session.get(StudentUser, post.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.WATCH
+
+
+def test_create_treehole_post_blocks_high_risk_content_and_creates_alert_case(
+    tmp_path,
+) -> None:
+    """High-risk content should be intercepted, not published, and queued for review."""
+    app = create_treehole_api_test_app(
+        tmp_path / "treehole-create-high.db",
+        deepseek_result=build_mock_treehole_ai_result(
+            fallback_used=False,
+            risk_level="high",
+            risk_score="0.9500",
+            recommended_action="manual_review_high",
+            emotion_tags=["despair"],
+            trigger_phrases=["不想活了"],
+            reason_text="检测到明确自伤或自杀意图，需要优先人工复核。",
+        ),
+    )
+    _, token = create_student_with_token(app, suffix="013")
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/treehole/posts",
+        json={"content": "我真的不想活了，感觉没有意义。"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["message"] == "safety_intercepted"
+    assert payload["data"]["risk_level"] == "high"
+    assert payload["data"]["publish_status"] == "blocked_high_risk"
+    assert payload["data"]["allow_publication"] is False
+    assert payload["data"]["content_masked"] is None
+    assert payload["data"]["published_at"] is None
+    assert payload["data"]["hotline"] == "400-161-9995"
+
+    with app.state.db_session_factory() as session:
+        post = session.get(TreeholePost, payload["data"]["post_id"])
+        assert post is not None
+        assert post.ai_status is TreeholeAIStatus.ANALYZED
+        assert post.publish_status is TreeholePublishStatus.BLOCKED_HIGH_RISK
+        assert post.risk_level is QuestionnaireRiskLevel.HIGH
+        assert post.allow_publication is False
+        assert post.content_masked is None
+        assert post.published_at is None
+
+        analysis = session.scalar(
+            select(AIAnalysisRecord).where(AIAnalysisRecord.target_id == post.id)
+        )
+        assert analysis is not None
+        assert analysis.parsed_risk_level is QuestionnaireRiskLevel.HIGH
+        assert analysis.recommended_action is AIRecommendedAction.MANUAL_REVIEW_HIGH
+        assert analysis.fallback_used is False
+
+        alert_case = session.scalar(select(AlertCase))
+        assert alert_case is not None
+        assert alert_case.student_id == post.student_id
+        assert alert_case.source_post_id == post.id
+        assert alert_case.case_level is AlertCaseLevel.HIGH
+        assert alert_case.queue_status is AlertQueueStatus.PENDING_REVIEW
+        assert alert_case.review_priority is ReviewPriority.HIGHEST
+        assert "检测到明确自伤或自杀意图" in (alert_case.ai_reason_text or "")
+        assert session.scalar(select(func.count()).select_from(FocusListEntry)) == 0
+        student = session.get(StudentUser, post.student_id)
+        assert student is not None
+        assert student.risk_status is StudentRiskStatus.HIGH
+
+    feed_response = client.get(
+        "/api/v1/treehole/feed",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert feed_response.status_code == 200
+    assert feed_response.json()["data"]["posts"] == []
 
 
 def test_create_treehole_post_rejects_students_without_granted_consent(

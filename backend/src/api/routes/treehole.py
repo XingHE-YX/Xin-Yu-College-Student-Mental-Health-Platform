@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from src.constants.treehole_enums import TreeholePublishStatus
 from src.core.auth import get_current_student
 from src.core.database import get_db_session
 from src.models.student_user import StudentUser
@@ -27,6 +28,7 @@ from src.schemas.treehole import (
     TreeholeReactionSuccessResponse,
 )
 from src.services.treehole_service import (
+    TREEHOLE_HOTLINE_PHONE,
     TreeholeAIAnalysisError,
     TreeholeConsentRequiredError,
     TreeholeContentEmptyError,
@@ -127,7 +129,7 @@ def create_treehole_post(
     student: Annotated[StudentUser, Depends(get_current_student)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> TreeholeCreatePostSuccessResponse | JSONResponse:
-    """Create one new treehole post using the phase-8 bootstrap publish path."""
+    """Create one new treehole post using the phase-9 publication decision rules."""
     try:
         result = TreeholeService(
             session,
@@ -155,7 +157,11 @@ def create_treehole_post(
             message=str(exc),
         )
 
+    is_high_risk_intercept = (
+        result.post.publish_status is TreeholePublishStatus.BLOCKED_HIGH_RISK
+    )
     return TreeholeCreatePostSuccessResponse(
+        message="safety_intercepted" if is_high_risk_intercept else "success",
         request_id=build_request_id(),
         data=TreeholeCreatePostData(
             post_id=result.post.id,
@@ -166,6 +172,7 @@ def create_treehole_post(
             anonymous_avatar_key=result.post.anonymous_avatar_key,
             content_masked=result.post.content_masked,
             published_at=result.post.published_at,
+            hotline=TREEHOLE_HOTLINE_PHONE if is_high_risk_intercept else None,
         ),
     )
 

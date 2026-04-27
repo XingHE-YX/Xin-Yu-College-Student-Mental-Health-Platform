@@ -42,7 +42,7 @@ Page({
     pageMode: "editor",
     heroTitle: "写下一条匿名心情",
     heroSummary:
-      "内容会先走匿名与脱敏处理，再进入公开广场。当前阶段先打通低风险可发布链路。",
+      "内容会先经过匿名与脱敏处理，再按风险进入公开发布、温和提醒或安全拦截分流。",
     heroTone: "brand",
     content: "",
     contentLength: 0,
@@ -79,7 +79,7 @@ Page({
     this.setData({
       heroTitle: "写下一条匿名心情",
       heroSummary:
-        "内容会先走匿名与脱敏处理，再进入公开广场。当前阶段先打通低风险可发布链路。",
+        "内容会先经过匿名与脱敏处理，再按风险进入公开发布、温和提醒或安全拦截分流。",
       heroTone: "brand",
     });
   },
@@ -135,9 +135,11 @@ Page({
         result.risk_level === "high"
       ) {
         this.setData({
+          hotlinePhone: result.hotline || HOTLINE_PHONE,
           pageMode: "intercept",
           heroTitle: "这条内容暂不适合公开发布",
-          heroSummary: "系统优先进入了安全提醒流程，因此不会把这条内容直接展示到广场。",
+          heroSummary:
+            "系统识别到当前内容需要优先进入安全支持流程，因此不会把它直接展示到广场。",
           heroTone: "warm",
           createdPost,
           submitting: false,

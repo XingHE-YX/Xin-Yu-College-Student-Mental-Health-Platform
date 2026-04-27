@@ -9,7 +9,7 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.orm import Session
 
-from src.constants.account_enums import ConsentStatus
+from src.constants.account_enums import ConsentStatus, StudentRiskStatus
 from src.constants.questionnaire_enums import QuestionnaireRiskLevel
 from src.constants.treehole_enums import (
     AIRecommendedAction,
@@ -17,19 +17,34 @@ from src.constants.treehole_enums import (
     TreeholeAIStatus,
     TreeholePublishStatus,
 )
+from src.constants.workflow_enums import (
+    AlertCaseLevel,
+    AlertQueueStatus,
+    CaseSourceType,
+    ReviewPriority,
+)
 from src.models.ai_analysis_record import AIAnalysisRecord
+from src.models.alert_case import AlertCase
 from src.models.base import utc_now
+from src.models.focus_list_entry import FocusListEntry
 from src.models.post_reaction import PostReaction
 from src.models.student_user import StudentUser
 from src.models.treehole_post import TreeholePost
+from src.repositories.review_workflow_repository import ReviewWorkflowRepository
+from src.repositories.student_user_repository import StudentUserRepository
 from src.repositories.treehole_repository import TreeholeRepository
 from src.services.deepseek_service import DeepSeekJsonCompletionResult, DeepSeekService
+from src.services.risk_aggregation_service import (
+    AggregatedRiskResult,
+    RiskAggregationService,
+)
 
 REACTION_DISPLAY_ORDER = (
     PostReactionType.HUG,
     PostReactionType.LIGHT,
     PostReactionType.ACCOMPANY,
 )
+TREEHOLE_HOTLINE_PHONE = "400-161-9995"
 
 PHONE_PATTERN = re.compile(r"(?<!\d)(?:\+?86[- ]?)?1[3-9]\d{9}(?!\d)")
 EMAIL_PATTERN = re.compile(
@@ -128,6 +143,9 @@ class TreeholeService:
     ) -> None:
         self.session = session
         self.repository = TreeholeRepository(session)
+        self.review_repository = ReviewWorkflowRepository(session)
+        self.student_repository = StudentUserRepository(session)
+        self.risk_aggregation_service = RiskAggregationService(session)
         self.deepseek_service = deepseek_service
 
     def list_feed(
@@ -149,7 +167,7 @@ class TreeholeService:
         student: StudentUser,
         content: str,
     ) -> CreatedTreeholePostResult:
-        """Persist one new treehole post while allowing AI fallback to keep the flow alive."""
+        """Persist one new treehole post and apply the phase-9 publication decision rules."""
         if student.consent_status is not ConsentStatus.GRANTED:
             raise TreeholeConsentRequiredError(
                 "crisis intervention consent is required to create treehole posts"
@@ -166,18 +184,38 @@ class TreeholeService:
             anonymous_name=student.display_nickname.strip() or "匿名同学",
             anonymous_avatar_key=student.display_avatar_seed,
             content_raw=normalized_content,
-            content_masked=masked_content,
+            content_masked=None,
             ai_status=TreeholeAIStatus.PENDING,
-            publish_status=TreeholePublishStatus.PUBLISHED,
+            publish_status=TreeholePublishStatus.PENDING_REVIEW,
             risk_level=QuestionnaireRiskLevel.LOW,
-            allow_publication=True,
+            allow_publication=False,
             hug_count=0,
-            published_at=published_at,
+            published_at=None,
         )
         self.repository.add_post(post)
         analysis_snapshot = self._analyze_treehole_content(normalized_content)
+        aggregated_risk = self.risk_aggregation_service.aggregate_treehole_risk(
+            student=student,
+            ai_risk_level=analysis_snapshot.parsed_risk_level,
+        )
+        self._apply_publish_decision(
+            post=post,
+            masked_content=masked_content,
+            published_at=published_at,
+            aggregated_risk=aggregated_risk,
+        )
+        self._apply_student_risk_status(
+            student=student,
+            aggregated_risk=aggregated_risk,
+        )
         post.ai_status = analysis_snapshot.ai_status
         self.session.add(self._build_ai_analysis_record(post, analysis_snapshot))
+        self._create_follow_up_records(
+            student=student,
+            post=post,
+            analysis_snapshot=analysis_snapshot,
+            aggregated_risk=aggregated_risk,
+        )
         self.session.commit()
         self.session.refresh(post)
         return CreatedTreeholePostResult(post=post)
@@ -312,6 +350,108 @@ class TreeholeService:
             recommended_action=analysis_snapshot.recommended_action,
             fallback_used=analysis_snapshot.fallback_used,
         )
+
+    def _apply_publish_decision(
+        self,
+        *,
+        post: TreeholePost,
+        masked_content: str,
+        published_at: datetime,
+        aggregated_risk: AggregatedRiskResult,
+    ) -> None:
+        """Map the aggregated risk level into publication state and public fields."""
+        post.risk_level = aggregated_risk.risk_level
+        if aggregated_risk.risk_level is QuestionnaireRiskLevel.HIGH:
+            post.publish_status = TreeholePublishStatus.BLOCKED_HIGH_RISK
+            post.allow_publication = False
+            post.published_at = None
+            post.content_masked = None
+            return
+
+        post.publish_status = TreeholePublishStatus.PUBLISHED
+        post.allow_publication = True
+        post.published_at = published_at
+        post.content_masked = masked_content
+
+    def _apply_student_risk_status(
+        self,
+        *,
+        student: StudentUser,
+        aggregated_risk: AggregatedRiskResult,
+    ) -> None:
+        """Persist the student's latest aggregate risk without prematurely downgrading history."""
+        next_risk_status = student.risk_status
+        if aggregated_risk.risk_level is QuestionnaireRiskLevel.HIGH:
+            next_risk_status = StudentRiskStatus.HIGH
+        elif aggregated_risk.risk_level is QuestionnaireRiskLevel.WATCH:
+            next_risk_status = (
+                StudentRiskStatus.HIGH
+                if student.risk_status is StudentRiskStatus.HIGH
+                else StudentRiskStatus.WATCH
+            )
+
+        if next_risk_status is not student.risk_status:
+            self.student_repository.update_risk_status(
+                student,
+                risk_status=next_risk_status,
+            )
+
+    def _create_follow_up_records(
+        self,
+        *,
+        student: StudentUser,
+        post: TreeholePost,
+        analysis_snapshot: TreeholeAIAnalysisSnapshot,
+        aggregated_risk: AggregatedRiskResult,
+    ) -> None:
+        """Create watch-list or alert records from the final publication decision."""
+        if aggregated_risk.risk_level is QuestionnaireRiskLevel.WATCH:
+            self.review_repository.add_focus_list_entry(
+                FocusListEntry(
+                    student_id=student.id,
+                    source_type=CaseSourceType.TREEHOLE,
+                    source_id=post.id,
+                    reason_code=aggregated_risk.reason_codes[0],
+                    reason_text=self._build_follow_up_reason_text(
+                        analysis_snapshot=analysis_snapshot,
+                        aggregated_risk=aggregated_risk,
+                    ),
+                )
+            )
+            return
+
+        if aggregated_risk.risk_level is QuestionnaireRiskLevel.HIGH:
+            self.review_repository.add_alert_case(
+                AlertCase(
+                    student_id=student.id,
+                    source_type=CaseSourceType.TREEHOLE,
+                    source_post_id=post.id,
+                    case_level=AlertCaseLevel.HIGH,
+                    queue_status=AlertQueueStatus.PENDING_REVIEW,
+                    review_priority=ReviewPriority.HIGHEST,
+                    ai_reason_text=self._build_follow_up_reason_text(
+                        analysis_snapshot=analysis_snapshot,
+                        aggregated_risk=aggregated_risk,
+                    ),
+                )
+            )
+
+    def _build_follow_up_reason_text(
+        self,
+        *,
+        analysis_snapshot: TreeholeAIAnalysisSnapshot,
+        aggregated_risk: AggregatedRiskResult,
+    ) -> str:
+        """Build a stable human-readable reason for watch-list and alert records."""
+        reason_prefix = "；".join(aggregated_risk.reason_codes)
+        history_hint = (
+            "系统同时检测到历史高风险记录，本次建议纳入复查。"
+            if aggregated_risk.history_elevated
+            else ""
+        )
+        if history_hint:
+            return f"{analysis_snapshot.reason_text}（{reason_prefix}）。{history_hint}"
+        return f"{analysis_snapshot.reason_text}（{reason_prefix}）。"
 
     def _analyze_treehole_content(
         self,
