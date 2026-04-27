@@ -1,4 +1,4 @@
-"""HTTP client helpers for Streamlit admin authentication."""
+"""HTTP client helpers for Streamlit admin API access."""
 
 from __future__ import annotations
 
@@ -9,11 +9,11 @@ import httpx
 
 
 class AdminApiClientError(RuntimeError):
-    """Base error raised when the Streamlit admin client cannot authenticate."""
+    """Base error raised when the Streamlit admin client cannot reach the backend."""
 
 
 class AdminApiRequestError(AdminApiClientError):
-    """Raised when the backend returns a business error envelope."""
+    """Raised when the backend returns a business or auth failure response."""
 
     def __init__(
         self,
@@ -37,7 +37,7 @@ class AdminSessionPayload:
 
 
 class AdminApiClient:
-    """Call administrator auth endpoints exposed by the FastAPI backend."""
+    """Call administrator-facing endpoints exposed by the FastAPI backend."""
 
     def __init__(
         self,
@@ -73,6 +73,15 @@ class AdminApiClient:
         )
         return payload["data"]["admin"]
 
+    def get_dashboard_summary(self, *, access_token: str) -> dict[str, Any]:
+        """Return the live summary payload for the A02 dashboard."""
+        payload = self._request(
+            "GET",
+            "/admin/dashboard/summary",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]["summary"]
+
     def _request(
         self,
         method: str,
@@ -99,9 +108,19 @@ class AdminApiClient:
             raise AdminApiClientError("后台返回了无法解析的响应。") from exc
 
         if response.status_code >= 400:
+            detail = payload.get("detail")
+            code = payload.get("code")
+            message = payload.get("message")
+            if not isinstance(code, str) or not code:
+                if detail == "admin account is inactive":
+                    code = "ADMIN_ACCOUNT_INACTIVE"
+                else:
+                    code = "ADMIN_API_ERROR"
+            if not isinstance(message, str) or not message:
+                message = str(detail or "请求失败")
             raise AdminApiRequestError(
                 status_code=response.status_code,
-                code=str(payload.get("code", "ADMIN_API_ERROR")),
-                message=str(payload.get("message", "请求失败")),
+                code=code,
+                message=message,
             )
         return payload

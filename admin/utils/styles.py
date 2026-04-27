@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def build_admin_console_css() -> str:
-    """Return the base CSS used by the Streamlit admin shell."""
+    """Return the base CSS used by the admin login and dashboard pages."""
     return """
     <style>
     :root {
@@ -19,8 +19,8 @@ def build_admin_console_css() -> str:
       --neutral-500: #70807C;
       --neutral-700: #41504C;
       --neutral-900: #1F2A28;
-      --danger-500: #D84C4C;
       --warning-500: #E5A23A;
+      --danger-500: #D84C4C;
       --shadow-card: 0 8px 24px rgba(18, 63, 58, 0.08);
       --radius-md: 14px;
       --radius-lg: 20px;
@@ -113,8 +113,20 @@ def build_admin_console_css() -> str:
       text-transform: uppercase;
     }
 
+    .xinyu-sync-chip {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(47, 143, 131, 0.1);
+      color: var(--brand-700);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
     .xinyu-topbar-title {
-      margin: 6px 0 0 0;
+      margin: 8px 0 0 0;
       color: var(--neutral-900);
       font-size: 24px;
       font-weight: 600;
@@ -128,16 +140,33 @@ def build_admin_console_css() -> str:
       line-height: 1.5;
     }
 
-    .xinyu-placeholder-card {
+    .xinyu-kpi-card {
       padding: 20px;
       border-radius: var(--radius-md);
       background: rgba(255, 255, 255, 0.9);
       border: 1px solid #E3EAE7;
+      border-top: 4px solid var(--brand-500);
       box-shadow: var(--shadow-card);
-      min-height: 148px;
+      min-height: 152px;
     }
 
-    .xinyu-placeholder-kpi {
+    .xinyu-kpi-warning {
+      border-top-color: var(--warning-500);
+    }
+
+    .xinyu-kpi-danger {
+      border-top-color: var(--danger-500);
+    }
+
+    .xinyu-kpi-brand {
+      border-top-color: var(--brand-500);
+    }
+
+    .xinyu-kpi-neutral {
+      border-top-color: var(--neutral-300);
+    }
+
+    .xinyu-kpi-value {
       color: var(--neutral-900);
       font-family: "DIN Alternate", "SF Mono", monospace;
       font-size: 32px;
@@ -145,11 +174,133 @@ def build_admin_console_css() -> str:
       line-height: 1.2;
     }
 
-    .xinyu-placeholder-label {
-      margin-top: 6px;
+    .xinyu-kpi-label {
+      margin-top: 8px;
+      color: var(--neutral-900);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .xinyu-kpi-meta {
+      margin-top: 8px;
       color: var(--neutral-500);
       font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .xinyu-stat-card {
+      padding: 18px 20px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid #E3EAE7;
+      min-height: 136px;
+    }
+
+    .xinyu-stat-value {
+      color: var(--neutral-900);
+      font-family: "DIN Alternate", "SF Mono", monospace;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .xinyu-stat-label {
+      margin-top: 10px;
+      color: var(--neutral-900);
+      font-size: 15px;
+      font-weight: 600;
       line-height: 1.4;
+    }
+
+    .xinyu-stat-meta {
+      margin-top: 8px;
+      color: var(--neutral-500);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .xinyu-nav-card {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #E3EAE7;
+      box-shadow: var(--shadow-card);
+      min-height: 196px;
+    }
+
+    .xinyu-nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .xinyu-nav-step {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--brand-50);
+      color: var(--brand-700);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .xinyu-nav-status {
+      color: var(--neutral-500);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .xinyu-nav-title {
+      margin-top: 14px;
+      color: var(--neutral-900);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .xinyu-nav-copy {
+      margin-top: 10px;
+      color: var(--neutral-700);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .xinyu-nav-metric {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--neutral-100);
+      color: var(--brand-700);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .xinyu-empty-state {
+      margin-top: 8px;
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(216, 76, 76, 0.18);
+      box-shadow: var(--shadow-card);
+    }
+
+    .xinyu-empty-title {
+      color: var(--neutral-900);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .xinyu-empty-copy {
+      margin: 10px 0 0 0;
+      color: var(--neutral-700);
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     .stButton > button {
