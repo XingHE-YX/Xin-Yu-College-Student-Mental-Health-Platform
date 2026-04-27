@@ -42,6 +42,11 @@ from src.services.questionnaire_submission_service import (
     SubmittedQuestionAnswerInput,
     SubmittedQuestionnaireResult,
 )
+from src.services.risk_aggregation_service import (
+    AggregatedRiskResult,
+    RiskAggregationService,
+    RiskAggregationServiceError,
+)
 from src.services.student_auth_service import (
     DemoLoginDisabledError,
     InvalidPhoneTicketError,
@@ -93,7 +98,10 @@ __all__ = [
     "QuestionnaireScoringError",
     "QuestionnaireScoringService",
     "QuestionnaireSubmissionService",
+    "AggregatedRiskResult",
     "ReportHistoryEntry",
+    "RiskAggregationService",
+    "RiskAggregationServiceError",
     "ScoredQuestionAnswer",
     "ScoringQuestion",
     "StudentConsentResult",
