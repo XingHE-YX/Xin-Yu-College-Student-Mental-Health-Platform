@@ -135,4 +135,10 @@
 当前状态补充：`backend/src/main.py` 现已在应用启动时实例化并挂载 `app.state.deepseek_service`，与既有 `access_token_service`、`wechat_session_service` 保持同一注入模式；当前树洞发布仍维持 8.x 的 bootstrap 占位链路，不提前切换到正式 AI 审核，以避免把 9.2 模拟回退和 9.3 风险聚合职责混入本步。
 当前状态补充：已新增 `tests/backend/test_deepseek_service.py`，覆盖正常 JSON 返回、非 2xx 响应、非 JSON 文本和非对象 JSON 四类场景；并扩展 `tests/backend/test_database.py` 校验 `create_app()` 已暴露 `deepseek_service`。本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，随后复跑全部后端测试，当前共 83 项后端测试通过。
 当前状态补充：本步未修改小程序页面、样式或路由，因此无需新增前端视觉实现；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中 `S12` 中的“AI 调用失败 -> 走模拟回退路径”仍待 9.2 正式接入。
-待办：见 IMPLEMENTATION_PLAN.md 步骤9.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤9.2（DeepSeek 模拟回退路径实现）。
+当前状态补充：已新增 `backend/mock_response.json` 作为本地 AI 回退结果文件，并扩展 `backend/src/services/deepseek_service.py`：当前除常规 `create_json_completion()` 外，已新增 `create_json_completion_with_fallback()`，会在 DeepSeek 超时、非 2xx 响应或返回非法 JSON 时自动读取本地 `mock_response.json`，返回统一结构的 `content_json`、`response_payload`、`fallback_used` 与 `fallback_reason`，满足 `TECH_STACK.md` 中“优先调用 DeepSeek，失败时回退模拟数据”的要求。
+当前状态补充：树洞发帖链路现已真正接入 AI 回退包装层：`backend/src/api/routes/treehole.py` 会把 `app.state.deepseek_service` 注入 `TreeholeService`，`backend/src/services/treehole_service.py` 在创建帖子时会先保存原始文本与脱敏正文，再调用 DeepSeek 或本地 mock 路径生成结构化分析结果，并将 `request_payload_json`、`response_raw_json`、`parsed_risk_level`、`parsed_risk_score`、`emotion_tags_json`、`trigger_phrases_json`、`reason_text`、`recommended_action` 和 `fallback_used` 持久化到 `ai_analysis_records`；当回退命中时，帖子 `ai_status` 会写为 `mocked`，从而保证 AI 异常时树洞主流程不中断。
+当前状态补充：为避免提前混入 9.3 / 9.4 的风险聚合与发布决策，本步仍保留现阶段树洞的低风险公开主流程：即使远端 DeepSeek 已返回结构化风险结果，`treehole_posts.publish_status` 与学生端 `S12` 返回分支仍维持当前 bootstrap 低风险发布行为；真正的 `watch / high` 决策切换、重点关注与安全拦截仍待后续步骤实现。
+当前状态补充：已新增 / 扩展 `tests/backend/test_deepseek_service.py` 与 `tests/backend/test_treehole_api.py`，覆盖超时回退、非 200 回退、非法 JSON 回退、错误 mock 文件、树洞发帖在 mock 回退下成功落库，以及远端 AI 成功时分析记录持久化等场景；本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，并复跑全部后端测试，当前共 88 项后端测试通过。
+当前状态补充：本步未修改小程序页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中 `S12` 的前端页面结构无需变更即可承接后续 9.3 / 9.4 的正式风险分流结果。
+待办：见 IMPLEMENTATION_PLAN.md 步骤9.3。
