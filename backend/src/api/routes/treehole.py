@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from src.schemas.treehole import (
     TreeholeReactionSuccessResponse,
 )
 from src.services.treehole_service import (
+    TreeholeAIAnalysisError,
     TreeholeConsentRequiredError,
     TreeholeContentEmptyError,
     TreeholeFeedPostSnapshot,
@@ -122,12 +123,16 @@ def get_treehole_feed(
 )
 def create_treehole_post(
     payload: TreeholeCreatePostRequest,
+    request: Request,
     student: Annotated[StudentUser, Depends(get_current_student)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> TreeholeCreatePostSuccessResponse | JSONResponse:
     """Create one new treehole post using the phase-8 bootstrap publish path."""
     try:
-        result = TreeholeService(session).create_post(
+        result = TreeholeService(
+            session,
+            deepseek_service=request.app.state.deepseek_service,
+        ).create_post(
             student=student,
             content=payload.content,
         )
@@ -141,6 +146,12 @@ def create_treehole_post(
         return build_error_response(
             http_status=status.HTTP_400_BAD_REQUEST,
             code="TREEHOLE_CONTENT_EMPTY",
+            message=str(exc),
+        )
+    except TreeholeAIAnalysisError as exc:
+        return build_error_response(
+            http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            code="TREEHOLE_AI_UNAVAILABLE",
             message=str(exc),
         )
 

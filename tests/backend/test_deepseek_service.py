@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import httpx
 import pytest
 
@@ -98,6 +99,8 @@ def test_create_json_completion_posts_to_deepseek_and_parses_json(monkeypatch) -
         "risk_level": "low",
         "reason_text": "tone is neutral",
     }
+    assert result.fallback_used is False
+    assert result.fallback_reason is None
 
 
 def test_create_json_completion_raises_on_http_failure(monkeypatch) -> None:
@@ -219,4 +222,165 @@ def test_create_json_completion_raises_on_non_object_json(monkeypatch) -> None:
             system_prompt="Analyze treehole safety risk.",
             user_prompt="I feel uncertain.",
             response_example={"risk_level": "low"},
+        )
+
+
+def build_timeout_client():
+    """Return one fake httpx client class that raises a timeout."""
+
+    class FakeClient:
+        def __init__(self, *, timeout, headers) -> None:
+            pass
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+        def post(self, url, json):
+            raise httpx.ReadTimeout(
+                "timed out",
+                request=httpx.Request("POST", url),
+            )
+
+    return FakeClient
+
+
+def build_status_error_client():
+    """Return one fake httpx client class that raises a non-2xx status error."""
+
+    class FakeClient:
+        def __init__(self, *, timeout, headers) -> None:
+            pass
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+        def post(self, url, json):
+            response = httpx.Response(
+                status_code=503,
+                request=httpx.Request("POST", url),
+                json={"error": {"message": "upstream unavailable"}},
+            )
+            response.raise_for_status()
+
+    return FakeClient
+
+
+def build_invalid_content_client():
+    """Return one fake httpx client class that returns non-JSON completion content."""
+
+    class FakeClient:
+        def __init__(self, *, timeout, headers) -> None:
+            pass
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> bool:
+            return False
+
+        def post(self, url, json):
+            return httpx.Response(
+                status_code=200,
+                request=httpx.Request("POST", url),
+                json={
+                    "id": "chatcmpl-test-004",
+                    "model": DEEPSEEK_MODEL_NAME,
+                    "choices": [
+                        {
+                            "finish_reason": "stop",
+                            "message": {
+                                "content": "not json",
+                            },
+                        }
+                    ],
+                },
+            )
+
+    return FakeClient
+
+
+@pytest.mark.parametrize(
+    ("client_factory", "expected_reason_fragment"),
+    [
+        (
+            lambda: build_timeout_client(),
+            "timed out",
+        ),
+        (
+            lambda: build_status_error_client(),
+            "non-success status",
+        ),
+        (
+            lambda: build_invalid_content_client(),
+            "not valid JSON",
+        ),
+    ],
+)
+def test_create_json_completion_with_fallback_uses_local_mock_response(
+    monkeypatch,
+    tmp_path,
+    client_factory,
+    expected_reason_fragment: str,
+) -> None:
+    """Supported upstream failures should fall back to the local mock JSON object."""
+    mock_response_path = tmp_path / "mock_response.json"
+    mock_payload = {
+        "risk_level": "low",
+        "risk_score": 0.12,
+        "emotion_tags": ["fatigue"],
+        "trigger_phrases": [],
+        "reason_text": "mocked fallback response",
+        "recommended_action": "publish",
+    }
+    mock_response_path.write_text(
+        json.dumps(mock_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "src.services.deepseek_service.httpx.Client",
+        client_factory(),
+    )
+
+    result = DeepSeekService(build_settings()).create_json_completion_with_fallback(
+        system_prompt="Analyze treehole safety risk.",
+        user_prompt="I feel overwhelmed.",
+        response_example={"risk_level": "low"},
+        mock_response_path=mock_response_path,
+    )
+
+    assert result.fallback_used is True
+    assert expected_reason_fragment in (result.fallback_reason or "")
+    assert result.finish_reason == "mock_fallback"
+    assert result.content_json == mock_payload
+    assert result.response_payload["source"] == "mock_response.json"
+    assert result.response_payload["mock_response_path"] == str(mock_response_path)
+
+
+def test_create_json_completion_with_fallback_raises_when_mock_file_is_invalid(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    """The fallback wrapper should fail clearly when the local mock file is malformed."""
+    mock_response_path = tmp_path / "mock_response.json"
+    mock_response_path.write_text("not valid json", encoding="utf-8")
+    monkeypatch.setattr(
+        "src.services.deepseek_service.httpx.Client",
+        build_timeout_client(),
+    )
+
+    with pytest.raises(
+        DeepSeekServiceError,
+        match="mock fallback file is not valid JSON",
+    ):
+        DeepSeekService(build_settings()).create_json_completion_with_fallback(
+            system_prompt="Analyze treehole safety risk.",
+            user_prompt="I feel overwhelmed.",
+            response_example={"risk_level": "low"},
+            mock_response_path=mock_response_path,
         )

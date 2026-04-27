@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.orm import Session
 
@@ -23,6 +23,7 @@ from src.models.post_reaction import PostReaction
 from src.models.student_user import StudentUser
 from src.models.treehole_post import TreeholePost
 from src.repositories.treehole_repository import TreeholeRepository
+from src.services.deepseek_service import DeepSeekJsonCompletionResult, DeepSeekService
 
 REACTION_DISPLAY_ORDER = (
     PostReactionType.HUG,
@@ -54,6 +55,10 @@ class TreeholePostNotFoundError(TreeholeServiceError):
 
 class TreeholePostNotPublicError(TreeholeServiceError):
     """Raised when the requested treehole post is not publicly interactable."""
+
+
+class TreeholeAIAnalysisError(TreeholeServiceError):
+    """Raised when one AI analysis payload cannot be normalized for persistence."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,12 +101,34 @@ class TreeholeReactionResult:
     reactions: list[TreeholeReactionSnapshot]
 
 
-class TreeholeService:
-    """Coordinate student feed reads, bootstrap post publishing, and reactions."""
+@dataclass(frozen=True, slots=True)
+class TreeholeAIAnalysisSnapshot:
+    """Normalized treehole AI moderation result used for persistence."""
 
-    def __init__(self, session: Session) -> None:
+    parsed_risk_level: QuestionnaireRiskLevel
+    parsed_risk_score: Decimal
+    emotion_tags: list[str]
+    trigger_phrases: list[str]
+    reason_text: str
+    recommended_action: AIRecommendedAction
+    request_payload_json: dict[str, object]
+    response_raw_json: dict[str, object]
+    fallback_used: bool
+    ai_status: TreeholeAIStatus
+
+
+class TreeholeService:
+    """Coordinate student feed reads, AI-backed post publishing, and reactions."""
+
+    def __init__(
+        self,
+        session: Session,
+        *,
+        deepseek_service: DeepSeekService | None = None,
+    ) -> None:
         self.session = session
         self.repository = TreeholeRepository(session)
+        self.deepseek_service = deepseek_service
 
     def list_feed(
         self,
@@ -122,7 +149,7 @@ class TreeholeService:
         student: StudentUser,
         content: str,
     ) -> CreatedTreeholePostResult:
-        """Persist one new treehole post using the phase-8 bootstrap publish path."""
+        """Persist one new treehole post while allowing AI fallback to keep the flow alive."""
         if student.consent_status is not ConsentStatus.GRANTED:
             raise TreeholeConsentRequiredError(
                 "crisis intervention consent is required to create treehole posts"
@@ -133,13 +160,14 @@ class TreeholeService:
             raise TreeholeContentEmptyError("treehole content must not be empty")
 
         published_at = utc_now()
+        masked_content = self._mask_content(normalized_content)
         post = TreeholePost(
             student_id=student.id,
             anonymous_name=student.display_nickname.strip() or "匿名同学",
             anonymous_avatar_key=student.display_avatar_seed,
             content_raw=normalized_content,
-            content_masked=self._mask_content(normalized_content),
-            ai_status=TreeholeAIStatus.MOCKED,
+            content_masked=masked_content,
+            ai_status=TreeholeAIStatus.PENDING,
             publish_status=TreeholePublishStatus.PUBLISHED,
             risk_level=QuestionnaireRiskLevel.LOW,
             allow_publication=True,
@@ -147,7 +175,9 @@ class TreeholeService:
             published_at=published_at,
         )
         self.repository.add_post(post)
-        self.session.add(self._build_bootstrap_analysis_record(post, normalized_content))
+        analysis_snapshot = self._analyze_treehole_content(normalized_content)
+        post.ai_status = analysis_snapshot.ai_status
+        self.session.add(self._build_ai_analysis_record(post, analysis_snapshot))
         self.session.commit()
         self.session.refresh(post)
         return CreatedTreeholePostResult(post=post)
@@ -264,34 +294,145 @@ class TreeholeService:
             for reaction_type in REACTION_DISPLAY_ORDER
         ]
 
-    def _build_bootstrap_analysis_record(
+    def _build_ai_analysis_record(
         self,
         post: TreeholePost,
-        content: str,
+        analysis_snapshot: TreeholeAIAnalysisSnapshot,
     ) -> AIAnalysisRecord:
-        """Create the phase-8 placeholder analysis row used before phase-9 AI wiring."""
+        """Create one persisted AI analysis row from a normalized moderation snapshot."""
         return AIAnalysisRecord(
             target_id=post.id,
+            request_payload_json=analysis_snapshot.request_payload_json,
+            response_raw_json=analysis_snapshot.response_raw_json,
+            parsed_risk_level=analysis_snapshot.parsed_risk_level,
+            parsed_risk_score=analysis_snapshot.parsed_risk_score,
+            emotion_tags_json=analysis_snapshot.emotion_tags,
+            trigger_phrases_json=analysis_snapshot.trigger_phrases,
+            reason_text=analysis_snapshot.reason_text,
+            recommended_action=analysis_snapshot.recommended_action,
+            fallback_used=analysis_snapshot.fallback_used,
+        )
+
+    def _analyze_treehole_content(
+        self,
+        content: str,
+    ) -> TreeholeAIAnalysisSnapshot:
+        """Run DeepSeek moderation with local fallback and normalize the structured result."""
+        if self.deepseek_service is None:
+            return self._build_legacy_mock_analysis_snapshot(content)
+
+        completion_result = self.deepseek_service.create_json_completion_with_fallback(
+            system_prompt=(
+                "You are a campus mental-health safety moderation assistant for an "
+                "anonymous treehole product. Analyze the student text and return a "
+                "structured safety assessment. Do not diagnose. Focus on risk "
+                "signals, supportive context, and whether the content can stay public."
+            ),
+            user_prompt=(
+                "Analyze the following anonymous treehole post:\n"
+                f"{content}"
+            ),
+            response_example={
+                "risk_level": "low",
+                "risk_score": 0.12,
+                "emotion_tags": ["fatigue"],
+                "trigger_phrases": [],
+                "reason_text": "brief rationale",
+                "recommended_action": "publish",
+            },
+        )
+        return self._normalize_ai_completion_result(completion_result)
+
+    def _normalize_ai_completion_result(
+        self,
+        completion_result: DeepSeekJsonCompletionResult,
+    ) -> TreeholeAIAnalysisSnapshot:
+        """Normalize one DeepSeek or mock completion into the persistence snapshot."""
+        content_json = completion_result.content_json
+
+        risk_level_raw = content_json.get("risk_level")
+        try:
+            parsed_risk_level = QuestionnaireRiskLevel(str(risk_level_raw))
+        except ValueError as exc:
+            raise TreeholeAIAnalysisError(
+                "treehole AI analysis payload contains an invalid risk_level"
+            ) from exc
+
+        risk_score_raw = content_json.get("risk_score", "0")
+        try:
+            parsed_risk_score = Decimal(str(risk_score_raw)).quantize(
+                Decimal("0.0001")
+            )
+        except (InvalidOperation, ValueError) as exc:
+            raise TreeholeAIAnalysisError(
+                "treehole AI analysis payload contains an invalid risk_score"
+            ) from exc
+
+        emotion_tags = self._normalize_string_list(
+            content_json.get("emotion_tags", []),
+            field_name="emotion_tags",
+        )
+        trigger_phrases = self._normalize_string_list(
+            content_json.get("trigger_phrases", []),
+            field_name="trigger_phrases",
+        )
+        reason_text = content_json.get("reason_text")
+        if not isinstance(reason_text, str) or not reason_text.strip():
+            raise TreeholeAIAnalysisError(
+                "treehole AI analysis payload contains an invalid reason_text"
+            )
+
+        recommended_action_raw = content_json.get("recommended_action")
+        try:
+            recommended_action = AIRecommendedAction(str(recommended_action_raw))
+        except ValueError as exc:
+            raise TreeholeAIAnalysisError(
+                "treehole AI analysis payload contains an invalid recommended_action"
+            ) from exc
+
+        return TreeholeAIAnalysisSnapshot(
+            parsed_risk_level=parsed_risk_level,
+            parsed_risk_score=parsed_risk_score,
+            emotion_tags=emotion_tags,
+            trigger_phrases=trigger_phrases,
+            reason_text=reason_text.strip(),
+            recommended_action=recommended_action,
+            request_payload_json=completion_result.request_payload,
+            response_raw_json=completion_result.response_payload,
+            fallback_used=completion_result.fallback_used,
+            ai_status=(
+                TreeholeAIStatus.MOCKED
+                if completion_result.fallback_used
+                else TreeholeAIStatus.ANALYZED
+            ),
+        )
+
+    def _build_legacy_mock_analysis_snapshot(
+        self,
+        content: str,
+    ) -> TreeholeAIAnalysisSnapshot:
+        """Fallback snapshot used only when the app is missing a DeepSeek service instance."""
+        return TreeholeAIAnalysisSnapshot(
+            parsed_risk_level=QuestionnaireRiskLevel.LOW,
+            parsed_risk_score=Decimal("0.1200"),
+            emotion_tags=["stage_9_fallback"],
+            trigger_phrases=[],
+            reason_text=(
+                "Treehole moderation used the local fallback path because no "
+                "DeepSeek service instance was attached to the application."
+            ),
+            recommended_action=AIRecommendedAction.PUBLISH,
             request_payload_json={
-                "mode": "stage_8_bootstrap",
+                "mode": "missing_deepseek_service",
                 "content_length": len(content),
             },
             response_raw_json={
-                "mode": "stage_8_bootstrap",
+                "source": "legacy_missing_service_fallback",
                 "risk_level": QuestionnaireRiskLevel.LOW.value,
-                "publish_status": TreeholePublishStatus.PUBLISHED.value,
+                "recommended_action": AIRecommendedAction.PUBLISH.value,
             },
-            parsed_risk_level=QuestionnaireRiskLevel.LOW,
-            parsed_risk_score=Decimal("0.1200"),
-            emotion_tags_json=["stage_8_bootstrap"],
-            trigger_phrases_json=[],
-            reason_text=(
-                "Phase 8 bootstrap moderation auto-published this post so the "
-                "student feed, reaction, and delete flows can run before phase 9 "
-                "AI integration lands."
-            ),
-            recommended_action=AIRecommendedAction.PUBLISH,
             fallback_used=True,
+            ai_status=TreeholeAIStatus.MOCKED,
         )
 
     def _is_public_post(self, post: TreeholePost) -> bool:
@@ -313,3 +454,26 @@ class TreeholeService:
         masked_content = PHONE_PATTERN.sub("[手机号已隐藏]", content)
         masked_content = EMAIL_PATTERN.sub("[邮箱已隐藏]", masked_content)
         return masked_content
+
+    def _normalize_string_list(
+        self,
+        value: object,
+        *,
+        field_name: str,
+    ) -> list[str]:
+        """Validate that one AI payload field is a string array and trim empty items."""
+        if not isinstance(value, list):
+            raise TreeholeAIAnalysisError(
+                f"treehole AI analysis payload contains an invalid {field_name}"
+            )
+
+        normalized_items: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise TreeholeAIAnalysisError(
+                    f"treehole AI analysis payload contains an invalid {field_name}"
+                )
+            normalized_item = item.strip()
+            if normalized_item:
+                normalized_items.append(normalized_item)
+        return normalized_items

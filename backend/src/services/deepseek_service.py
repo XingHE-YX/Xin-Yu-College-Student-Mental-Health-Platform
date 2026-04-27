@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -12,6 +13,9 @@ from src.core.settings import Settings
 
 DEEPSEEK_CHAT_COMPLETIONS_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL_NAME = "deepseek-chat"
+DEFAULT_DEEPSEEK_MOCK_RESPONSE_PATH = (
+    Path(__file__).resolve().parents[2] / "mock_response.json"
+)
 
 
 class DeepSeekServiceError(RuntimeError):
@@ -29,6 +33,8 @@ class DeepSeekJsonCompletionResult:
     finish_reason: str | None
     content_text: str
     content_json: dict[str, Any]
+    fallback_used: bool
+    fallback_reason: str | None
 
 
 class DeepSeekService:
@@ -48,6 +54,52 @@ class DeepSeekService:
         max_tokens: int = 800,
     ) -> DeepSeekJsonCompletionResult:
         """Request one DeepSeek chat completion that must decode into a JSON object."""
+        request_payload = self._build_request_payload(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_example=response_example,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return self._execute_json_completion(request_payload)
+
+    def create_json_completion_with_fallback(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        response_example: dict[str, Any],
+        temperature: float = 0.2,
+        max_tokens: int = 800,
+        mock_response_path: str | Path | None = None,
+    ) -> DeepSeekJsonCompletionResult:
+        """Return one JSON completion, falling back to local mock data on supported failures."""
+        request_payload = self._build_request_payload(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            response_example=response_example,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        try:
+            return self._execute_json_completion(request_payload)
+        except DeepSeekServiceError as exc:
+            return self._load_mock_completion(
+                request_payload=request_payload,
+                fallback_reason=str(exc),
+                mock_response_path=mock_response_path,
+            )
+
+    def _build_request_payload(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        response_example: dict[str, Any],
+        temperature: float,
+        max_tokens: int,
+    ) -> dict[str, Any]:
+        """Build the stable DeepSeek request payload used by all JSON completions."""
         normalized_system_prompt = system_prompt.strip()
         normalized_user_prompt = user_prompt.strip()
         if not normalized_system_prompt:
@@ -57,7 +109,7 @@ class DeepSeekService:
         if not response_example:
             raise ValueError("response_example must not be empty")
 
-        request_payload = {
+        return {
             "model": DEEPSEEK_MODEL_NAME,
             "messages": [
                 {
@@ -76,6 +128,12 @@ class DeepSeekService:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+
+    def _execute_json_completion(
+        self,
+        request_payload: dict[str, Any],
+    ) -> DeepSeekJsonCompletionResult:
+        """Execute one remote DeepSeek request and parse the JSON completion result."""
         headers = {
             "Authorization": (
                 f"Bearer {self.settings.deepseek_api_key.get_secret_value()}"
@@ -90,6 +148,8 @@ class DeepSeekService:
                     json=request_payload,
                 )
                 response.raise_for_status()
+        except httpx.TimeoutException as exc:
+            raise DeepSeekServiceError("DeepSeek chat completion timed out") from exc
         except httpx.HTTPStatusError as exc:
             raise DeepSeekServiceError(
                 "DeepSeek chat completion returned a non-success status"
@@ -159,6 +219,55 @@ class DeepSeekService:
             finish_reason=finish_reason if isinstance(finish_reason, str) else None,
             content_text=content_text,
             content_json=content_json,
+            fallback_used=False,
+            fallback_reason=None,
+        )
+
+    def _load_mock_completion(
+        self,
+        *,
+        request_payload: dict[str, Any],
+        fallback_reason: str,
+        mock_response_path: str | Path | None,
+    ) -> DeepSeekJsonCompletionResult:
+        """Load one local mock response used when the upstream API cannot complete."""
+        resolved_path = (
+            Path(mock_response_path)
+            if mock_response_path is not None
+            else DEFAULT_DEEPSEEK_MOCK_RESPONSE_PATH
+        )
+        try:
+            content_json = json.loads(resolved_path.read_text(encoding="utf-8"))
+        except FileNotFoundError as exc:
+            raise DeepSeekServiceError(
+                f"DeepSeek mock fallback file does not exist: {resolved_path}"
+            ) from exc
+        except json.JSONDecodeError as exc:
+            raise DeepSeekServiceError(
+                "DeepSeek mock fallback file is not valid JSON"
+            ) from exc
+
+        if not isinstance(content_json, dict):
+            raise DeepSeekServiceError(
+                "DeepSeek mock fallback content must decode to a JSON object"
+            )
+
+        content_text = json.dumps(content_json, ensure_ascii=False)
+        return DeepSeekJsonCompletionResult(
+            request_payload=request_payload,
+            response_payload={
+                "source": "mock_response.json",
+                "mock_response_path": str(resolved_path),
+                "fallback_reason": fallback_reason,
+                "content": content_json,
+            },
+            completion_id=None,
+            model_name=DEEPSEEK_MODEL_NAME,
+            finish_reason="mock_fallback",
+            content_text=content_text,
+            content_json=content_json,
+            fallback_used=True,
+            fallback_reason=fallback_reason,
         )
 
     def _build_json_system_prompt(

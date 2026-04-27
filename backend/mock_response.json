@@ -1,0 +1,11 @@
+{
+  "risk_level": "low",
+  "risk_score": 0.12,
+  "emotion_tags": [
+    "fatigue",
+    "support_seeking"
+  ],
+  "trigger_phrases": [],
+  "reason_text": "模拟回退结果：文本表达了压力与倾诉需求，但未出现明确自伤、自杀或他伤信号。",
+  "recommended_action": "publish"
+}

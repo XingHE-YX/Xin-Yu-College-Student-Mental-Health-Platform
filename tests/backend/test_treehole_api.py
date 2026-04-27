@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
+from decimal import Decimal
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -19,6 +21,10 @@ from src.constants.treehole_enums import (
 from src.core.settings import Settings
 from src.main import create_app
 from src.models import AIAnalysisRecord, Base, PostReaction, StudentUser, TreeholePost
+from src.services.deepseek_service import (
+    DEEPSEEK_MODEL_NAME,
+    DeepSeekJsonCompletionResult,
+)
 
 
 def build_settings(database_file: Path) -> Settings:
@@ -36,11 +42,78 @@ def build_settings(database_file: Path) -> Settings:
     )
 
 
-def create_treehole_api_test_app(database_file: Path):
+def create_treehole_api_test_app(
+    database_file: Path,
+    *,
+    deepseek_result: DeepSeekJsonCompletionResult | None = None,
+):
     """Create an application backed by a temporary SQLite file."""
     app = create_app(build_settings(database_file))
+    app.state.deepseek_service = FakeDeepSeekService(
+        result=deepseek_result or build_mock_treehole_ai_result()
+    )
     Base.metadata.create_all(app.state.db_engine)
     return app
+
+
+class FakeDeepSeekService:
+    """Deterministic DeepSeek stub used by treehole API tests."""
+
+    def __init__(self, *, result: DeepSeekJsonCompletionResult) -> None:
+        self.result = result
+        self.calls: list[dict[str, object]] = []
+
+    def create_json_completion_with_fallback(self, **kwargs) -> DeepSeekJsonCompletionResult:
+        self.calls.append(kwargs)
+        return self.result
+
+
+def build_mock_treehole_ai_result(
+    *,
+    fallback_used: bool = True,
+    risk_level: str = "low",
+    risk_score: str = "0.1200",
+    recommended_action: str = "publish",
+    emotion_tags: list[str] | None = None,
+    trigger_phrases: list[str] | None = None,
+    reason_text: str = "模拟回退：当前内容未出现明确高风险信号。",
+) -> DeepSeekJsonCompletionResult:
+    """Build one normalized fake AI result for treehole posting tests."""
+    content_json = {
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "emotion_tags": emotion_tags or ["fatigue"],
+        "trigger_phrases": trigger_phrases or [],
+        "reason_text": reason_text,
+        "recommended_action": recommended_action,
+    }
+    return DeepSeekJsonCompletionResult(
+        request_payload={
+            "model": DEEPSEEK_MODEL_NAME,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Analyze treehole safety risk.",
+                },
+                {
+                    "role": "user",
+                    "content": "fake test treehole content",
+                },
+            ],
+            "response_format": {"type": "json_object"},
+        },
+        response_payload={
+            "source": "mock_response.json" if fallback_used else "deepseek_api",
+            "content": content_json,
+        },
+        completion_id=None if fallback_used else "chatcmpl-treehole-test-001",
+        model_name=DEEPSEEK_MODEL_NAME,
+        finish_reason="mock_fallback" if fallback_used else "stop",
+        content_text=json.dumps(content_json, ensure_ascii=False),
+        content_json=content_json,
+        fallback_used=fallback_used,
+        fallback_reason="DeepSeek chat completion timed out" if fallback_used else None,
+    )
 
 
 def create_student_with_token(
@@ -250,10 +323,10 @@ def test_feed_returns_only_public_posts_with_masked_content_and_reaction_state(
     assert older_reactions["accompany"]["count"] == 0
 
 
-def test_create_treehole_post_persists_masked_public_post_and_bootstrap_analysis(
+def test_create_treehole_post_persists_masked_public_post_and_mock_fallback_analysis(
     tmp_path,
 ) -> None:
-    """Create should publish one bootstrap post and store a placeholder analysis row."""
+    """Create should keep the student flow alive by storing one fallback analysis row."""
     app = create_treehole_api_test_app(tmp_path / "treehole-create.db")
     _, token = create_student_with_token(app, suffix="011")
     client = TestClient(app)
@@ -289,8 +362,60 @@ def test_create_treehole_post_persists_masked_public_post_and_bootstrap_analysis
         )
         assert analysis is not None
         assert analysis.parsed_risk_level is QuestionnaireRiskLevel.LOW
+        assert analysis.parsed_risk_score == Decimal("0.1200")
         assert analysis.recommended_action is AIRecommendedAction.PUBLISH
         assert analysis.fallback_used is True
+        assert analysis.provider.value == "deepseek"
+        assert analysis.model_name == DEEPSEEK_MODEL_NAME
+        assert analysis.response_raw_json["source"] == "mock_response.json"
+
+
+def test_create_treehole_post_records_remote_ai_analysis_without_interrupting_publish_flow(
+    tmp_path,
+) -> None:
+    """Remote AI success should be persisted even though publish decisions stay on the bootstrap path."""
+    app = create_treehole_api_test_app(
+        tmp_path / "treehole-create-remote.db",
+        deepseek_result=build_mock_treehole_ai_result(
+            fallback_used=False,
+            risk_level="watch",
+            risk_score="0.6400",
+            recommended_action="focus_list",
+            emotion_tags=["stress", "fatigue"],
+            trigger_phrases=["撑不住了"],
+            reason_text="检测到持续性消极和压力表达，但未出现明确自伤信号。",
+        ),
+    )
+    _, token = create_student_with_token(app, suffix="012")
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/treehole/posts",
+        json={"content": "最近总觉得撑不住了，但我还在努力。"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["data"]["publish_status"] == "published"
+    assert payload["data"]["risk_level"] == "low"
+
+    with app.state.db_session_factory() as session:
+        post = session.get(TreeholePost, payload["data"]["post_id"])
+        assert post is not None
+        assert post.ai_status is TreeholeAIStatus.ANALYZED
+        assert post.publish_status is TreeholePublishStatus.PUBLISHED
+        assert post.risk_level is QuestionnaireRiskLevel.LOW
+
+        analysis = session.scalar(
+            select(AIAnalysisRecord).where(AIAnalysisRecord.target_id == post.id)
+        )
+        assert analysis is not None
+        assert analysis.parsed_risk_level is QuestionnaireRiskLevel.WATCH
+        assert analysis.parsed_risk_score == Decimal("0.6400")
+        assert analysis.recommended_action is AIRecommendedAction.FOCUS_LIST
+        assert analysis.fallback_used is False
+        assert analysis.trigger_phrases_json == ["撑不住了"]
 
 
 def test_create_treehole_post_rejects_students_without_granted_consent(
