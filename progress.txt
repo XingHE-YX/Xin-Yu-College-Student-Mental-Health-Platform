@@ -211,3 +211,16 @@
 当前状态补充：本地已执行 `ruff check --no-cache` 静态检查、定向 pytest（`tests/backend/test_admin_auth_api.py`、`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/admin/test_session_state.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 120 项通过，`tests/admin` 共 5 项通过，合计 125 项测试通过。
 当前状态补充：本步尚未实现 `A05 帖子管理`、`A06 用户目录` 或 `A07 审计日志` 的独立页面；A02 中对应模块入口仍为结构化说明卡片，后续继续按 `IMPLEMENTATION_PLAN.md` 的 `11.4 / 11.5` 逐步补齐。
 待办：见 IMPLEMENTATION_PLAN.md 步骤11.4。
+已完成：IMPLEMENTATION_PLAN.md 步骤11.4（帖子管理页实现）。
+当前状态补充：已新增 `backend/src/repositories/admin_post_repository.py`、`backend/src/services/admin_post_service.py`、`backend/src/schemas/admin_post.py` 与路由 `backend/src/api/routes/admin_posts.py`，打通 `GET /api/v1/admin/posts`、`GET /api/v1/admin/posts/{post_id}`、`PATCH /api/v1/admin/posts/{post_id}/visibility`，并额外新增 `POST /api/v1/admin/posts/{post_id}/reveal-content` 作为显式原文展开入口，从而把 `A05 帖子管理页` 的列表、详情、审计与隐藏动作闭环真正接通。
+当前状态补充：A05 列表接口当前已支持按 `published / hidden_by_admin / blocked_high_risk / deleted_by_user` 四种帖子状态过滤，并返回状态桶计数；排序当前按 `published_at / deleted_at / created_at` 的最新可见活动时间倒序，满足“已发布 / 被拦截 / 已删除 / 管理员隐藏”统一管理的后台口径。
+当前状态补充：A05 详情接口当前默认只返回脱敏内容与结构化上下文，不直接暴露 `content_raw`。管理员必须通过显式 `reveal-content` 动作二次确认后才会获得完整原文；该动作会写入 `ADMIN_REVEAL_POST_CONTENT` 审计事件。详情当前同时返回匿名昵称、发帖人脱敏身份、AI 风险等级、AI 触发短语、互动统计、关联预警工单摘要以及当前可执行的可见性动作权限。
+当前状态补充：帖子可见性动作当前按固定状态机执行，避免后台误把危险内容恢复公开：`published -> hidden_by_admin` 对应“隐藏帖子”，`hidden_by_admin -> published` 对应“恢复发布”，`hidden_by_admin / blocked_high_risk -> 保持隐藏` 对应显式维持非公开状态；其中系统已判定为 `blocked_high_risk` 的帖子当前不可直接恢复发布，只能继续保持隐藏，从而不与 9.4 的高风险拦截规则冲突。
+当前状态补充：本步已补齐帖子管理动作审计：隐藏帖子写入 `ADMIN_HIDE_POST`，保持隐藏写入 `ADMIN_KEEP_POST_HIDDEN`，恢复发布写入 `ADMIN_RESTORE_POST_VISIBILITY`；因此 `PRD.md` 中“隐藏 / 维持隐藏 / 恢复发布”三类内容治理动作现在都具备后台可追溯性。
+当前状态补充：管理后台 `admin/app.py` 已从 `A02/A03/A04` 扩展为真实 `A05 帖子管理` 工作区。当前管理员可从 A02 总览或 A03 队列页进入 A05；A05 采用左侧帖子列表、右侧详情的 master-detail 布局，支持状态筛选、显式打开帖子、查看 AI 分析和支持反应统计、二次确认后展开完整原文，以及执行“隐藏帖子 / 保持隐藏 / 恢复发布”动作。
+当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端规范，本步继续仅使用 Streamlit 原生组件与局部 CSS 注入，复用既有卡片、Chip 与详情块视觉语言，同时用危险色和警示色区分“被拦截”“原文展开”“隐藏动作”等高敏感内容治理区域，保证后台观感克制、高信息密度且可审计。
+当前状态补充：已扩展 `admin/state/session.py` 与 `admin/services/auth.py`，为当前活动帖子详情、帖子状态筛选、帖子原文展开与可见性动作建立独立缓存与 API 调用能力；后台当前只会在管理员显式点击“打开帖子”时请求 A05 详情，只会在显式点击“展开完整原文”时请求敏感原文，因此不会因为页面 rerun 制造无意义的敏感查看审计噪音。
+当前状态补充：已新增 `tests/backend/test_admin_posts_api.py`，覆盖 A05 列表筛选与状态桶统计、默认脱敏详情、完整原文展开审计、隐藏帖子、恢复发布、保持隐藏以及“被拦截帖子不可直接恢复发布”的状态冲突场景；同时扩展 `tests/admin/test_admin_api_client.py` 与 `tests/admin/test_session_state.py`，覆盖 posts 客户端 query params、帖子可见性 patch 端点和后台帖子详情 session 缓存逻辑。
+当前状态补充：本地已执行 `ruff check --no-cache` 静态检查、定向 pytest（`tests/backend/test_admin_auth_api.py`、`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/backend/test_admin_posts_api.py`、`tests/admin/test_session_state.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 127 项通过，`tests/admin` 共 7 项通过，合计 134 项测试通过。
+当前状态补充：本步尚未实现 `A06 用户目录` 或 `A07 审计日志` 的独立页面；A02 中对应模块入口仍为结构化说明卡片，后续继续按 `IMPLEMENTATION_PLAN.md` 的 `11.5` 补齐用户目录、敏感详情二次确认和审计日志查询界面。
+待办：见 IMPLEMENTATION_PLAN.md 步骤11.5。
