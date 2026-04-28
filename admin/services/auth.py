@@ -244,6 +244,83 @@ class AdminApiClient:
         )
         return payload["data"]
 
+    def list_users(
+        self,
+        *,
+        access_token: str,
+        risk_status: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the filtered A06 user-directory payload."""
+        params = {"risk_status": risk_status} if risk_status else None
+        payload = self._request(
+            "GET",
+            "/admin/users",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params=params,
+        )
+        return payload["data"]
+
+    def get_user_detail(
+        self,
+        *,
+        access_token: str,
+        student_id: int,
+    ) -> dict[str, Any]:
+        """Return the A06 user-detail payload for one selected student."""
+        payload = self._request(
+            "GET",
+            f"/admin/users/{student_id}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]["student"]
+
+    def reveal_user_phone(
+        self,
+        *,
+        access_token: str,
+        student_id: int,
+    ) -> dict[str, Any]:
+        """Reveal the full phone number for one selected student."""
+        payload = self._request(
+            "POST",
+            f"/admin/users/{student_id}/reveal-phone",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]
+
+    def list_audit_logs(
+        self,
+        *,
+        access_token: str,
+        actor_type: str | None = None,
+        actor_id: int | None = None,
+        action_code: str | None = None,
+        target_type: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the filtered A07 audit-log payload."""
+        params: dict[str, str] = {}
+        if actor_type:
+            params["actor_type"] = actor_type
+        if actor_id is not None:
+            params["actor_id"] = str(actor_id)
+        if action_code:
+            params["action_code"] = action_code
+        if target_type:
+            params["target_type"] = target_type
+        if date_from:
+            params["date_from"] = date_from
+        if date_to:
+            params["date_to"] = date_to
+        payload = self._request(
+            "GET",
+            "/admin/audit-logs",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params=params or None,
+        )
+        return payload["data"]
+
     def _request(
         self,
         method: str,

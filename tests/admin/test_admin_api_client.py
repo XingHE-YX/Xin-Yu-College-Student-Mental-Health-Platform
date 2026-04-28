@@ -177,6 +177,107 @@ def test_update_post_visibility_calls_patch_endpoint(monkeypatch) -> None:
     assert payload["publish_status"] == "hidden_by_admin"
 
 
+def test_list_users_passes_risk_status_params(monkeypatch) -> None:
+    """User-directory requests should forward the selected risk-status filter."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {"data": {"items": [], "status_counts": [], "applied_risk_status": "high"}}
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    payload = client.list_users(
+        access_token="jwt-token",
+        risk_status="high",
+    )
+
+    assert captured == {
+        "method": "GET",
+        "path": "/admin/users",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+        "params": {"risk_status": "high"},
+    }
+    assert payload["applied_risk_status"] == "high"
+
+
+def test_reveal_user_phone_calls_explicit_reveal_endpoint(monkeypatch) -> None:
+    """Full-phone reveal requests should use the dedicated audited endpoint."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {"data": {"student_id": 4, "full_phone": "+8613812345678"}}
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    payload = client.reveal_user_phone(
+        access_token="jwt-token",
+        student_id=4,
+    )
+
+    assert captured == {
+        "method": "POST",
+        "path": "/admin/users/4/reveal-phone",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+        "params": None,
+    }
+    assert payload["full_phone"] == "+8613812345678"
+
+
+def test_list_audit_logs_passes_filter_params(monkeypatch) -> None:
+    """Audit-log requests should forward actor, action, target, and date filters."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {"data": {"records": [], "filtered_count": 0}}
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    client.list_audit_logs(
+        access_token="jwt-token",
+        actor_type="admin",
+        actor_id=1,
+        action_code="ADMIN_REVEAL_STUDENT_PHONE",
+        target_type="student_user",
+        date_from="2026-04-28",
+        date_to="2026-04-28",
+    )
+
+    assert captured == {
+        "method": "GET",
+        "path": "/admin/audit-logs",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+        "params": {
+            "actor_type": "admin",
+            "actor_id": "1",
+            "action_code": "ADMIN_REVEAL_STUDENT_PHONE",
+            "target_type": "student_user",
+            "date_from": "2026-04-28",
+            "date_to": "2026-04-28",
+        },
+    }
+
+
 def test_request_uses_detail_payload_for_inactive_admin_errors(monkeypatch) -> None:
     """Auth dependency errors returned as `detail` should still map to a useful code."""
 
