@@ -18,12 +18,15 @@ from admin.state.session import (
     bootstrap_admin_session_state,
     clear_admin_session,
     clear_selected_alert_detail,
+    clear_selected_post_detail,
     get_admin_access_token,
     get_admin_active_view,
     get_admin_auth_error,
     get_admin_profile,
     get_selected_alert_detail,
     get_selected_alert_id,
+    get_selected_post_detail,
+    get_selected_post_id,
     is_admin_authenticated,
     pop_admin_alert_feedback,
     set_admin_active_view,
@@ -31,12 +34,14 @@ from admin.state.session import (
     set_admin_auth_error,
     set_admin_session,
     set_selected_alert_detail,
+    set_selected_post_detail,
 )
 from admin.utils.config import get_admin_api_base_url
 from admin.utils.styles import build_admin_console_css
 
 VIEW_DASHBOARD = "dashboard"
 VIEW_ALERTS = "alerts"
+VIEW_POSTS = "posts"
 ALERT_STATUS_FILTER_OPTIONS = (
     ("pending_review", "待复核"),
     ("confirmed_pending_intervention", "已确认"),
@@ -44,6 +49,13 @@ ALERT_STATUS_FILTER_OPTIONS = (
     ("closed", "已结案"),
 )
 ALERT_STATUS_LABELS = {code: label for code, label in ALERT_STATUS_FILTER_OPTIONS}
+POST_STATUS_FILTER_OPTIONS = (
+    ("published", "已发布"),
+    ("hidden_by_admin", "管理员隐藏"),
+    ("blocked_high_risk", "被拦截"),
+    ("deleted_by_user", "已删除"),
+)
+POST_STATUS_LABELS = {code: label for code, label in POST_STATUS_FILTER_OPTIONS}
 RISK_LABELS = {
     "low": "低风险",
     "watch": "需关注",
@@ -65,6 +77,11 @@ INTERVENTION_ACTION_LABELS = {
     "simulate_contact": "写入模拟通知",
     "add_note": "添加干预记录",
     "close_case": "结案",
+}
+POST_VISIBILITY_ACTION_LABELS = {
+    "hide": "隐藏帖子",
+    "keep_hidden": "保持隐藏",
+    "restore_publish": "恢复发布",
 }
 FEEDBACK_LEVEL_RENDERERS = {
     "success": st.success,
@@ -127,6 +144,9 @@ def render_authenticated_workspace(api_client: AdminApiClient) -> None:
     active_view = get_admin_active_view(st.session_state)
     if active_view == VIEW_ALERTS:
         render_alert_queue_page(api_client)
+        return
+    if active_view == VIEW_POSTS:
+        render_post_management_page(api_client)
         return
     render_dashboard_page(api_client)
 
@@ -229,15 +249,19 @@ def render_dashboard_page(api_client: AdminApiClient) -> None:
             unsafe_allow_html=True,
         )
     with right:
-        button_columns = st.columns(3)
+        button_columns = st.columns(4)
         with button_columns[0]:
             if st.button("进入 A03", use_container_width=True):
                 set_admin_active_view(st.session_state, VIEW_ALERTS)
                 st.rerun()
         with button_columns[1]:
-            if st.button("刷新总览", use_container_width=True):
+            if st.button("进入 A05", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_POSTS)
                 st.rerun()
         with button_columns[2]:
+            if st.button("刷新总览", use_container_width=True):
+                st.rerun()
+        with button_columns[3]:
             if st.button("退出登录", use_container_width=True):
                 clear_admin_session(st.session_state)
                 set_admin_auth_error(st.session_state, "已退出当前管理员会话。")
@@ -275,15 +299,19 @@ def render_alert_queue_page(api_client: AdminApiClient) -> None:
             unsafe_allow_html=True,
         )
     with right:
-        button_columns = st.columns(3)
+        button_columns = st.columns(4)
         with button_columns[0]:
             if st.button("返回 A02", use_container_width=True):
                 set_admin_active_view(st.session_state, VIEW_DASHBOARD)
                 st.rerun()
         with button_columns[1]:
-            if st.button("刷新队列", use_container_width=True):
+            if st.button("前往 A05", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_POSTS)
                 st.rerun()
         with button_columns[2]:
+            if st.button("刷新队列", use_container_width=True):
+                st.rerun()
+        with button_columns[3]:
             if st.button("退出登录", use_container_width=True):
                 clear_admin_session(st.session_state)
                 set_admin_auth_error(st.session_state, "已退出当前管理员会话。")
@@ -706,6 +734,328 @@ def render_alert_action_zone(
                 )
 
 
+def render_post_management_page(api_client: AdminApiClient) -> None:
+    """Render the A05 post-management page with list/detail workspace layout."""
+    admin_profile = get_admin_profile(st.session_state) or {}
+    display_name = str(admin_profile.get("display_name") or "管理员")
+
+    left, right = st.columns([0.76, 0.24], vertical_alignment="center")
+    with left:
+        st.markdown(
+            (
+                '<div class="xinyu-topbar">'
+                '<div class="xinyu-topbar-label">A05 Post Management</div>'
+                f'<h1 class="xinyu-topbar-title">树洞帖子管理 · {escape_html(display_name)}</h1>'
+                '<p class="xinyu-topbar-copy">'
+                "左侧按状态查看帖子，右侧在脱敏前提下展开详情、查看原文，并执行隐藏或恢复发布动作。"
+                "</p>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+    with right:
+        button_columns = st.columns(4)
+        with button_columns[0]:
+            if st.button("返回 A02", key="posts-back-dashboard", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_DASHBOARD)
+                st.rerun()
+        with button_columns[1]:
+            if st.button("前往 A03", key="posts-go-alerts", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_ALERTS)
+                st.rerun()
+        with button_columns[2]:
+            if st.button("刷新帖子", key="posts-refresh", use_container_width=True):
+                st.rerun()
+        with button_columns[3]:
+            if st.button("退出登录", key="posts-logout", use_container_width=True):
+                clear_admin_session(st.session_state)
+                set_admin_auth_error(st.session_state, "已退出当前管理员会话。")
+                st.rerun()
+
+    render_alert_feedback_banner()
+    publish_status = render_post_filter_control()
+    post_data, load_error = load_post_list(api_client, publish_status=publish_status)
+    if load_error:
+        st.error(load_error)
+    if post_data is None:
+        render_dashboard_unavailable_state()
+        return
+
+    render_post_status_overview(post_data["status_counts"])
+
+    list_column, detail_column = st.columns([0.44, 0.56], vertical_alignment="top")
+    with list_column:
+        render_post_management_list(api_client, post_data["items"])
+    with detail_column:
+        render_selected_post_detail(api_client)
+
+
+def render_post_filter_control() -> str:
+    """Render the A05 post-status filter selectbox and return the selected status."""
+    if "admin_post_status_filter" not in st.session_state:
+        st.session_state["admin_post_status_filter"] = "published"
+
+    selected_status = st.selectbox(
+        "帖子状态",
+        options=[option[0] for option in POST_STATUS_FILTER_OPTIONS],
+        format_func=lambda status_code: POST_STATUS_LABELS.get(status_code, status_code),
+        key="admin_post_status_filter",
+    )
+    st.caption("默认按最新可见活动时间倒序排列，可查看已发布、被拦截、隐藏和软删除内容。")
+    return str(selected_status)
+
+
+def render_post_status_overview(status_counts: list[dict[str, Any]]) -> None:
+    """Render the four status buckets above the A05 post list."""
+    st.caption("A05 帖子状态")
+    columns = st.columns(4)
+    for column, item in zip(columns, status_counts, strict=True):
+        with column:
+            st.markdown(
+                build_stat_card_html(
+                    value=int(item.get("count", 0)),
+                    label=POST_STATUS_LABELS.get(
+                        str(item.get("publish_status", "")),
+                        str(item.get("publish_status", "--")),
+                    ),
+                    meta="当前状态帖子数",
+                ),
+                unsafe_allow_html=True,
+            )
+
+
+def render_post_management_list(
+    api_client: AdminApiClient,
+    post_items: list[dict[str, Any]],
+) -> None:
+    """Render the left-side A05 post cards and open detail on explicit click."""
+    st.caption("帖子列表")
+    if not post_items:
+        render_post_empty_state()
+        return
+
+    selected_post_id = get_selected_post_id(st.session_state)
+    for item in post_items:
+        post_id = int(item["post_id"])
+        is_active = selected_post_id == post_id
+        st.markdown(
+            build_post_queue_card_html(item, is_active=is_active),
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "打开帖子" if not is_active else "当前详情",
+            key=f"open-post-{post_id}",
+            use_container_width=True,
+            disabled=is_active,
+        ):
+            handle_select_post(api_client, post_id=post_id)
+
+
+def render_selected_post_detail(api_client: AdminApiClient) -> None:
+    """Render the right-side A05 detail pane for the currently selected post."""
+    post_detail = get_selected_post_detail(st.session_state)
+    if post_detail is None:
+        render_post_detail_empty_state()
+        return
+
+    post_id = int(post_detail["post_id"])
+    st.caption(f"A05 帖子详情 · #{post_id}")
+    st.markdown(
+        build_post_detail_header_html(post_detail),
+        unsafe_allow_html=True,
+    )
+
+    render_post_owner_snapshot(post_detail["student"])
+    render_post_content_context(api_client, post_detail)
+    render_post_reaction_summary(post_detail["reactions"])
+    render_post_ai_analysis(post_detail["ai_analysis"])
+    render_post_alert_case_summary(post_detail.get("alert_case_summary"))
+    render_post_action_zone(api_client, post_detail)
+
+
+def render_post_owner_snapshot(student: dict[str, Any]) -> None:
+    """Render the masked owner identity card for A05."""
+    st.markdown(
+        (
+            '<div class="xinyu-section-card">'
+            '<div class="xinyu-section-label">发帖人身份</div>'
+            f'<div class="xinyu-section-title">{escape_html(str(student.get("student_label", "--")))}</div>'
+            '<div class="xinyu-section-copy">'
+            f'手机号：{escape_html(str(student.get("masked_phone", "--")))} · '
+            f'风险状态：{escape_html(render_risk_label(str(student.get("risk_status", ""))))}'
+            "</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+    col1, col2 = st.columns(2)
+    col1.metric("学院", str(student.get("college_name") or "--"))
+    col2.metric("班级", str(student.get("class_name") or "--"))
+
+
+def render_post_content_context(
+    api_client: AdminApiClient,
+    post_detail: dict[str, Any],
+) -> None:
+    """Render masked post content and the explicit raw-content reveal flow."""
+    content = post_detail["content"]
+    metadata_columns = st.columns(3)
+    metadata_columns[0].metric("匿名昵称", str(post_detail.get("anonymous_name") or "--"))
+    metadata_columns[1].metric(
+        "发布状态",
+        str(post_detail.get("publish_status_label") or "--"),
+    )
+    metadata_columns[2].metric(
+        "风险等级",
+        render_risk_label(str(post_detail.get("risk_level") or "--")),
+    )
+
+    st.markdown(
+        build_copy_block_html(
+            title="默认展示脱敏内容",
+            body=str(content.get("masked_content") or "--"),
+            tone="warning",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if content.get("full_content_available"):
+        with st.expander(
+            "查看完整原文（需二次确认）",
+            expanded=bool(content.get("full_content")),
+        ):
+            confirm_reveal = st.checkbox(
+                "我已确认因内容治理或人工复核需要查看完整原文。",
+                key=f"reveal-post-confirm-{post_detail['post_id']}",
+            )
+            if st.button(
+                "展开完整原文",
+                key=f"reveal-post-{post_detail['post_id']}",
+                use_container_width=True,
+            ):
+                if not confirm_reveal:
+                    set_admin_alert_feedback(
+                        st.session_state,
+                        {"level": "error", "message": "请先确认查看完整原文的必要性。"},
+                    )
+                    st.rerun()
+                handle_reveal_post_content(
+                    api_client,
+                    post_id=int(post_detail["post_id"]),
+                )
+
+            full_content = content.get("full_content")
+            if isinstance(full_content, str) and full_content:
+                st.markdown(
+                    build_copy_block_html(
+                        title="完整原文",
+                        body=full_content,
+                        tone="danger",
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+
+def render_post_reaction_summary(reactions: list[dict[str, Any]]) -> None:
+    """Render preset support reaction totals for the selected managed post."""
+    st.markdown(
+        (
+            '<div class="xinyu-section-card">'
+            '<div class="xinyu-section-label">互动概况</div>'
+            '<div class="xinyu-section-title">预设支持反应统计</div>'
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+    columns = st.columns(3)
+    for column, item in zip(columns, reactions, strict=True):
+        column.metric(str(item.get("label") or "--"), str(item.get("count") or 0))
+
+
+def render_post_ai_analysis(ai_analysis: dict[str, Any] | None) -> None:
+    """Render the latest AI moderation analysis for the selected post."""
+    if ai_analysis is None:
+        st.info("该帖子当前没有可用的 AI 分析记录。")
+        return
+
+    st.markdown(
+        build_ai_analysis_card_html(ai_analysis),
+        unsafe_allow_html=True,
+    )
+
+
+def render_post_alert_case_summary(alert_case_summary: dict[str, Any] | None) -> None:
+    """Render the linked alert-case summary for blocked posts when one exists."""
+    if alert_case_summary is None:
+        return
+
+    st.markdown(
+        (
+            '<div class="xinyu-detail-card">'
+            '<div class="xinyu-detail-title">关联预警工单</div>'
+            f'<div class="xinyu-detail-copy">工单 #{int(alert_case_summary.get("alert_id", 0))} · '
+            f'{escape_html(ALERT_STATUS_LABELS.get(str(alert_case_summary.get("queue_status", "")), str(alert_case_summary.get("queue_status", "--"))))}'
+            f' · {escape_html(PRIORITY_LABELS.get(str(alert_case_summary.get("review_priority", "")), str(alert_case_summary.get("review_priority", "--"))))}</div>'
+            f'<div class="xinyu-detail-foot">最新复核说明：{escape_html(str(alert_case_summary.get("review_note") or "暂无"))}</div>'
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_post_action_zone(
+    api_client: AdminApiClient,
+    post_detail: dict[str, Any],
+) -> None:
+    """Render visibility action controls for the selected managed post."""
+    permissions = post_detail["action_permissions"]
+    post_id = int(post_detail["post_id"])
+    st.markdown(
+        (
+            '<div class="xinyu-section-card">'
+            '<div class="xinyu-section-label">内容治理动作</div>'
+            '<div class="xinyu-section-title">按当前状态执行隐藏、保持隐藏或恢复发布</div>'
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    columns = st.columns(3)
+    with columns[0]:
+        if permissions.get("can_hide") and st.button(
+            POST_VISIBILITY_ACTION_LABELS["hide"],
+            key=f"hide-post-{post_id}",
+            use_container_width=True,
+        ):
+            handle_update_post_visibility(
+                api_client,
+                post_id=post_id,
+                action="hide",
+            )
+    with columns[1]:
+        if permissions.get("can_keep_hidden") and st.button(
+            POST_VISIBILITY_ACTION_LABELS["keep_hidden"],
+            key=f"keep-hidden-post-{post_id}",
+            use_container_width=True,
+        ):
+            handle_update_post_visibility(
+                api_client,
+                post_id=post_id,
+                action="keep_hidden",
+            )
+    with columns[2]:
+        if permissions.get("can_restore_publish") and st.button(
+            POST_VISIBILITY_ACTION_LABELS["restore_publish"],
+            key=f"restore-post-{post_id}",
+            use_container_width=True,
+        ):
+            handle_update_post_visibility(
+                api_client,
+                post_id=post_id,
+                action="restore_publish",
+            )
+
+
 def load_dashboard_summary(
     api_client: AdminApiClient,
 ) -> tuple[dict[str, Any] | None, str | None]:
@@ -736,6 +1086,27 @@ def load_alert_queue(
         return api_client.list_alerts(
             access_token=access_token,
             queue_status=queue_status,
+        ), None
+    except AdminApiRequestError as exc:
+        return None, normalize_admin_request_error(exc)
+    except AdminApiClientError as exc:
+        return None, str(exc)
+
+
+def load_post_list(
+    api_client: AdminApiClient,
+    *,
+    publish_status: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Fetch the filtered A05 post-management payload."""
+    access_token = get_admin_access_token(st.session_state)
+    if access_token is None:
+        return None, "当前管理员会话不存在，请重新登录。"
+
+    try:
+        return api_client.list_posts(
+            access_token=access_token,
+            publish_status=publish_status,
         ), None
     except AdminApiRequestError as exc:
         return None, normalize_admin_request_error(exc)
@@ -785,6 +1156,48 @@ def handle_select_alert(
     st.rerun()
 
 
+def handle_select_post(
+    api_client: AdminApiClient,
+    *,
+    post_id: int,
+) -> None:
+    """Fetch and cache one explicit post detail request for the A05 detail pane."""
+    access_token = get_admin_access_token(st.session_state)
+    if access_token is None:
+        set_admin_auth_error(st.session_state, "管理员会话不存在，请重新登录。")
+        st.rerun()
+
+    try:
+        post_detail = api_client.get_post_detail(
+            access_token=access_token,
+            post_id=post_id,
+        )
+    except AdminApiRequestError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {
+                "level": "error",
+                "message": f"加载帖子详情失败：{normalize_admin_request_error(exc)}",
+            },
+        )
+    except AdminApiClientError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {"level": "error", "message": f"加载帖子详情失败：{exc}"},
+        )
+    else:
+        preserved_detail = preserve_revealed_post_full_content(
+            new_detail=post_detail,
+            existing_detail=get_selected_post_detail(st.session_state),
+        )
+        set_selected_post_detail(
+            st.session_state,
+            post_id=post_id,
+            post_detail=preserved_detail,
+        )
+    st.rerun()
+
+
 def handle_reveal_alert_content(
     api_client: AdminApiClient,
     *,
@@ -826,6 +1239,55 @@ def handle_reveal_alert_content(
             st.session_state,
             alert_id=alert_id,
             alert_detail=updated_detail,
+        )
+        set_admin_alert_feedback(
+            st.session_state,
+            {"level": "success", "message": "已展开完整原文，并记录敏感查看审计。"},
+        )
+    st.rerun()
+
+
+def handle_reveal_post_content(
+    api_client: AdminApiClient,
+    *,
+    post_id: int,
+) -> None:
+    """Reveal the full treehole raw content for the selected managed post."""
+    access_token = get_admin_access_token(st.session_state)
+    current_detail = get_selected_post_detail(st.session_state)
+    if access_token is None or current_detail is None:
+        set_admin_alert_feedback(
+            st.session_state,
+            {"level": "error", "message": "当前没有可用的管理员会话或帖子详情。"},
+        )
+        st.rerun()
+
+    try:
+        content_payload = api_client.reveal_post_content(
+            access_token=access_token,
+            post_id=post_id,
+        )
+    except AdminApiRequestError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {
+                "level": "error",
+                "message": f"展开帖子原文失败：{normalize_admin_request_error(exc)}",
+            },
+        )
+    except AdminApiClientError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {"level": "error", "message": f"展开帖子原文失败：{exc}"},
+        )
+    else:
+        updated_detail = deepcopy(current_detail)
+        updated_detail.setdefault("content", {})
+        updated_detail["content"]["full_content"] = content_payload["full_content"]
+        set_selected_post_detail(
+            st.session_state,
+            post_id=post_id,
+            post_detail=updated_detail,
         )
         set_admin_alert_feedback(
             st.session_state,
@@ -993,6 +1455,52 @@ def handle_add_alert_note(
     st.rerun()
 
 
+def handle_update_post_visibility(
+    api_client: AdminApiClient,
+    *,
+    post_id: int,
+    action: str,
+) -> None:
+    """Apply one admin post visibility action and refresh the selected post detail."""
+    access_token = get_admin_access_token(st.session_state)
+    if access_token is None:
+        set_admin_auth_error(st.session_state, "管理员会话不存在，请重新登录。")
+        st.rerun()
+
+    try:
+        api_client.update_post_visibility(
+            access_token=access_token,
+            post_id=post_id,
+            action=action,
+        )
+    except AdminApiRequestError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {
+                "level": "error",
+                "message": f"{POST_VISIBILITY_ACTION_LABELS.get(action, action)}失败：{normalize_admin_request_error(exc)}",
+            },
+        )
+    except AdminApiClientError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {
+                "level": "error",
+                "message": f"{POST_VISIBILITY_ACTION_LABELS.get(action, action)}失败：{exc}",
+            },
+        )
+    else:
+        refresh_selected_post_detail(api_client, post_id=post_id)
+        set_admin_alert_feedback(
+            st.session_state,
+            {
+                "level": "success",
+                "message": f"已执行：{POST_VISIBILITY_ACTION_LABELS.get(action, action)}。",
+            },
+        )
+    st.rerun()
+
+
 def refresh_selected_alert_detail(
     api_client: AdminApiClient,
     *,
@@ -1066,6 +1574,80 @@ def preserve_revealed_full_content(
     return merged_detail
 
 
+def refresh_selected_post_detail(
+    api_client: AdminApiClient,
+    *,
+    post_id: int,
+) -> None:
+    """Refresh the selected post detail after one explicit admin action."""
+    access_token = get_admin_access_token(st.session_state)
+    if access_token is None:
+        return
+
+    existing_detail = get_selected_post_detail(st.session_state)
+    try:
+        refreshed_detail = api_client.get_post_detail(
+            access_token=access_token,
+            post_id=post_id,
+        )
+    except AdminApiRequestError as exc:
+        if exc.code == "TREEHOLE_POST_NOT_FOUND":
+            clear_selected_post_detail(st.session_state)
+            set_admin_alert_feedback(
+                st.session_state,
+                {"level": "error", "message": "当前帖子已不存在，已清除详情缓存。"},
+            )
+            return
+        set_admin_alert_feedback(
+            st.session_state,
+            {
+                "level": "error",
+                "message": f"刷新帖子详情失败：{normalize_admin_request_error(exc)}",
+            },
+        )
+        return
+    except AdminApiClientError as exc:
+        set_admin_alert_feedback(
+            st.session_state,
+            {"level": "error", "message": f"刷新帖子详情失败：{exc}"},
+        )
+        return
+
+    merged_detail = preserve_revealed_post_full_content(
+        new_detail=refreshed_detail,
+        existing_detail=existing_detail,
+    )
+    set_selected_post_detail(
+        st.session_state,
+        post_id=post_id,
+        post_detail=merged_detail,
+    )
+
+
+def preserve_revealed_post_full_content(
+    *,
+    new_detail: dict[str, Any],
+    existing_detail: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Carry over already revealed post raw content when the detail payload refreshes."""
+    if existing_detail is None:
+        return new_detail
+    if int(existing_detail.get("post_id", -1)) != int(new_detail.get("post_id", -2)):
+        return new_detail
+
+    existing_content = existing_detail.get("content")
+    if not isinstance(existing_content, dict):
+        return new_detail
+    full_content = existing_content.get("full_content")
+    if not isinstance(full_content, str) or not full_content:
+        return new_detail
+
+    merged_detail = deepcopy(new_detail)
+    merged_detail.setdefault("content", {})
+    merged_detail["content"]["full_content"] = full_content
+    return merged_detail
+
+
 def normalize_admin_request_error(exc: AdminApiRequestError) -> str:
     """Handle auth-invalidating admin API failures and return a user-facing message."""
     if exc.status_code in {401, 403}:
@@ -1133,6 +1715,36 @@ def render_detail_empty_state() -> None:
             '<div class="xinyu-empty-title">尚未打开案例详情</div>'
             '<p class="xinyu-empty-copy">'
             "请从左侧队列中选择一条案例。系统只会在你显式打开详情时写入敏感查看审计。"
+            "</p>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_post_empty_state() -> None:
+    """Render the empty list state for one filtered post status."""
+    st.markdown(
+        (
+            '<div class="xinyu-empty-state">'
+            '<div class="xinyu-empty-title">当前筛选下没有帖子</div>'
+            '<p class="xinyu-empty-copy">'
+            "可以切换到其他帖子状态，或等待新的树洞内容进入后台管理范围。"
+            "</p>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_post_detail_empty_state() -> None:
+    """Render the placeholder state before one managed post is explicitly opened."""
+    st.markdown(
+        (
+            '<div class="xinyu-empty-state">'
+            '<div class="xinyu-empty-title">尚未打开帖子详情</div>'
+            '<p class="xinyu-empty-copy">'
+            "请从左侧帖子列表中选择一条内容。完整原文只会在你显式展开时记录敏感查看审计。"
             "</p>"
             "</div>"
         ),
@@ -1230,9 +1842,9 @@ def render_dashboard_navigation(summary: dict[str, Any]) -> None:
         (
             "A05",
             "帖子管理",
-            "查看已发布与被拦截的树洞内容，后续支持隐藏与恢复。",
+            "查看已发布、被拦截、隐藏与软删除内容，并支持隐藏、保持隐藏与恢复发布。",
             f"已发布 {int(kpis.get('published_post_count', 0))} · 已拦截 {int(stats.get('blocked_post_count', 0))}",
-            "11.4 下一步",
+            "已实现",
         ),
         (
             "A06",
@@ -1348,6 +1960,36 @@ def build_alert_queue_card_html(
     )
 
 
+def build_post_queue_card_html(
+    post_item: dict[str, Any],
+    *,
+    is_active: bool,
+) -> str:
+    """Build one left-panel A05 post-management card."""
+    publish_status = str(post_item.get("publish_status") or "--")
+    risk_level = str(post_item.get("risk_level") or "--")
+    timing = (
+        post_item.get("published_at")
+        or post_item.get("deleted_at")
+        or post_item.get("created_at")
+    )
+    return (
+        f'<div class="xinyu-alert-card{" xinyu-alert-card-active" if is_active else ""}">'
+        '<div class="xinyu-alert-card-header">'
+        f'<div class="xinyu-alert-card-title">#{int(post_item.get("post_id", 0))} · {escape_html(str(post_item.get("anonymous_name") or "--"))}</div>'
+        f'<div class="xinyu-alert-card-meta">{escape_html(format_dashboard_timestamp(timing))} · {escape_html(str(post_item.get("student_label") or "--"))}</div>'
+        "</div>"
+        '<div class="xinyu-chip-row">'
+        f'{build_chip_html(POST_STATUS_LABELS.get(publish_status, publish_status), tone=resolve_post_status_tone(publish_status))}'
+        f'{build_chip_html(render_risk_label(risk_level), tone=RISK_TONES.get(risk_level, "neutral"))}'
+        f'{build_chip_html(f"互动 {int(post_item.get("total_reaction_count", 0))}", tone="brand")}'
+        "</div>"
+        f'<div class="xinyu-alert-card-copy">{escape_html(str(post_item.get("source_preview") or "--"))}</div>'
+        f'<div class="xinyu-alert-card-foot">手机号：{escape_html(str(post_item.get("masked_phone") or "--"))} · {escape_html(str(post_item.get("college_name") or "--"))} / {escape_html(str(post_item.get("class_name") or "--"))}</div>'
+        "</div>"
+    )
+
+
 def build_alert_detail_header_html(alert_detail: dict[str, Any]) -> str:
     """Build the A04 detail header card."""
     return (
@@ -1361,6 +2003,26 @@ def build_alert_detail_header_html(alert_detail: dict[str, Any]) -> str:
         "</div>"
         f'<div class="xinyu-detail-foot">创建时间：{escape_html(format_dashboard_timestamp(alert_detail.get("created_at")))}'
         f' · 最近复核：{escape_html(format_dashboard_timestamp(alert_detail.get("reviewed_at")))}'
+        "</div>"
+        "</div>"
+    )
+
+
+def build_post_detail_header_html(post_detail: dict[str, Any]) -> str:
+    """Build the A05 detail header card."""
+    publish_status = str(post_detail.get("publish_status") or "--")
+    risk_level = str(post_detail.get("risk_level") or "--")
+    return (
+        '<div class="xinyu-detail-card">'
+        f'<div class="xinyu-detail-title">帖子 #{int(post_detail.get("post_id", 0))} · {escape_html(str(post_detail.get("anonymous_name") or "--"))}</div>'
+        f'<div class="xinyu-chip-row">'
+        f'{build_chip_html(POST_STATUS_LABELS.get(publish_status, publish_status), tone=resolve_post_status_tone(publish_status))}'
+        f'{build_chip_html(render_risk_label(risk_level), tone=RISK_TONES.get(risk_level, "neutral"))}'
+        f'{build_chip_html("公开可见" if post_detail.get("allow_publication") else "当前非公开", tone="brand")}'
+        "</div>"
+        f'<div class="xinyu-detail-foot">创建时间：{escape_html(format_dashboard_timestamp(post_detail.get("created_at")))}'
+        f' · 发布时间：{escape_html(format_dashboard_timestamp(post_detail.get("published_at")))}'
+        f' · 删除时间：{escape_html(format_dashboard_timestamp(post_detail.get("deleted_at")))}'
         "</div>"
         "</div>"
     )
@@ -1450,6 +2112,16 @@ def resolve_status_tone(queue_status: str) -> str:
         "dismissed_false_positive": "neutral",
         "closed": "brand",
     }.get(queue_status, "neutral")
+
+
+def resolve_post_status_tone(publish_status: str) -> str:
+    """Map post publication statuses onto management-chip tones."""
+    return {
+        "published": "success",
+        "hidden_by_admin": "warning",
+        "blocked_high_risk": "danger",
+        "deleted_by_user": "neutral",
+    }.get(publish_status, "neutral")
 
 
 def resolve_priority_tone(review_priority: str) -> str:

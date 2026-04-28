@@ -189,6 +189,61 @@ class AdminApiClient:
         )
         return payload["data"]
 
+    def list_posts(
+        self,
+        *,
+        access_token: str,
+        publish_status: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the filtered A05 post-management payload."""
+        params = {"publish_status": publish_status} if publish_status else None
+        payload = self._request(
+            "GET",
+            "/admin/posts",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params=params,
+        )
+        return payload["data"]
+
+    def get_post_detail(self, *, access_token: str, post_id: int) -> dict[str, Any]:
+        """Return the A05 post detail payload for one selected treehole post."""
+        payload = self._request(
+            "GET",
+            f"/admin/posts/{post_id}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]["post"]
+
+    def reveal_post_content(
+        self,
+        *,
+        access_token: str,
+        post_id: int,
+    ) -> dict[str, Any]:
+        """Reveal raw treehole content for one selected managed post."""
+        payload = self._request(
+            "POST",
+            f"/admin/posts/{post_id}/reveal-content",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]
+
+    def update_post_visibility(
+        self,
+        *,
+        access_token: str,
+        post_id: int,
+        action: str,
+    ) -> dict[str, Any]:
+        """Apply one audited admin visibility action to the selected post."""
+        payload = self._request(
+            "PATCH",
+            f"/admin/posts/{post_id}/visibility",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"action": action},
+        )
+        return payload["data"]
+
     def _request(
         self,
         method: str,

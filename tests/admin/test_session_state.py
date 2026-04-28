@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from admin.state.session import (  # noqa: E402
     bootstrap_admin_session_state,
     clear_selected_alert_detail,
+    clear_selected_post_detail,
     clear_admin_session,
     get_admin_active_view,
     get_admin_access_token,
@@ -19,6 +20,8 @@ from admin.state.session import (  # noqa: E402
     get_admin_profile,
     get_selected_alert_detail,
     get_selected_alert_id,
+    get_selected_post_detail,
+    get_selected_post_id,
     is_admin_authenticated,
     pop_admin_alert_feedback,
     set_admin_active_view,
@@ -26,6 +29,7 @@ from admin.state.session import (  # noqa: E402
     set_admin_auth_error,
     set_admin_session,
     set_selected_alert_detail,
+    set_selected_post_detail,
 )
 
 
@@ -41,6 +45,8 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_admin_active_view(state) == "dashboard"
     assert get_selected_alert_id(state) is None
     assert get_selected_alert_detail(state) is None
+    assert get_selected_post_id(state) is None
+    assert get_selected_post_detail(state) is None
     assert pop_admin_alert_feedback(state) is None
 
     set_admin_auth_error(state, "登录失败")
@@ -58,6 +64,17 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_selected_alert_detail(state) == {
         "alert_id": 12,
         "queue_status": "pending_review",
+    }
+
+    set_selected_post_detail(
+        state,
+        post_id=18,
+        post_detail={"post_id": 18, "publish_status": "published"},
+    )
+    assert get_selected_post_id(state) == 18
+    assert get_selected_post_detail(state) == {
+        "post_id": 18,
+        "publish_status": "published",
     }
 
     set_admin_alert_feedback(state, {"level": "success", "message": "已刷新"})
@@ -79,6 +96,8 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_admin_active_view(state) == "dashboard"
     assert get_selected_alert_id(state) is None
     assert get_selected_alert_detail(state) is None
+    assert get_selected_post_id(state) is None
+    assert get_selected_post_detail(state) is None
 
     set_selected_alert_detail(
         state,
@@ -89,6 +108,15 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_selected_alert_id(state) is None
     assert get_selected_alert_detail(state) is None
 
+    set_selected_post_detail(
+        state,
+        post_id=35,
+        post_detail={"post_id": 35},
+    )
+    clear_selected_post_detail(state)
+    assert get_selected_post_id(state) is None
+    assert get_selected_post_detail(state) is None
+
     clear_admin_session(state)
     assert is_admin_authenticated(state) is False
     assert get_admin_access_token(state) is None
@@ -96,3 +124,5 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_admin_active_view(state) == "dashboard"
     assert get_selected_alert_id(state) is None
     assert get_selected_alert_detail(state) is None
+    assert get_selected_post_id(state) is None
+    assert get_selected_post_detail(state) is None

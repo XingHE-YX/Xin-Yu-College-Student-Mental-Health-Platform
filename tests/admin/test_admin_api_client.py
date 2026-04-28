@@ -109,6 +109,74 @@ def test_reveal_alert_content_calls_explicit_reveal_endpoint(monkeypatch) -> Non
     assert reveal_payload["full_content"] == "raw"
 
 
+def test_list_posts_passes_publish_status_params(monkeypatch) -> None:
+    """Post-list requests should forward the selected publication status."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {"data": {"items": [], "status_counts": [], "applied_publish_status": "published"}}
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    post_payload = client.list_posts(
+        access_token="jwt-token",
+        publish_status="published",
+    )
+
+    assert captured == {
+        "method": "GET",
+        "path": "/admin/posts",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+        "params": {"publish_status": "published"},
+    }
+    assert post_payload["applied_publish_status"] == "published"
+
+
+def test_update_post_visibility_calls_patch_endpoint(monkeypatch) -> None:
+    """Visibility updates should use the dedicated admin post patch endpoint."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {
+            "data": {
+                "post_id": 7,
+                "publish_status": "hidden_by_admin",
+                "allow_publication": False,
+                "action": "hide",
+            }
+        }
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    payload = client.update_post_visibility(
+        access_token="jwt-token",
+        post_id=7,
+        action="hide",
+    )
+
+    assert captured == {
+        "method": "PATCH",
+        "path": "/admin/posts/7/visibility",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": {"action": "hide"},
+        "params": None,
+    }
+    assert payload["publish_status"] == "hidden_by_admin"
+
+
 def test_request_uses_detail_payload_for_inactive_admin_errors(monkeypatch) -> None:
     """Auth dependency errors returned as `detail` should still map to a useful code."""
 

@@ -12,6 +12,8 @@ SESSION_KEY_ACTIVE_VIEW = "admin_active_view"
 SESSION_KEY_SELECTED_ALERT_ID = "admin_selected_alert_id"
 SESSION_KEY_SELECTED_ALERT_DETAIL = "admin_selected_alert_detail"
 SESSION_KEY_ALERT_FEEDBACK = "admin_alert_feedback"
+SESSION_KEY_SELECTED_POST_ID = "admin_selected_post_id"
+SESSION_KEY_SELECTED_POST_DETAIL = "admin_selected_post_detail"
 
 
 def bootstrap_admin_session_state(state: MutableMapping[str, Any]) -> None:
@@ -23,6 +25,8 @@ def bootstrap_admin_session_state(state: MutableMapping[str, Any]) -> None:
     state.setdefault(SESSION_KEY_SELECTED_ALERT_ID, None)
     state.setdefault(SESSION_KEY_SELECTED_ALERT_DETAIL, None)
     state.setdefault(SESSION_KEY_ALERT_FEEDBACK, None)
+    state.setdefault(SESSION_KEY_SELECTED_POST_ID, None)
+    state.setdefault(SESSION_KEY_SELECTED_POST_DETAIL, None)
 
 
 def set_admin_session(
@@ -39,6 +43,8 @@ def set_admin_session(
     state[SESSION_KEY_SELECTED_ALERT_ID] = None
     state[SESSION_KEY_SELECTED_ALERT_DETAIL] = None
     state[SESSION_KEY_ALERT_FEEDBACK] = None
+    state[SESSION_KEY_SELECTED_POST_ID] = None
+    state[SESSION_KEY_SELECTED_POST_DETAIL] = None
 
 
 def clear_admin_session(state: MutableMapping[str, Any]) -> None:
@@ -49,6 +55,8 @@ def clear_admin_session(state: MutableMapping[str, Any]) -> None:
     state[SESSION_KEY_SELECTED_ALERT_ID] = None
     state[SESSION_KEY_SELECTED_ALERT_DETAIL] = None
     state[SESSION_KEY_ALERT_FEEDBACK] = None
+    state[SESSION_KEY_SELECTED_POST_ID] = None
+    state[SESSION_KEY_SELECTED_POST_DETAIL] = None
 
 
 def set_admin_auth_error(state: MutableMapping[str, Any], message: str | None) -> None:
@@ -123,14 +131,43 @@ def set_admin_alert_feedback(
     state: MutableMapping[str, Any],
     feedback: dict[str, str] | None,
 ) -> None:
-    """Store one transient alert-page feedback message."""
+    """Store one transient admin workspace feedback message."""
     state[SESSION_KEY_ALERT_FEEDBACK] = feedback
 
 
 def pop_admin_alert_feedback(
     state: MutableMapping[str, Any],
 ) -> dict[str, str] | None:
-    """Return and clear one transient alert-page feedback message."""
+    """Return and clear one transient admin workspace feedback message."""
     value = state.get(SESSION_KEY_ALERT_FEEDBACK)
     state[SESSION_KEY_ALERT_FEEDBACK] = None
     return value if isinstance(value, dict) else None
+
+
+def set_selected_post_detail(
+    state: MutableMapping[str, Any],
+    *,
+    post_id: int,
+    post_detail: dict[str, Any],
+) -> None:
+    """Persist the currently selected admin post detail payload."""
+    state[SESSION_KEY_SELECTED_POST_ID] = post_id
+    state[SESSION_KEY_SELECTED_POST_DETAIL] = post_detail
+
+
+def get_selected_post_id(state: MutableMapping[str, Any]) -> int | None:
+    """Return the currently selected admin post id, if any."""
+    value = state.get(SESSION_KEY_SELECTED_POST_ID)
+    return value if isinstance(value, int) else None
+
+
+def get_selected_post_detail(state: MutableMapping[str, Any]) -> dict[str, Any] | None:
+    """Return the cached selected admin post detail payload."""
+    value = state.get(SESSION_KEY_SELECTED_POST_DETAIL)
+    return value if isinstance(value, dict) else None
+
+
+def clear_selected_post_detail(state: MutableMapping[str, Any]) -> None:
+    """Clear the current admin post detail selection cache."""
+    state[SESSION_KEY_SELECTED_POST_ID] = None
+    state[SESSION_KEY_SELECTED_POST_DETAIL] = None
