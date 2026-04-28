@@ -11,13 +11,21 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from admin.state.session import (  # noqa: E402
     bootstrap_admin_session_state,
+    clear_selected_alert_detail,
     clear_admin_session,
+    get_admin_active_view,
     get_admin_access_token,
     get_admin_auth_error,
     get_admin_profile,
+    get_selected_alert_detail,
+    get_selected_alert_id,
     is_admin_authenticated,
+    pop_admin_alert_feedback,
+    set_admin_active_view,
+    set_admin_alert_feedback,
     set_admin_auth_error,
     set_admin_session,
+    set_selected_alert_detail,
 )
 
 
@@ -30,9 +38,34 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_admin_access_token(state) is None
     assert get_admin_profile(state) is None
     assert get_admin_auth_error(state) is None
+    assert get_admin_active_view(state) == "dashboard"
+    assert get_selected_alert_id(state) is None
+    assert get_selected_alert_detail(state) is None
+    assert pop_admin_alert_feedback(state) is None
 
     set_admin_auth_error(state, "登录失败")
     assert get_admin_auth_error(state) == "登录失败"
+
+    set_admin_active_view(state, "alerts")
+    assert get_admin_active_view(state) == "alerts"
+
+    set_selected_alert_detail(
+        state,
+        alert_id=12,
+        alert_detail={"alert_id": 12, "queue_status": "pending_review"},
+    )
+    assert get_selected_alert_id(state) == 12
+    assert get_selected_alert_detail(state) == {
+        "alert_id": 12,
+        "queue_status": "pending_review",
+    }
+
+    set_admin_alert_feedback(state, {"level": "success", "message": "已刷新"})
+    assert pop_admin_alert_feedback(state) == {
+        "level": "success",
+        "message": "已刷新",
+    }
+    assert pop_admin_alert_feedback(state) is None
 
     set_admin_session(
         state,
@@ -43,8 +76,23 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_admin_access_token(state) == "jwt-token"
     assert get_admin_profile(state) == {"id": 1, "username": "platform.admin"}
     assert get_admin_auth_error(state) is None
+    assert get_admin_active_view(state) == "dashboard"
+    assert get_selected_alert_id(state) is None
+    assert get_selected_alert_detail(state) is None
+
+    set_selected_alert_detail(
+        state,
+        alert_id=24,
+        alert_detail={"alert_id": 24},
+    )
+    clear_selected_alert_detail(state)
+    assert get_selected_alert_id(state) is None
+    assert get_selected_alert_detail(state) is None
 
     clear_admin_session(state)
     assert is_admin_authenticated(state) is False
     assert get_admin_access_token(state) is None
     assert get_admin_profile(state) is None
+    assert get_admin_active_view(state) == "dashboard"
+    assert get_selected_alert_id(state) is None
+    assert get_selected_alert_detail(state) is None

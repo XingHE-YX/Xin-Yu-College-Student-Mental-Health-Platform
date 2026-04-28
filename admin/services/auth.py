@@ -82,6 +82,113 @@ class AdminApiClient:
         )
         return payload["data"]["summary"]
 
+    def list_alerts(
+        self,
+        *,
+        access_token: str,
+        queue_status: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the filtered A03 alert queue payload."""
+        params = {"queue_status": queue_status} if queue_status else None
+        payload = self._request(
+            "GET",
+            "/admin/alerts",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params=params,
+        )
+        return payload["data"]
+
+    def get_alert_detail(self, *, access_token: str, alert_id: int) -> dict[str, Any]:
+        """Return the A04 alert detail payload for one selected alert case."""
+        payload = self._request(
+            "GET",
+            f"/admin/alerts/{alert_id}",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]["alert"]
+
+    def reveal_alert_content(
+        self,
+        *,
+        access_token: str,
+        alert_id: int,
+    ) -> dict[str, Any]:
+        """Reveal raw treehole content for one selected alert case."""
+        payload = self._request(
+            "POST",
+            f"/admin/alerts/{alert_id}/reveal-content",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]
+
+    def confirm_alert(
+        self,
+        *,
+        access_token: str,
+        alert_id: int,
+        review_note: str,
+        intervention_note: str,
+    ) -> dict[str, Any]:
+        """Confirm one pending alert case as high risk."""
+        payload = self._request(
+            "POST",
+            f"/admin/alerts/{alert_id}/confirm",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={
+                "review_note": review_note,
+                "intervention_note": intervention_note,
+            },
+        )
+        return payload["data"]
+
+    def dismiss_alert(
+        self,
+        *,
+        access_token: str,
+        alert_id: int,
+        review_note: str,
+    ) -> dict[str, Any]:
+        """Dismiss one pending alert case as a false positive."""
+        payload = self._request(
+            "POST",
+            f"/admin/alerts/{alert_id}/dismiss",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"review_note": review_note},
+        )
+        return payload["data"]
+
+    def close_alert(
+        self,
+        *,
+        access_token: str,
+        alert_id: int,
+        action_note: str,
+    ) -> dict[str, Any]:
+        """Close one reviewed alert case."""
+        payload = self._request(
+            "POST",
+            f"/admin/alerts/{alert_id}/close",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"action_note": action_note},
+        )
+        return payload["data"]
+
+    def add_alert_note(
+        self,
+        *,
+        access_token: str,
+        alert_id: int,
+        action_note: str,
+    ) -> dict[str, Any]:
+        """Append one intervention note to the selected alert case timeline."""
+        payload = self._request(
+            "POST",
+            f"/admin/alerts/{alert_id}/notes",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"action_note": action_note},
+        )
+        return payload["data"]
+
     def _request(
         self,
         method: str,
@@ -89,6 +196,7 @@ class AdminApiClient:
         *,
         headers: dict[str, str] | None = None,
         json: dict[str, Any] | None = None,
+        params: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Perform one backend request and normalize error handling."""
         try:
@@ -98,6 +206,7 @@ class AdminApiClient:
                     f"{self.api_base_url}{path}",
                     headers=headers,
                     json=json,
+                    params=params,
                 )
         except httpx.HTTPError as exc:  # pragma: no cover
             raise AdminApiClientError(f"无法连接后台服务：{exc}") from exc

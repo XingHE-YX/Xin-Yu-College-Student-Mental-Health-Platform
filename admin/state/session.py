@@ -8,6 +8,10 @@ from typing import Any
 SESSION_KEY_ACCESS_TOKEN = "admin_access_token"
 SESSION_KEY_PROFILE = "admin_profile"
 SESSION_KEY_AUTH_ERROR = "admin_auth_error"
+SESSION_KEY_ACTIVE_VIEW = "admin_active_view"
+SESSION_KEY_SELECTED_ALERT_ID = "admin_selected_alert_id"
+SESSION_KEY_SELECTED_ALERT_DETAIL = "admin_selected_alert_detail"
+SESSION_KEY_ALERT_FEEDBACK = "admin_alert_feedback"
 
 
 def bootstrap_admin_session_state(state: MutableMapping[str, Any]) -> None:
@@ -15,6 +19,10 @@ def bootstrap_admin_session_state(state: MutableMapping[str, Any]) -> None:
     state.setdefault(SESSION_KEY_ACCESS_TOKEN, None)
     state.setdefault(SESSION_KEY_PROFILE, None)
     state.setdefault(SESSION_KEY_AUTH_ERROR, None)
+    state.setdefault(SESSION_KEY_ACTIVE_VIEW, "dashboard")
+    state.setdefault(SESSION_KEY_SELECTED_ALERT_ID, None)
+    state.setdefault(SESSION_KEY_SELECTED_ALERT_DETAIL, None)
+    state.setdefault(SESSION_KEY_ALERT_FEEDBACK, None)
 
 
 def set_admin_session(
@@ -27,12 +35,20 @@ def set_admin_session(
     state[SESSION_KEY_ACCESS_TOKEN] = access_token
     state[SESSION_KEY_PROFILE] = admin_profile
     state[SESSION_KEY_AUTH_ERROR] = None
+    state[SESSION_KEY_ACTIVE_VIEW] = "dashboard"
+    state[SESSION_KEY_SELECTED_ALERT_ID] = None
+    state[SESSION_KEY_SELECTED_ALERT_DETAIL] = None
+    state[SESSION_KEY_ALERT_FEEDBACK] = None
 
 
 def clear_admin_session(state: MutableMapping[str, Any]) -> None:
     """Clear all admin-authenticated session state."""
     state[SESSION_KEY_ACCESS_TOKEN] = None
     state[SESSION_KEY_PROFILE] = None
+    state[SESSION_KEY_ACTIVE_VIEW] = "dashboard"
+    state[SESSION_KEY_SELECTED_ALERT_ID] = None
+    state[SESSION_KEY_SELECTED_ALERT_DETAIL] = None
+    state[SESSION_KEY_ALERT_FEEDBACK] = None
 
 
 def set_admin_auth_error(state: MutableMapping[str, Any], message: str | None) -> None:
@@ -61,3 +77,60 @@ def get_admin_auth_error(state: MutableMapping[str, Any]) -> str | None:
 def is_admin_authenticated(state: MutableMapping[str, Any]) -> bool:
     """Return whether the current Streamlit session carries an admin token."""
     return get_admin_access_token(state) is not None
+
+
+def set_admin_active_view(state: MutableMapping[str, Any], view_name: str) -> None:
+    """Persist the current top-level admin workspace view."""
+    state[SESSION_KEY_ACTIVE_VIEW] = view_name
+
+
+def get_admin_active_view(state: MutableMapping[str, Any]) -> str:
+    """Return the current top-level admin workspace view."""
+    value = state.get(SESSION_KEY_ACTIVE_VIEW)
+    return value if isinstance(value, str) and value else "dashboard"
+
+
+def set_selected_alert_detail(
+    state: MutableMapping[str, Any],
+    *,
+    alert_id: int,
+    alert_detail: dict[str, Any],
+) -> None:
+    """Persist the currently selected alert detail payload."""
+    state[SESSION_KEY_SELECTED_ALERT_ID] = alert_id
+    state[SESSION_KEY_SELECTED_ALERT_DETAIL] = alert_detail
+
+
+def get_selected_alert_id(state: MutableMapping[str, Any]) -> int | None:
+    """Return the currently selected alert id, if any."""
+    value = state.get(SESSION_KEY_SELECTED_ALERT_ID)
+    return value if isinstance(value, int) else None
+
+
+def get_selected_alert_detail(state: MutableMapping[str, Any]) -> dict[str, Any] | None:
+    """Return the cached selected alert detail payload."""
+    value = state.get(SESSION_KEY_SELECTED_ALERT_DETAIL)
+    return value if isinstance(value, dict) else None
+
+
+def clear_selected_alert_detail(state: MutableMapping[str, Any]) -> None:
+    """Clear the current alert-detail selection cache."""
+    state[SESSION_KEY_SELECTED_ALERT_ID] = None
+    state[SESSION_KEY_SELECTED_ALERT_DETAIL] = None
+
+
+def set_admin_alert_feedback(
+    state: MutableMapping[str, Any],
+    feedback: dict[str, str] | None,
+) -> None:
+    """Store one transient alert-page feedback message."""
+    state[SESSION_KEY_ALERT_FEEDBACK] = feedback
+
+
+def pop_admin_alert_feedback(
+    state: MutableMapping[str, Any],
+) -> dict[str, str] | None:
+    """Return and clear one transient alert-page feedback message."""
+    value = state.get(SESSION_KEY_ALERT_FEEDBACK)
+    state[SESSION_KEY_ALERT_FEEDBACK] = None
+    return value if isinstance(value, dict) else None

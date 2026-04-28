@@ -49,6 +49,66 @@ def test_get_dashboard_summary_uses_summary_endpoint(monkeypatch) -> None:
     assert summary["kpis"]["pending_review_count"] == 2
 
 
+def test_list_alerts_passes_queue_status_params(monkeypatch) -> None:
+    """Queue-list requests should forward the selected workflow status as query params."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {"data": {"items": [], "status_counts": [], "applied_queue_status": "pending_review"}}
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    queue_payload = client.list_alerts(
+        access_token="jwt-token",
+        queue_status="pending_review",
+    )
+
+    assert captured == {
+        "method": "GET",
+        "path": "/admin/alerts",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+        "params": {"queue_status": "pending_review"},
+    }
+    assert queue_payload["applied_queue_status"] == "pending_review"
+
+
+def test_reveal_alert_content_calls_explicit_reveal_endpoint(monkeypatch) -> None:
+    """Raw-content reveal requests should use the dedicated audited endpoint."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None, params=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["params"] = params
+        return {"data": {"alert_id": 9, "source_type": "treehole", "full_content": "raw"}}
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    reveal_payload = client.reveal_alert_content(
+        access_token="jwt-token",
+        alert_id=9,
+    )
+
+    assert captured == {
+        "method": "POST",
+        "path": "/admin/alerts/9/reveal-content",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+        "params": None,
+    }
+    assert reveal_payload["full_content"] == "raw"
+
+
 def test_request_uses_detail_payload_for_inactive_admin_errors(monkeypatch) -> None:
     """Auth dependency errors returned as `detail` should still map to a useful code."""
 
@@ -69,7 +129,7 @@ def test_request_uses_detail_payload_for_inactive_admin_errors(monkeypatch) -> N
         def __exit__(self, exc_type, exc, tb):
             return False
 
-        def request(self, method, url, *, headers=None, json=None):
+        def request(self, method, url, *, headers=None, json=None, params=None):
             return DummyResponse()
 
     monkeypatch.setattr(auth_module.httpx, "Client", DummyClient)

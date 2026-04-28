@@ -303,6 +303,166 @@ def build_admin_console_css() -> str:
       line-height: 1.5;
     }
 
+    .xinyu-alert-card {
+      margin-bottom: 12px;
+      padding: 18px 18px 16px 18px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #E3EAE7;
+      box-shadow: var(--shadow-card);
+    }
+
+    .xinyu-alert-card-active {
+      border-color: rgba(47, 143, 131, 0.5);
+      box-shadow: 0 12px 28px rgba(30, 100, 92, 0.12);
+    }
+
+    .xinyu-alert-card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .xinyu-alert-card-title {
+      color: var(--neutral-900);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .xinyu-alert-card-meta {
+      color: var(--neutral-500);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .xinyu-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .xinyu-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .xinyu-chip-brand {
+      background: rgba(47, 143, 131, 0.12);
+      color: var(--brand-700);
+    }
+
+    .xinyu-chip-warning {
+      background: rgba(229, 162, 58, 0.14);
+      color: #9C650A;
+    }
+
+    .xinyu-chip-danger {
+      background: rgba(216, 76, 76, 0.12);
+      color: #A92A2A;
+    }
+
+    .xinyu-chip-neutral {
+      background: rgba(112, 128, 124, 0.12);
+      color: var(--neutral-700);
+    }
+
+    .xinyu-chip-success {
+      background: rgba(61, 155, 94, 0.12);
+      color: #2F7D49;
+    }
+
+    .xinyu-alert-card-copy {
+      margin-top: 12px;
+      color: var(--neutral-700);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .xinyu-alert-card-foot {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--neutral-100);
+      color: var(--neutral-500);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .xinyu-detail-card,
+    .xinyu-section-card,
+    .xinyu-history-card,
+    .xinyu-timeline-item,
+    .xinyu-copy-block {
+      margin-bottom: 12px;
+      padding: 18px 20px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #E3EAE7;
+      box-shadow: var(--shadow-card);
+    }
+
+    .xinyu-detail-title,
+    .xinyu-section-title,
+    .xinyu-history-title,
+    .xinyu-timeline-title,
+    .xinyu-copy-block-title {
+      color: var(--neutral-900);
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .xinyu-detail-copy,
+    .xinyu-section-copy,
+    .xinyu-history-copy,
+    .xinyu-timeline-copy,
+    .xinyu-copy-block-body {
+      margin-top: 10px;
+      color: var(--neutral-700);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .xinyu-detail-foot,
+    .xinyu-history-foot,
+    .xinyu-timeline-foot {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--neutral-100);
+      color: var(--neutral-500);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .xinyu-section-label {
+      color: var(--neutral-500);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .xinyu-copy-block-brand {
+      border-left: 4px solid var(--brand-500);
+    }
+
+    .xinyu-copy-block-warning {
+      border-left: 4px solid var(--warning-500);
+      background: rgba(255, 241, 227, 0.62);
+    }
+
+    .xinyu-copy-block-danger {
+      border-left: 4px solid var(--danger-500);
+      background: rgba(251, 231, 231, 0.72);
+    }
+
     .stButton > button {
       min-height: 48px;
       border-radius: 14px;
@@ -319,6 +479,14 @@ def build_admin_console_css() -> str:
 
     .stTextInput input {
       min-height: 48px;
+      border-radius: 14px;
+      border: 1px solid #E3EAE7;
+      background: rgba(248, 250, 250, 0.95);
+      color: var(--neutral-900);
+    }
+
+    .stTextArea textarea,
+    .stSelectbox div[data-baseweb="select"] > div {
       border-radius: 14px;
       border: 1px solid #E3EAE7;
       background: rgba(248, 250, 250, 0.95);
