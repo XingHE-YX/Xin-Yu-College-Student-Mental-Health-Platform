@@ -82,6 +82,15 @@ class AdminApiClient:
         )
         return payload["data"]["summary"]
 
+    def get_analytics_trends(self, *, access_token: str) -> dict[str, Any]:
+        """Return the live analytics payload used by the admin chart page."""
+        payload = self._request(
+            "GET",
+            "/admin/analytics/trends",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return payload["data"]["analytics"]
+
     def list_alerts(
         self,
         *,

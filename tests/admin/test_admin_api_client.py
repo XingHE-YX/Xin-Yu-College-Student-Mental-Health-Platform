@@ -49,6 +49,49 @@ def test_get_dashboard_summary_uses_summary_endpoint(monkeypatch) -> None:
     assert summary["kpis"]["pending_review_count"] == 2
 
 
+def test_get_analytics_trends_uses_trends_endpoint(monkeypatch) -> None:
+    """The admin API client should call the analytics trends route with bearer auth."""
+    captured: dict[str, object] = {}
+
+    def fake_request(self, method, path, *, headers=None, json=None):
+        captured["method"] = method
+        captured["path"] = path
+        captured["headers"] = headers
+        captured["json"] = json
+        return {
+            "data": {
+                "analytics": {
+                    "generated_at": "2026-04-29T10:30:00",
+                    "risk_distribution": {"total_students": 4, "items": []},
+                    "daily_trends": {
+                        "window_days": 7,
+                        "start_date": "2026-04-23",
+                        "end_date": "2026-04-29",
+                        "items": [],
+                    },
+                    "alert_processing": {
+                        "total_alert_case_count": 5,
+                        "items": [],
+                    },
+                }
+            }
+        }
+
+    monkeypatch.setattr(AdminApiClient, "_request", fake_request)
+
+    client = AdminApiClient(api_base_url="http://127.0.0.1:8000/api/v1")
+    analytics = client.get_analytics_trends(access_token="jwt-token")
+
+    assert captured == {
+        "method": "GET",
+        "path": "/admin/analytics/trends",
+        "headers": {"Authorization": "Bearer jwt-token"},
+        "json": None,
+    }
+    assert analytics["risk_distribution"]["total_students"] == 4
+    assert analytics["alert_processing"]["total_alert_case_count"] == 5
+
+
 def test_list_alerts_passes_queue_status_params(monkeypatch) -> None:
     """Queue-list requests should forward the selected workflow status as query params."""
     captured: dict[str, object] = {}
