@@ -243,3 +243,12 @@
 当前状态补充：已新增 `tests/backend/test_admin_analytics_api.py`，覆盖风险分布聚合、最近 7 天趋势窗口、窗口外数据排除、工单状态统计和未授权访问；同时扩展 `tests/admin/test_admin_api_client.py`，覆盖 Streamlit client 对 `/admin/analytics/trends` 的 Bearer 调用与响应解析。
 当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（analytics 新增 / 受影响文件）、定向 pytest（`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_analytics_api.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 134 项通过，`tests/admin` 共 11 项通过，合计 145 项测试通过。
 待办：见 IMPLEMENTATION_PLAN.md 步骤12.2。
+已完成：IMPLEMENTATION_PLAN.md 步骤12.2（Streamlit 图表页实现）。
+当前状态补充：管理后台 `admin/app.py` 已新增独立的 `A08 统计分析` 工作区，并在 A02 顶部导航中补充“进入 A08”入口；A02 的模块入口卡片也已扩展为 `A03 / A05 / A06 / A07 / A08` 五块，使总览页继续负责概览和分流，而不把趋势图、分布图直接堆进 A02，保持后台信息密度高但不混乱。
+当前状态补充：A08 当前直接复用 `12.1` 中已落地的 `GET /api/v1/admin/analytics/trends`，并使用 Streamlit 原生图表能力渲染三块核心内容：学生风险分布图、最近 7 天活跃趋势图、当前工单处理状态统计图。图表数据没有重新计算，前端只做标签本地化、顺序保持和图表规格转换，确保页面数值与数据库聚合结果一致。
+当前状态补充：为符合 `FRONTEND_GUIDELINES.md` 的管理端规范，本步继续只使用 Streamlit 原生组件与局部 CSS 注入，没有引入任何第三方前端组件库。A08 视觉上延续品牌青绿色 + 中性色卡片体系，并按语义色区分正常 / 需关注 / 高风险与不同工单状态；7 天趋势图则固定使用品牌绿、暖色和危险色区分“问卷提交 / 树洞发帖 / 新建工单”，维持克制、可信、可审计的后台观感。
+当前状态补充：A08 现已补齐“图表 + 原始统计表”双视图。每个图表区块下都提供可展开的原始统计表，用于直接核对风险分布人数、工单状态数量和 7 天每日明细；趋势区块还会展示 7 天汇总指标和活跃峰值日，帮助管理员在演示或日常值班时快速解释图表背后的确切数值来源。
+当前状态补充：已新增 `tests/admin/test_analytics_view_helpers.py`，覆盖 A08 风险分布、本地化标签、工单状态 tone 映射、7 天趋势行数据、原始表格数据、汇总卡片与峰值日计算；同时保留 `tests/backend/test_admin_analytics_api.py` 与 `tests/admin/test_admin_api_client.py`，从后端聚合、HTTP client 到前端映射三层共同验证 `12.2` 依赖的数据链路。
+当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（`admin/app.py`、`admin/utils/styles.py`、新增 admin tests 等受影响文件）、定向 pytest（`tests/admin/test_analytics_view_helpers.py`、`tests/admin/test_admin_api_client.py`、`tests/admin/test_session_state.py`、`tests/backend/test_admin_analytics_api.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 134 项通过，`tests/admin` 共 14 项通过，合计 148 项测试通过。
+当前状态补充：第十二阶段当前已完整落地 `12.1 统计接口` 与 `12.2 Streamlit 图表页`；管理后台现在除 A01-A07 外，已额外具备可直接演示的 A08 统计分析视图，为后续第十三阶段测试和答辩演示加固提供真实可视化入口。
+待办：见 IMPLEMENTATION_PLAN.md 步骤13.1。
