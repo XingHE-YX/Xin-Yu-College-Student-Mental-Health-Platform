@@ -48,6 +48,7 @@ VIEW_ALERTS = "alerts"
 VIEW_POSTS = "posts"
 VIEW_USERS = "users"
 VIEW_AUDIT = "audit"
+VIEW_ANALYTICS = "analytics"
 ALERT_STATUS_FILTER_OPTIONS = (
     ("pending_review", "待复核"),
     ("confirmed_pending_intervention", "已确认"),
@@ -72,6 +73,11 @@ USER_RISK_LABELS = {
     "high": "高风险",
     "watch": "需关注",
     "normal": "正常",
+}
+USER_RISK_TONES = {
+    "normal": "success",
+    "watch": "warning",
+    "high": "danger",
 }
 RISK_LABELS = {
     "low": "低风险",
@@ -105,6 +111,11 @@ AUDIT_ACTOR_TYPE_LABELS = {
     "system": "系统",
     "student": "学生",
 }
+ANALYTICS_ACTIVITY_METRICS = (
+    ("questionnaire_submission_count", "问卷提交", "#2F8F83"),
+    ("treehole_post_count", "树洞发帖", "#E89A4A"),
+    ("alert_case_count", "新建工单", "#D84C4C"),
+)
 FEEDBACK_LEVEL_RENDERERS = {
     "success": st.success,
     "error": st.error,
@@ -175,6 +186,9 @@ def render_authenticated_workspace(api_client: AdminApiClient) -> None:
         return
     if active_view == VIEW_AUDIT:
         render_audit_log_page(api_client)
+        return
+    if active_view == VIEW_ANALYTICS:
+        render_analytics_page(api_client)
         return
     render_dashboard_page(api_client)
 
@@ -277,31 +291,35 @@ def render_dashboard_page(api_client: AdminApiClient) -> None:
             unsafe_allow_html=True,
         )
     with right:
-        button_columns = st.columns(6)
-        with button_columns[0]:
+        top_buttons = st.columns(3)
+        bottom_buttons = st.columns(3)
+        with top_buttons[0]:
             if st.button("进入 A03", use_container_width=True):
                 set_admin_active_view(st.session_state, VIEW_ALERTS)
                 st.rerun()
-        with button_columns[1]:
+        with top_buttons[1]:
             if st.button("进入 A05", use_container_width=True):
                 set_admin_active_view(st.session_state, VIEW_POSTS)
                 st.rerun()
-        with button_columns[2]:
+        with top_buttons[2]:
             if st.button("进入 A06", use_container_width=True):
                 set_admin_active_view(st.session_state, VIEW_USERS)
                 st.rerun()
-        with button_columns[3]:
+        with bottom_buttons[0]:
             if st.button("进入 A07", use_container_width=True):
                 set_admin_active_view(st.session_state, VIEW_AUDIT)
                 st.rerun()
-        with button_columns[4]:
+        with bottom_buttons[1]:
+            if st.button("进入 A08", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_ANALYTICS)
+                st.rerun()
+        with bottom_buttons[2]:
             if st.button("刷新总览", use_container_width=True):
                 st.rerun()
-        with button_columns[5]:
-            if st.button("退出登录", use_container_width=True):
-                clear_admin_session(st.session_state)
-                set_admin_auth_error(st.session_state, "已退出当前管理员会话。")
-                st.rerun()
+        if st.button("退出登录", key="dashboard-logout", use_container_width=True):
+            clear_admin_session(st.session_state)
+            set_admin_auth_error(st.session_state, "已退出当前管理员会话。")
+            st.rerun()
 
     render_admin_identity_card(admin_profile, role_code=role_code)
     if load_error:
@@ -313,6 +331,73 @@ def render_dashboard_page(api_client: AdminApiClient) -> None:
     render_dashboard_kpis(summary["kpis"])
     render_dashboard_stats(summary["stats"])
     render_dashboard_navigation(summary)
+
+
+def render_analytics_page(api_client: AdminApiClient) -> None:
+    """Render the A08 analytics page using the live 12.1 aggregate snapshot."""
+    admin_profile = get_admin_profile(st.session_state) or {}
+    display_name = str(admin_profile.get("display_name") or "管理员")
+    role_code = str(admin_profile.get("role_code") or "platform_admin")
+    analytics, load_error = load_analytics_snapshot(api_client)
+
+    left, right = st.columns([0.74, 0.26], vertical_alignment="center")
+    with left:
+        topbar_copy = (
+            "当前图表直接基于真实聚合接口返回，集中展示风险分布、近 7 天活跃趋势和工单处理状态。"
+            if analytics is not None
+            else "管理员会话仍有效，但本次未能加载实时统计数据。可立即刷新重试。"
+        )
+        st.markdown(
+            (
+                '<div class="xinyu-topbar">'
+                '<div class="xinyu-topbar-label">A08 Analytics</div>'
+                f'<div class="xinyu-sync-chip">数据快照（UTC）· {format_dashboard_timestamp(analytics.get("generated_at") if analytics else None)}</div>'
+                f'<h1 class="xinyu-topbar-title">统计分析看板 · {escape_html(display_name)}</h1>'
+                f'<p class="xinyu-topbar-copy">{escape_html(topbar_copy)}</p>'
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+    with right:
+        top_buttons = st.columns(2)
+        bottom_buttons = st.columns(3)
+        with top_buttons[0]:
+            if st.button("返回 A02", key="analytics-back-dashboard", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_DASHBOARD)
+                st.rerun()
+        with top_buttons[1]:
+            if st.button("前往 A03", key="analytics-go-alerts", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_ALERTS)
+                st.rerun()
+        with bottom_buttons[0]:
+            if st.button("前往 A07", key="analytics-go-audit", use_container_width=True):
+                set_admin_active_view(st.session_state, VIEW_AUDIT)
+                st.rerun()
+        with bottom_buttons[1]:
+            if st.button("刷新统计", key="analytics-refresh", use_container_width=True):
+                st.rerun()
+        with bottom_buttons[2]:
+            if st.button("退出登录", key="analytics-logout", use_container_width=True):
+                clear_admin_session(st.session_state)
+                set_admin_auth_error(st.session_state, "已退出当前管理员会话。")
+                st.rerun()
+
+    render_admin_identity_card(admin_profile, role_code=role_code)
+    if load_error:
+        st.error(load_error)
+    if analytics is None:
+        render_dashboard_unavailable_state()
+        return
+
+    render_analytics_summary_cards(analytics)
+
+    top_row = st.columns(2, vertical_alignment="top")
+    with top_row[0]:
+        render_risk_distribution_chart(analytics["risk_distribution"])
+    with top_row[1]:
+        render_alert_processing_chart(analytics["alert_processing"])
+
+    render_daily_trend_chart(analytics["daily_trends"])
 
 
 def render_alert_queue_page(api_client: AdminApiClient) -> None:
@@ -1512,6 +1597,22 @@ def load_dashboard_summary(
         return None, str(exc)
 
 
+def load_analytics_snapshot(
+    api_client: AdminApiClient,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Fetch the live A08 analytics payload or normalize recoverable failures."""
+    access_token = get_admin_access_token(st.session_state)
+    if access_token is None:
+        return None, "当前管理员会话不存在，请重新登录。"
+
+    try:
+        return api_client.get_analytics_trends(access_token=access_token), None
+    except AdminApiRequestError as exc:
+        return None, normalize_admin_request_error(exc)
+    except AdminApiClientError as exc:
+        return None, str(exc)
+
+
 def load_alert_queue(
     api_client: AdminApiClient,
     *,
@@ -2352,6 +2453,118 @@ def render_admin_identity_card(
         )
 
 
+def render_analytics_summary_cards(analytics: dict[str, Any]) -> None:
+    """Render the A08 overview cards above the chart grid."""
+    summary_cards = build_analytics_summary_cards(analytics)
+    st.caption("A08 统计概览")
+    columns = st.columns(4)
+    for column, (value, label, meta) in zip(columns, summary_cards, strict=True):
+        with column:
+            st.markdown(
+                build_stat_card_html(value=value, label=label, meta=meta),
+                unsafe_allow_html=True,
+            )
+
+
+def render_risk_distribution_chart(risk_distribution: dict[str, Any]) -> None:
+    """Render the student risk-distribution chart and supporting raw table."""
+    chart_rows = build_risk_distribution_chart_rows(risk_distribution)
+    chart_spec = build_risk_distribution_chart_spec(chart_rows)
+    chip_row = build_chip_row_html(
+        [
+            (
+                f"{row['label']} {int(row['student_count'])}",
+                str(row["tone"]),
+            )
+            for row in chart_rows
+        ]
+    )
+
+    with st.container(border=True):
+        st.markdown(
+            build_chart_section_header_html(
+                eyebrow="风险分布",
+                title="学生风险档位分布",
+                copy="按当前 `student_users.risk_status` 聚合，直接反映后台正在跟踪的整体风险结构。",
+            ),
+            unsafe_allow_html=True,
+        )
+        st.vega_lite_chart(chart_spec, use_container_width=True)
+        st.markdown(chip_row, unsafe_allow_html=True)
+        with st.expander("查看分布原始统计表"):
+            st.dataframe(
+                build_risk_distribution_table_rows(chart_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+
+def render_alert_processing_chart(alert_processing: dict[str, Any]) -> None:
+    """Render the current alert queue-status distribution chart."""
+    chart_rows = build_alert_processing_chart_rows(alert_processing)
+    chart_spec = build_alert_processing_chart_spec(chart_rows)
+    chip_row = build_chip_row_html(
+        [
+            (
+                f"{row['label']} {int(row['case_count'])}",
+                str(row["tone"]),
+            )
+            for row in chart_rows
+        ]
+    )
+
+    with st.container(border=True):
+        st.markdown(
+            build_chart_section_header_html(
+                eyebrow="工单状态",
+                title="当前工单处理状态统计",
+                copy="按 `queue_status` 聚合展示当前工单队列口径，可直接观察待复核、已确认、已忽略与已结案的结构。",
+            ),
+            unsafe_allow_html=True,
+        )
+        st.vega_lite_chart(chart_spec, use_container_width=True)
+        st.markdown(chip_row, unsafe_allow_html=True)
+        with st.expander("查看工单状态原始统计表"):
+            st.dataframe(
+                build_alert_processing_table_rows(chart_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+
+def render_daily_trend_chart(daily_trends: dict[str, Any]) -> None:
+    """Render the fixed seven-day recent-activity trend chart."""
+    chart_rows = build_daily_trend_chart_rows(daily_trends)
+    chart_spec = build_daily_trend_chart_spec(chart_rows)
+    table_rows = build_daily_trend_table_rows(daily_trends)
+    totals = summarize_daily_trends(daily_trends)
+    peak_summary = build_daily_trend_peak_summary(daily_trends)
+
+    with st.container(border=True):
+        st.markdown(
+            build_chart_section_header_html(
+                eyebrow="近 7 天趋势",
+                title="后台活跃趋势",
+                copy="固定观察最近 7 个自然日的问卷提交、树洞发帖与新建工单数量，帮助值班管理员快速识别波峰波谷。",
+            ),
+            unsafe_allow_html=True,
+        )
+        st.vega_lite_chart(chart_spec, use_container_width=True)
+        summary_columns = st.columns(3)
+        summary_columns[0].metric("7 天问卷提交", totals["questionnaire_submission_count"])
+        summary_columns[1].metric("7 天树洞发帖", totals["treehole_post_count"])
+        summary_columns[2].metric("7 天新建工单", totals["alert_case_count"])
+        st.caption(
+            f"活跃峰值日：{peak_summary['date_label']} · 总事件 {peak_summary['total_count']}。"
+        )
+        with st.expander("查看近 7 天原始统计表"):
+            st.dataframe(
+                table_rows,
+                use_container_width=True,
+                hide_index=True,
+            )
+
+
 def render_dashboard_unavailable_state() -> None:
     """Render the fallback state when one backend payload cannot be loaded."""
     st.markdown(
@@ -2549,8 +2762,7 @@ def render_dashboard_navigation(summary: dict[str, Any]) -> None:
     kpis = summary["kpis"]
     stats = summary["stats"]
     st.caption("模块入口")
-    top_row = st.columns(2)
-    bottom_row = st.columns(2)
+    columns = (*st.columns(3), *st.columns(2))
     cards = (
         (
             "A03",
@@ -2580,12 +2792,15 @@ def render_dashboard_navigation(summary: dict[str, Any]) -> None:
             "管理员登录、敏感详情展开与人工处置都会写入审计。",
             "已实现",
         ),
+        (
+            "A08",
+            "统计分析",
+            "查看风险分布、近 7 天趋势和工单处理状态图，辅助日常值班判断整体运行态势。",
+            f"高风险档案 {int(stats.get('high_risk_student_count', 0))} · 已确认高风险 {int(kpis.get('confirmed_high_risk_count', 0))}",
+            "已实现",
+        ),
     )
-    for column, (step, title, copy, metric, status_label) in zip(
-        (*top_row, *bottom_row),
-        cards,
-        strict=True,
-    ):
+    for column, (step, title, copy, metric, status_label) in zip(columns, cards, strict=True):
         with column:
             st.markdown(
                 build_navigation_card_html(
@@ -2652,6 +2867,375 @@ def build_navigation_card_html(
         f'<div class="xinyu-nav-metric">{escape_html(metric)}</div>'
         "</div>"
     )
+
+
+def build_chart_section_header_html(
+    *,
+    eyebrow: str,
+    title: str,
+    copy: str,
+) -> str:
+    """Build one compact header block used at the top of each analytics chart card."""
+    return (
+        '<div class="xinyu-chart-header">'
+        f'<div class="xinyu-chart-eyebrow">{escape_html(eyebrow)}</div>'
+        f'<div class="xinyu-chart-title">{escape_html(title)}</div>'
+        f'<div class="xinyu-chart-copy">{escape_html(copy)}</div>'
+        "</div>"
+    )
+
+
+def build_chip_row_html(chips: list[tuple[str, str]]) -> str:
+    """Build one horizontal chip row from label and tone pairs."""
+    return (
+        '<div class="xinyu-chip-row">'
+        + "".join(build_chip_html(label, tone=tone) for label, tone in chips)
+        + "</div>"
+    )
+
+
+def build_analytics_summary_cards(
+    analytics: dict[str, Any],
+) -> tuple[tuple[int, str, str], ...]:
+    """Build the top-level A08 summary cards from the live analytics snapshot."""
+    risk_distribution = analytics.get("risk_distribution") or {}
+    daily_trends = analytics.get("daily_trends") or {}
+    totals = summarize_daily_trends(daily_trends)
+    date_window = (
+        f"{str(daily_trends.get('start_date') or '--')} - {str(daily_trends.get('end_date') or '--')}"
+    )
+    return (
+        (
+            int(risk_distribution.get("total_students", 0)),
+            "在册学生数",
+            "按当前 `student_users.risk_status` 聚合",
+        ),
+        (
+            totals["questionnaire_submission_count"],
+            "7 天量表提交",
+            f"窗口 {date_window}",
+        ),
+        (
+            totals["treehole_post_count"],
+            "7 天树洞发帖",
+            "按 `treehole_posts.created_at` 统计",
+        ),
+        (
+            totals["alert_case_count"],
+            "7 天新建工单",
+            "按 `alert_cases.created_at` 统计",
+        ),
+    )
+
+
+def build_risk_distribution_chart_rows(
+    risk_distribution: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Normalize the risk-distribution payload into ordered chart rows."""
+    items = risk_distribution.get("items") or []
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        risk_status = str(item.get("risk_status") or "normal")
+        rows.append(
+            {
+                "risk_status": risk_status,
+                "label": USER_RISK_LABELS.get(risk_status, risk_status),
+                "student_count": int(item.get("student_count", 0)),
+                "tone": USER_RISK_TONES.get(risk_status, "neutral"),
+            }
+        )
+    return rows
+
+
+def build_risk_distribution_table_rows(
+    chart_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Convert chart rows into one raw table displayed under the risk chart."""
+    return [
+        {
+            "风险状态": str(row["label"]),
+            "学生人数": int(row["student_count"]),
+        }
+        for row in chart_rows
+    ]
+
+
+def build_risk_distribution_chart_spec(
+    chart_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the Vega-Lite spec for the risk-distribution bar chart."""
+    domain = [str(row["label"]) for row in chart_rows]
+    colors = [
+        {
+            "success": "#3D9B5E",
+            "warning": "#E5A23A",
+            "danger": "#D84C4C",
+            "neutral": "#70807C",
+            "brand": "#2F8F83",
+        }.get(str(row["tone"]), "#70807C")
+        for row in chart_rows
+    ]
+    return {
+        "data": {"values": chart_rows},
+        "mark": {"type": "bar", "cornerRadiusEnd": 8},
+        "height": 280,
+        "encoding": {
+            "y": {
+                "field": "label",
+                "type": "nominal",
+                "sort": domain,
+                "axis": {
+                    "title": None,
+                    "labelColor": "#41504C",
+                    "labelFontSize": 12,
+                    "labelFontWeight": 600,
+                },
+            },
+            "x": {
+                "field": "student_count",
+                "type": "quantitative",
+                "axis": {
+                    "title": "学生人数",
+                    "titleColor": "#70807C",
+                    "labelColor": "#70807C",
+                    "gridColor": "#EEF2F1",
+                    "tickCount": 5,
+                },
+            },
+            "color": {
+                "field": "label",
+                "type": "nominal",
+                "scale": {"domain": domain, "range": colors},
+                "legend": None,
+            },
+            "tooltip": [
+                {"field": "label", "type": "nominal", "title": "风险状态"},
+                {"field": "student_count", "type": "quantitative", "title": "学生人数"},
+            ],
+        },
+        "config": {"view": {"stroke": None}},
+    }
+
+
+def build_alert_processing_chart_rows(
+    alert_processing: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Normalize the alert-processing payload into ordered chart rows."""
+    items = alert_processing.get("items") or []
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        queue_status = str(item.get("queue_status") or "pending_review")
+        rows.append(
+            {
+                "queue_status": queue_status,
+                "label": ALERT_STATUS_LABELS.get(queue_status, queue_status),
+                "case_count": int(item.get("case_count", 0)),
+                "tone": resolve_status_tone(queue_status),
+            }
+        )
+    return rows
+
+
+def build_alert_processing_table_rows(
+    chart_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Convert alert chart rows into one raw table displayed under the chart."""
+    return [
+        {
+            "工单状态": str(row["label"]),
+            "工单数量": int(row["case_count"]),
+        }
+        for row in chart_rows
+    ]
+
+
+def build_alert_processing_chart_spec(
+    chart_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the Vega-Lite spec for the alert queue-status chart."""
+    domain = [str(row["label"]) for row in chart_rows]
+    colors = [
+        {
+            "warning": "#E5A23A",
+            "danger": "#D84C4C",
+            "neutral": "#70807C",
+            "brand": "#2F8F83",
+            "success": "#3D9B5E",
+        }.get(str(row["tone"]), "#70807C")
+        for row in chart_rows
+    ]
+    return {
+        "data": {"values": chart_rows},
+        "mark": {"type": "bar", "cornerRadiusTopLeft": 8, "cornerRadiusTopRight": 8},
+        "height": 280,
+        "encoding": {
+            "x": {
+                "field": "label",
+                "type": "nominal",
+                "sort": domain,
+                "axis": {
+                    "title": None,
+                    "labelColor": "#41504C",
+                    "labelFontSize": 12,
+                    "labelFontWeight": 600,
+                    "labelAngle": 0,
+                },
+            },
+            "y": {
+                "field": "case_count",
+                "type": "quantitative",
+                "axis": {
+                    "title": "工单数量",
+                    "titleColor": "#70807C",
+                    "labelColor": "#70807C",
+                    "gridColor": "#EEF2F1",
+                    "tickCount": 5,
+                },
+            },
+            "color": {
+                "field": "label",
+                "type": "nominal",
+                "scale": {"domain": domain, "range": colors},
+                "legend": None,
+            },
+            "tooltip": [
+                {"field": "label", "type": "nominal", "title": "工单状态"},
+                {"field": "case_count", "type": "quantitative", "title": "工单数量"},
+            ],
+        },
+        "config": {"view": {"stroke": None}},
+    }
+
+
+def build_daily_trend_chart_rows(
+    daily_trends: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Flatten the seven-day trend payload into long-form chart rows."""
+    rows: list[dict[str, Any]] = []
+    for item in daily_trends.get("items") or []:
+        date_value = str(item.get("date") or "--")
+        date_label = format_compact_date_label(date_value)
+        for field_name, metric_label, _color in ANALYTICS_ACTIVITY_METRICS:
+            rows.append(
+                {
+                    "date": date_value,
+                    "date_label": date_label,
+                    "metric_label": metric_label,
+                    "count": int(item.get(field_name, 0)),
+                }
+            )
+    return rows
+
+
+def build_daily_trend_table_rows(
+    daily_trends: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Return the raw seven-day trend table shown below the line chart."""
+    return [
+        {
+            "日期": str(item.get("date") or "--"),
+            "问卷提交": int(item.get("questionnaire_submission_count", 0)),
+            "树洞发帖": int(item.get("treehole_post_count", 0)),
+            "新建工单": int(item.get("alert_case_count", 0)),
+        }
+        for item in daily_trends.get("items") or []
+    ]
+
+
+def build_daily_trend_chart_spec(
+    chart_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the Vega-Lite spec for the seven-day multi-series trend chart."""
+    metric_domain = [label for _field, label, _color in ANALYTICS_ACTIVITY_METRICS]
+    metric_colors = [color for _field, _label, color in ANALYTICS_ACTIVITY_METRICS]
+    date_domain = list(dict.fromkeys(str(row["date_label"]) for row in chart_rows))
+    return {
+        "data": {"values": chart_rows},
+        "mark": {
+            "type": "line",
+            "point": {"filled": True, "size": 72},
+            "strokeWidth": 3,
+        },
+        "height": 320,
+        "encoding": {
+            "x": {
+                "field": "date_label",
+                "type": "ordinal",
+                "sort": date_domain,
+                "axis": {
+                    "title": None,
+                    "labelColor": "#41504C",
+                    "labelFontSize": 12,
+                    "labelAngle": 0,
+                },
+            },
+            "y": {
+                "field": "count",
+                "type": "quantitative",
+                "axis": {
+                    "title": "数量",
+                    "titleColor": "#70807C",
+                    "labelColor": "#70807C",
+                    "gridColor": "#EEF2F1",
+                    "tickCount": 6,
+                },
+            },
+            "color": {
+                "field": "metric_label",
+                "type": "nominal",
+                "scale": {"domain": metric_domain, "range": metric_colors},
+                "legend": {
+                    "title": None,
+                    "labelColor": "#41504C",
+                    "orient": "top",
+                },
+            },
+            "tooltip": [
+                {"field": "date", "type": "nominal", "title": "日期"},
+                {"field": "metric_label", "type": "nominal", "title": "指标"},
+                {"field": "count", "type": "quantitative", "title": "数量"},
+            ],
+        },
+        "config": {"view": {"stroke": None}},
+    }
+
+
+def summarize_daily_trends(daily_trends: dict[str, Any]) -> dict[str, int]:
+    """Aggregate seven-day totals for the A08 headline summary and metrics."""
+    totals = {
+        "questionnaire_submission_count": 0,
+        "treehole_post_count": 0,
+        "alert_case_count": 0,
+    }
+    for item in daily_trends.get("items") or []:
+        for field_name in totals:
+            totals[field_name] += int(item.get(field_name, 0))
+    return totals
+
+
+def build_daily_trend_peak_summary(daily_trends: dict[str, Any]) -> dict[str, Any]:
+    """Return the highest-activity day within the current seven-day window."""
+    best_date = "--"
+    best_total = 0
+    for item in daily_trends.get("items") or []:
+        total = (
+            int(item.get("questionnaire_submission_count", 0))
+            + int(item.get("treehole_post_count", 0))
+            + int(item.get("alert_case_count", 0))
+        )
+        if total > best_total:
+            best_total = total
+            best_date = format_compact_date_label(str(item.get("date") or "--"))
+    return {"date_label": best_date, "total_count": best_total}
+
+
+def format_compact_date_label(raw_value: str) -> str:
+    """Format one ISO date string into a compact month-day label."""
+    try:
+        parsed = datetime.fromisoformat(raw_value)
+    except ValueError:
+        return raw_value
+    return parsed.strftime("%m-%d")
 
 
 def build_alert_queue_card_html(

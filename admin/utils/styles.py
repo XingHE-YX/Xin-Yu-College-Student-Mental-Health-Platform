@@ -280,6 +280,33 @@ def build_admin_console_css() -> str:
       line-height: 1.5;
     }
 
+    .xinyu-chart-header {
+      margin-bottom: 8px;
+    }
+
+    .xinyu-chart-eyebrow {
+      color: var(--neutral-500);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .xinyu-chart-title {
+      margin-top: 8px;
+      color: var(--neutral-900);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .xinyu-chart-copy {
+      margin-top: 8px;
+      color: var(--neutral-700);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
     .xinyu-empty-state {
       margin-top: 8px;
       padding: 24px;
@@ -491,6 +518,13 @@ def build_admin_console_css() -> str:
       border: 1px solid #E3EAE7;
       background: rgba(248, 250, 250, 0.95);
       color: var(--neutral-900);
+    }
+
+    div[data-testid="stDataFrame"] {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #E3EAE7;
+      background: rgba(255, 255, 255, 0.96);
     }
     </style>
     """
