@@ -138,6 +138,81 @@ def test_report_summary_stays_partial_until_all_required_questionnaires_finish()
     assert len(summary["scale_results"]) == 2
 
 
+def test_report_summary_is_locked_without_any_submissions() -> None:
+    """The report-home state should stay locked until the first required questionnaire exists."""
+    service = AssessmentReportService()
+
+    summary = service.build_report_summary([])
+
+    assert summary["state"] == "locked"
+    assert summary["progress"]["required_questions_completed"] == 0
+    assert summary["progress"]["required_questions_total"] == 70
+    assert [item["code"] for item in summary["progress"]["missing_required_questionnaires"]] == [
+        "SCREEN",
+        "SDS",
+        "SAS",
+        "SLEEP",
+    ]
+    assert summary["next_actions"][0]["target_questionnaire_code"] == "SCREEN"
+    assert summary["scale_results"] == []
+    assert "overview_badge" not in summary
+
+
+def test_report_summary_unlocks_with_exact_required_chain_without_upi() -> None:
+    """The full profile should unlock once the four required questionnaires are complete."""
+    service = AssessmentReportService()
+    now = datetime.now(UTC).replace(tzinfo=None)
+    submissions = [
+        build_submission(
+            submission_id=211,
+            questionnaire_code="SCREEN",
+            submitted_at=now,
+            raw_score=44,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+        build_submission(
+            submission_id=212,
+            questionnaire_code="SDS",
+            submitted_at=now + timedelta(minutes=1),
+            raw_score=42,
+            standardized_score=52,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+        build_submission(
+            submission_id=213,
+            questionnaire_code="SAS",
+            submitted_at=now + timedelta(minutes=2),
+            raw_score=39,
+            standardized_score=48,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+        build_submission(
+            submission_id=214,
+            questionnaire_code="SLEEP",
+            submitted_at=now + timedelta(minutes=3),
+            raw_score=7,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+    ]
+
+    summary = service.build_report_summary(submissions)
+
+    assert summary["state"] == "unlocked"
+    assert summary["progress"]["required_questions_completed"] == 70
+    assert summary["progress"]["required_questions_total"] == 70
+    assert summary["progress"]["full_profile_unlocked"] is True
+    assert summary["progress"]["missing_required_questionnaires"] == []
+    assert summary["overview_badge"]["risk_level"] == "low"
+    assert [item["questionnaire"]["code"] for item in summary["scale_results"]] == [
+        "SCREEN",
+        "SDS",
+        "SAS",
+        "SLEEP",
+    ]
+    assert [item["flow_step"] for item in summary["next_actions"]] == ["S10A", "S15"]
+    assert summary["next_actions"][0]["label"] == "查看完整报告"
+
+
 def test_full_profile_requires_all_required_questionnaires() -> None:
     """Full-profile generation should fail until the required 70-question chain is complete."""
     service = AssessmentReportService()

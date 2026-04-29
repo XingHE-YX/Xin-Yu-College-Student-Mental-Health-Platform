@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -80,6 +81,22 @@ def test_aggregate_signals_with_treehole_watch_only_returns_watch() -> None:
     assert result.current_signals_neutral is False
 
 
+def test_aggregate_signals_with_treehole_high_only_returns_high() -> None:
+    """AI high should immediately force a high-risk aggregate result."""
+    service = RiskAggregationService()
+
+    result = service.aggregate_signals(
+        ai_risk_level=QuestionnaireRiskLevel.HIGH,
+        questionnaire_submissions=[],
+        history_high_risk=False,
+    )
+
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.reason_codes == ["TREEHOLE_AI_HIGH"]
+    assert result.hard_trigger_hit is False
+    assert result.current_signals_neutral is False
+
+
 def test_aggregate_signals_with_required_chain_complete_maps_sleep_high_to_watch() -> None:
     """Sleep concern should elevate risk only after the fixed required chain is complete."""
     service = RiskAggregationService()
@@ -124,6 +141,33 @@ def test_aggregate_signals_with_required_chain_complete_maps_sleep_high_to_watch
     assert "SLEEP_CONCERN" in result.reason_codes
     assert result.required_chain_complete is True
     assert result.latest_questionnaire_codes == ["SCREEN", "SDS", "SAS", "SLEEP"]
+
+
+def test_aggregate_signals_with_sas_watch_returns_watch() -> None:
+    """A latest SAS watch result should elevate the aggregate level to watch."""
+    service = RiskAggregationService()
+    now = datetime.now(UTC).replace(tzinfo=None)
+    submissions = [
+        build_submission(
+            submission_id=151,
+            questionnaire_code="SAS",
+            submitted_at=now,
+            risk_level=QuestionnaireRiskLevel.WATCH,
+            raw_score=40,
+            standardized_score=50,
+        ),
+    ]
+
+    result = service.aggregate_signals(
+        ai_risk_level=QuestionnaireRiskLevel.LOW,
+        questionnaire_submissions=submissions,
+        history_high_risk=False,
+    )
+
+    assert result.risk_level is QuestionnaireRiskLevel.WATCH
+    assert result.reason_codes == ["SAS_POSITIVE"]
+    assert result.latest_questionnaire_codes == ["SAS"]
+    assert result.required_chain_complete is False
 
 
 def test_aggregate_signals_with_incomplete_chain_does_not_raise_on_sleep_only_concern() -> None:
@@ -182,6 +226,42 @@ def test_aggregate_signals_with_hard_trigger_returns_high() -> None:
     assert result.risk_level is QuestionnaireRiskLevel.HIGH
     assert "QUESTIONNAIRE_HARD_TRIGGER" in result.reason_codes
     assert result.hard_trigger_hit is True
+
+
+@pytest.mark.parametrize(
+    ("questionnaire_code", "reason_code", "standardized_score"),
+    [
+        ("SDS", "SDS_HIGH", 63),
+        ("SAS", "SAS_HIGH", 60),
+    ],
+)
+def test_aggregate_signals_with_scale_high_returns_high(
+    questionnaire_code: str,
+    reason_code: str,
+    standardized_score: int,
+) -> None:
+    """Latest SDS/SAS high results should each force a high aggregate level."""
+    service = RiskAggregationService()
+    now = datetime.now(UTC).replace(tzinfo=None)
+    submissions = [
+        build_submission(
+            submission_id=311,
+            questionnaire_code=questionnaire_code,
+            submitted_at=now,
+            risk_level=QuestionnaireRiskLevel.HIGH,
+            standardized_score=standardized_score,
+        ),
+    ]
+
+    result = service.aggregate_signals(
+        ai_risk_level=QuestionnaireRiskLevel.LOW,
+        questionnaire_submissions=submissions,
+        history_high_risk=False,
+    )
+
+    assert result.risk_level is QuestionnaireRiskLevel.HIGH
+    assert result.reason_codes == [reason_code]
+    assert result.hard_trigger_hit is False
 
 
 def test_aggregate_signals_history_high_elevates_neutral_current_state_to_watch() -> None:
