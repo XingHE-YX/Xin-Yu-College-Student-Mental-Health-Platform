@@ -252,3 +252,11 @@
 当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（`admin/app.py`、`admin/utils/styles.py`、新增 admin tests 等受影响文件）、定向 pytest（`tests/admin/test_analytics_view_helpers.py`、`tests/admin/test_admin_api_client.py`、`tests/admin/test_session_state.py`、`tests/backend/test_admin_analytics_api.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 134 项通过，`tests/admin` 共 14 项通过，合计 148 项测试通过。
 当前状态补充：第十二阶段当前已完整落地 `12.1 统计接口` 与 `12.2 Streamlit 图表页`；管理后台现在除 A01-A07 外，已额外具备可直接演示的 A08 统计分析视图，为后续第十三阶段测试和答辩演示加固提供真实可视化入口。
 待办：见 IMPLEMENTATION_PLAN.md 步骤13.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤13.1（后端单元测试增强完成）。
+当前状态补充：本步没有改动后端业务逻辑或前端页面，而是针对 `13.1` 的完成标准补齐服务层关键规则分支测试，重点覆盖 `QuestionnaireScoringService`、`AssessmentReportService` 与 `RiskAggregationService` 三类核心规则引擎，确保“SDS 评分 / SAS 评分 / 睡眠评分 / 硬触发逻辑 / 报告解锁逻辑 / 风险聚合逻辑”六项要求都由明确的后端单测保护，而不是只依赖更高层 API 回归间接覆盖。
+当前状态补充：`tests/backend/test_questionnaire_scoring_service.py` 现继续承担量表评分与硬触发核心覆盖，已覆盖 SDS `53 / 63` 边界、SAS `50 / 60` 边界、睡眠问卷 `7 / 8 / 14 / 15` 边界，以及 `SCREEN_15`、`SDS_15`、`SAS_13`、`UPI_01`、`UPI_02` 五条冻结硬触发规则和 Zung 反向计分行为，因此 `13.1` 中“评分 + 硬触发”部分当前已具备稳定单测护栏。
+当前状态补充：本步补强了 `tests/backend/test_assessment_report_service.py` 的报告解锁单测，新增覆盖“零提交时报告首页保持 locked 状态”“仅完成四份必做问卷且未做 UPI 时仍可正常解锁完整报告入口”两类关键分支；配合既有“部分完成保持 partial”“缺失必做问卷时报 `FullProfileLockedError`”“完整链路下使用最新提交覆盖旧提交”“可选 UPI 不阻塞解锁但可抬升综合风险”等场景，`S10 / S10A` 的解锁状态机现在已由纯服务层单测完整约束。
+当前状态补充：本步补强了 `tests/backend/test_risk_aggregation_service.py` 的风险聚合单测，新增覆盖 `AI high -> high`、`SAS watch -> watch`、`SDS high -> high`、`SAS high -> high` 等直接判定路径；结合既有“AI watch -> watch”“完整必做链路下 sleep concern -> watch”“不完整链路下 sleep 单独不提升”“问卷硬触发直接 high”“历史高风险在当前中性时提升为 watch”“数据库上下文下历史高风险提交与历史高风险树洞 AI 记录查询”等场景，`9.3` 聚合器的主要优先级和降噪规则已经全部由后端单测显式覆盖。
+当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（新增 / 受影响测试文件）、定向 pytest（`tests/backend/test_questionnaire_scoring_service.py`、`tests/backend/test_assessment_report_service.py`、`tests/backend/test_risk_aggregation_service.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 140 项通过，`tests/admin` 共 14 项通过，合计 154 项测试通过。
+当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试` 的核心规则覆盖补强；后续继续按 `IMPLEMENTATION_PLAN.md` 的 `13.2` 进入 API 集成测试收口。
+待办：见 IMPLEMENTATION_PLAN.md 步骤13.2。
