@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from src.constants.treehole_enums import PostReactionType, TreeholePublishStatus
 from src.models.post_reaction import PostReaction
 from src.models.treehole_post import TreeholePost
+from src.repositories.demo_visibility import exclude_seeded_students_clause
 
 
 class TreeholeRepository:
@@ -16,7 +17,12 @@ class TreeholeRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def list_public_posts(self, *, limit: int) -> list[TreeholePost]:
+    def list_public_posts(
+        self,
+        *,
+        limit: int,
+        show_seeded_cases: bool,
+    ) -> list[TreeholePost]:
         """Return published posts for the public feed ordered by newest first."""
         statement = (
             select(TreeholePost)
@@ -31,6 +37,10 @@ class TreeholeRepository:
             .order_by(TreeholePost.published_at.desc(), TreeholePost.id.desc())
             .limit(limit)
         )
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
+            )
         return list(self.session.scalars(statement))
 
     def get_post_by_id(
@@ -38,11 +48,16 @@ class TreeholeRepository:
         post_id: int,
         *,
         include_reactions: bool = False,
+        show_seeded_cases: bool = True,
     ) -> TreeholePost | None:
         """Return one post by id, optionally with reaction rows loaded."""
         statement = select(TreeholePost).where(TreeholePost.id == post_id)
         if include_reactions:
             statement = statement.options(selectinload(TreeholePost.reactions))
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
+            )
         return self.session.scalar(statement)
 
     def get_student_post(
@@ -51,6 +66,7 @@ class TreeholeRepository:
         post_id: int,
         student_id: int,
         include_reactions: bool = False,
+        show_seeded_cases: bool = True,
     ) -> TreeholePost | None:
         """Return one owned post for the given student id."""
         statement = select(TreeholePost).where(
@@ -59,6 +75,10 @@ class TreeholeRepository:
         )
         if include_reactions:
             statement = statement.options(selectinload(TreeholePost.reactions))
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
+            )
         return self.session.scalar(statement)
 
     def get_reaction(

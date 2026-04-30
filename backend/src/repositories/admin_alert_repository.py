@@ -12,6 +12,7 @@ from src.models.audit_log import AuditLog
 from src.models.intervention_log import InterventionLog
 from src.models.questionnaire_submission import QuestionnaireSubmission
 from src.models.treehole_post import TreeholePost
+from src.repositories.demo_visibility import exclude_seeded_students_clause
 
 
 class AdminAlertRepository:
@@ -24,6 +25,7 @@ class AdminAlertRepository:
         self,
         *,
         queue_status: AlertQueueStatus | None,
+        show_seeded_cases: bool,
     ) -> list[AlertCase]:
         """Return alert cases sorted by priority then newest-first within each priority."""
         priority_order = case(
@@ -45,17 +47,34 @@ class AdminAlertRepository:
         )
         if queue_status is not None:
             statement = statement.where(AlertCase.queue_status == queue_status)
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(AlertCase.student_id)
+            )
         return list(self.session.scalars(statement).all())
 
-    def count_alert_cases_by_status(self) -> dict[AlertQueueStatus, int]:
+    def count_alert_cases_by_status(
+        self,
+        *,
+        show_seeded_cases: bool,
+    ) -> dict[AlertQueueStatus, int]:
         """Return alert-case counts grouped by workflow status."""
-        rows = self.session.execute(
-            select(AlertCase.queue_status, func.count())
-            .group_by(AlertCase.queue_status)
-        ).all()
+        statement = select(AlertCase.queue_status, func.count()).group_by(
+            AlertCase.queue_status
+        )
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(AlertCase.student_id)
+            )
+        rows = self.session.execute(statement).all()
         return {queue_status: int(count) for queue_status, count in rows}
 
-    def get_alert_case_detail(self, alert_case_id: int) -> AlertCase | None:
+    def get_alert_case_detail(
+        self,
+        alert_case_id: int,
+        *,
+        show_seeded_cases: bool,
+    ) -> AlertCase | None:
         """Return one alert case with all relationships needed by the A04 detail page."""
         statement = (
             select(AlertCase)
@@ -74,6 +93,10 @@ class AdminAlertRepository:
             )
             .where(AlertCase.id == alert_case_id)
         )
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(AlertCase.student_id)
+            )
         return self.session.scalar(statement)
 
     def list_student_submissions(

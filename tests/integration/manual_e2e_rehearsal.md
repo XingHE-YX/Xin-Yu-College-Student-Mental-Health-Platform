@@ -36,6 +36,8 @@ DEEPSEEK_API_KEY=your-deepseek-api-key
 WECHAT_APP_ID=your-wechat-app-id
 WECHAT_APP_SECRET=your-wechat-app-secret
 ENABLE_DEMO_LOGIN=true
+ENABLE_MOCK_AI=true
+SHOW_SEEDED_CASES=true
 ```
 
 3. 导入题库：
@@ -106,11 +108,12 @@ cd /Users/xingheluqi/心语大学生心理健康平台/backend
 
 ### 2.5 高风险树洞特别说明
 
-当前 `backend/mock_response.json` 默认是低风险回退结果：
+当前已经支持 `14.2` 的容错开关：
 
-- 当 DeepSeek 可正常访问时，高风险树洞脚本按标准流程演练；
-- 当 DeepSeek 不可访问时，树洞会回退成低风险发布，不适合做“高风险树洞拦截”现场演示；
-- 因此在正式答辩前，应先确认 `DEEPSEEK_API_KEY` 有效且外网可达，再执行脚本 3 和脚本 4。
+- `ENABLE_MOCK_AI=true` 时，树洞风险分析会直接走本地模拟路径，不访问 DeepSeek 外网；
+- 本地模拟路径会根据树洞文本中的明确危险表达，把内容稳定分流到 `low / watch / high`，因此“高风险树洞拦截”脚本现在可以在无外网或外网抖动时继续演练；
+- `SHOW_SEEDED_CASES=true` 时，后台会展示 `14.1` 预置的低风险 / 需关注 / 高风险样例，适合在开场或兜底时直接进入 A02-A08 演示；
+- 若希望验证真实 DeepSeek 链路，可将 `ENABLE_MOCK_AI=false`，但答辩前应确认 `DEEPSEEK_API_KEY` 有效且外网可达。
 
 ## 3. 开场自检
 
@@ -344,6 +347,6 @@ cd /Users/xingheluqi/心语大学生心理健康平台/backend
 
 ## 10. 与当前实现的边界
 
-1. 当前还没有 `14.2` 里的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，所以高风险树洞演练依赖可用的 DeepSeek 外网调用。
-2. 当前已经提供 `14.1` 的演示种子数据脚本，因此 A02 / A03 / A05 / A06 / A07 / A08 可以通过统一 seed 命令直接获得展示样例；但学生端“高风险树洞拦截”链路本身仍建议用手动输入再走一遍，以证明实时状态机仍然可用。
-3. 当前手册已经能指导“从空库到一轮可走通演练”，但若要做到答辩现场完全离线、完全可控，后续仍应继续完成 `14.2`。
+1. 当前已经完成 `14.2` 的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，因此答辩演示可在“真实 DeepSeek 模式”和“本地 mock 容错模式”之间切换；推荐正式答辩优先使用 `ENABLE_MOCK_AI=true` 与 `SHOW_SEEDED_CASES=true`，降低外网抖动风险。
+2. 当前已经提供 `14.1` 的演示种子数据脚本，因此 A02 / A03 / A05 / A06 / A07 / A08 可以通过统一 seed 命令直接获得展示样例；学生端若需要证明实时状态机仍然可用，仍建议至少手动走一遍树洞发布和报告查看链路。
+3. 当前手册已经可以支撑“从空库到一轮稳定答辩演练”；后续若继续推进 `14.3`，重点将转向固定演示顺序与话术节奏，而不是继续补基础容错能力。

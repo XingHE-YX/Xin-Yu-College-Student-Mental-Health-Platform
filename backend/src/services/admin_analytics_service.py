@@ -92,8 +92,9 @@ class AdminAnalyticsSnapshot:
 class AdminAnalyticsService:
     """Build the fixed analytics snapshot required by IMPLEMENTATION_PLAN 12.1."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
         self.repository = AdminAnalyticsRepository(session)
+        self.show_seeded_cases = show_seeded_cases
 
     def build_trends_snapshot(self) -> AdminAnalyticsSnapshot:
         """Return one chart-ready analytics snapshot for the admin backend."""
@@ -103,19 +104,26 @@ class AdminAnalyticsService:
         start_at = datetime.combine(start_date, time.min)
         end_before = datetime.combine(end_date + timedelta(days=1), time.min)
 
-        risk_counts = self.repository.load_student_risk_distribution()
-        alert_status_counts = self.repository.load_alert_queue_status_counts()
+        risk_counts = self.repository.load_student_risk_distribution(
+            show_seeded_cases=self.show_seeded_cases
+        )
+        alert_status_counts = self.repository.load_alert_queue_status_counts(
+            show_seeded_cases=self.show_seeded_cases
+        )
         submission_dates = self.repository.load_questionnaire_submission_dates(
             start_at=start_at,
             end_before=end_before,
+            show_seeded_cases=self.show_seeded_cases,
         )
         treehole_dates = self.repository.load_treehole_post_dates(
             start_at=start_at,
             end_before=end_before,
+            show_seeded_cases=self.show_seeded_cases,
         )
         alert_dates = self.repository.load_alert_case_dates(
             start_at=start_at,
             end_before=end_before,
+            show_seeded_cases=self.show_seeded_cases,
         )
 
         risk_distribution_items = [

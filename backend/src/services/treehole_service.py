@@ -133,6 +133,7 @@ class TreeholeService:
         session: Session,
         *,
         deepseek_service: DeepSeekService | None = None,
+        show_seeded_cases: bool = True,
     ) -> None:
         self.session = session
         self.repository = TreeholeRepository(session)
@@ -141,6 +142,7 @@ class TreeholeService:
         self.student_repository = StudentUserRepository(session)
         self.risk_aggregation_service = RiskAggregationService(session)
         self.deepseek_service = deepseek_service
+        self.show_seeded_cases = show_seeded_cases
 
     def list_feed(
         self,
@@ -149,7 +151,10 @@ class TreeholeService:
         limit: int = 20,
     ) -> list[TreeholeFeedPostSnapshot]:
         """Return public treehole posts visible in the student feed."""
-        posts = self.repository.list_public_posts(limit=limit)
+        posts = self.repository.list_public_posts(
+            limit=limit,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         return [
             self._build_feed_post_snapshot(post, student_id=student_id)
             for post in posts
@@ -221,7 +226,11 @@ class TreeholeService:
         post_id: int,
     ) -> TreeholePost:
         """Soft-delete one owned treehole post while keeping the database record."""
-        post = self.repository.get_student_post(post_id=post_id, student_id=student_id)
+        post = self.repository.get_student_post(
+            post_id=post_id,
+            student_id=student_id,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         if post is None:
             raise TreeholePostNotFoundError("treehole post does not exist")
 
@@ -241,7 +250,11 @@ class TreeholeService:
         reaction_type: PostReactionType,
     ) -> TreeholeReactionResult:
         """Record one preset reaction on a public post, treating duplicates idempotently."""
-        post = self.repository.get_post_by_id(post_id, include_reactions=True)
+        post = self.repository.get_post_by_id(
+            post_id,
+            include_reactions=True,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         if post is None:
             raise TreeholePostNotFoundError("treehole post does not exist")
         if not self._is_public_post(post):
@@ -266,7 +279,11 @@ class TreeholeService:
             post.hug_count += 1
             self.session.commit()
             self.session.expire_all()
-            post = self.repository.get_post_by_id(post_id, include_reactions=True)
+            post = self.repository.get_post_by_id(
+                post_id,
+                include_reactions=True,
+                show_seeded_cases=self.show_seeded_cases,
+            )
             if post is None:
                 raise TreeholePostNotFoundError("treehole post does not exist")
 

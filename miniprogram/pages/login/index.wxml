@@ -102,7 +102,10 @@
         <view class="eyebrow">Demo</view>
         <view class="section-subtitle">开发演示入口</view>
         <view class="body-text">
-          仅在开发或试运行环境显示。若后端未开启演示模式，点击后会明确提示并自动隐藏入口。
+          仅在后端显式开启演示模式时显示。若同时开启容错模式，登录后可直接配合预置案例完成演示。
+        </view>
+        <view wx:if="{{demoModeHint}}" class="login-page__demo-hint">
+          {{demoModeHint}}
         </view>
         <view class="button-stack login-page__button-stack">
           <secondary-button

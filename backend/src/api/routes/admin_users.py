@@ -59,12 +59,16 @@ def build_error_response(
     status_code=status.HTTP_200_OK,
 )
 def list_admin_users(
+    request: Request,
     _admin: Annotated[AdminUser, Depends(get_current_admin)],
     session: Annotated[Session, Depends(get_db_session)],
     risk_status: StudentRiskStatus | None = None,
 ) -> AdminStudentListSuccessResponse:
     """Return the filtered A06 masked student directory."""
-    snapshot = AdminUserDirectoryService(session).list_students(risk_status=risk_status)
+    snapshot = AdminUserDirectoryService(
+        session,
+        show_seeded_cases=request.app.state.settings.show_seeded_cases,
+    ).list_students(risk_status=risk_status)
     return AdminStudentListSuccessResponse(
         request_id=build_request_id(),
         data=AdminStudentListData(
@@ -109,7 +113,10 @@ def get_admin_user_detail(
 ) -> AdminStudentDetailSuccessResponse | JSONResponse:
     """Return one masked A06 student detail payload and audit the explicit view."""
     try:
-        student_payload = AdminUserDirectoryService(session).get_student_detail(
+        student_payload = AdminUserDirectoryService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).get_student_detail(
             student_id=student_id,
             admin_user_id=admin.id,
             ip_address=request.client.host if request.client is not None else None,
@@ -140,7 +147,10 @@ def reveal_admin_user_phone(
 ) -> AdminStudentRevealPhoneSuccessResponse | JSONResponse:
     """Reveal one student's full phone number after explicit admin confirmation."""
     try:
-        payload = AdminUserDirectoryService(session).reveal_student_phone(
+        payload = AdminUserDirectoryService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).reveal_student_phone(
             student_id=student_id,
             admin_user_id=admin.id,
             ip_address=request.client.host if request.client is not None else None,

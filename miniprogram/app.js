@@ -1,4 +1,8 @@
-const { API_BASE_URL, shouldShowDemoEntry } = require("./constants/config");
+const {
+  API_BASE_URL,
+  buildDefaultRuntimeFeatures,
+} = require("./constants/config");
+const { fetchRuntimeFeatures } = require("./services/runtime");
 const {
   clearStudentSession,
   loadStudentSession,
@@ -9,13 +13,14 @@ App({
   globalData: {
     appName: "心语",
     apiBaseUrl: API_BASE_URL,
-    enableDemoEntry: true,
+    enableDemoEntry: false,
+    runtimeFeatures: buildDefaultRuntimeFeatures(),
     studentSession: null,
   },
 
   onLaunch() {
-    this.globalData.enableDemoEntry = shouldShowDemoEntry();
     this.globalData.studentSession = loadStudentSession();
+    this.syncRuntimeFeatures();
   },
 
   setStudentSession(sessionData) {
@@ -37,5 +42,29 @@ App({
   clearStudentSession() {
     clearStudentSession();
     this.globalData.studentSession = null;
+  },
+
+  syncRuntimeFeatures() {
+    if (this.runtimeFeaturesPromise) {
+      return this.runtimeFeaturesPromise;
+    }
+
+    this.runtimeFeaturesPromise = fetchRuntimeFeatures()
+      .then((features) => {
+        this.globalData.runtimeFeatures = features;
+        this.globalData.enableDemoEntry = features.enableDemoLogin;
+        return features;
+      })
+      .catch(() => {
+        const fallbackFeatures = buildDefaultRuntimeFeatures();
+        this.globalData.runtimeFeatures = fallbackFeatures;
+        this.globalData.enableDemoEntry = fallbackFeatures.enableDemoLogin;
+        return fallbackFeatures;
+      })
+      .finally(() => {
+        this.runtimeFeaturesPromise = null;
+      });
+
+    return this.runtimeFeaturesPromise;
   },
 });

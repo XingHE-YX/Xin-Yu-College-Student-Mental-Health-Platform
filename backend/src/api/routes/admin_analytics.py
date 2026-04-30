@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from src.core.auth import get_current_admin
@@ -38,11 +38,15 @@ def build_request_id() -> str:
     status_code=status.HTTP_200_OK,
 )
 def get_admin_analytics_trends(
+    request: Request,
     _admin: Annotated[AdminUser, Depends(get_current_admin)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> AdminAnalyticsSuccessResponse:
     """Return chart-ready analytics aggregates for the authenticated admin."""
-    analytics = AdminAnalyticsService(session).build_trends_snapshot()
+    analytics = AdminAnalyticsService(
+        session,
+        show_seeded_cases=request.app.state.settings.show_seeded_cases,
+    ).build_trends_snapshot()
     return AdminAnalyticsSuccessResponse(
         request_id=build_request_id(),
         data=AdminAnalyticsData(

@@ -104,12 +104,16 @@ def build_feed_post_response(
     status_code=status.HTTP_200_OK,
 )
 def get_treehole_feed(
+    request: Request,
     student: Annotated[StudentUser, Depends(get_current_student)],
     session: Annotated[Session, Depends(get_db_session)],
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
 ) -> TreeholeFeedSuccessResponse:
     """Return public treehole posts for the authenticated student."""
-    posts = TreeholeService(session).list_feed(student_id=student.id, limit=limit)
+    posts = TreeholeService(
+        session,
+        show_seeded_cases=request.app.state.settings.show_seeded_cases,
+    ).list_feed(student_id=student.id, limit=limit)
     return TreeholeFeedSuccessResponse(
         request_id=build_request_id(),
         data=TreeholeFeedData(
@@ -134,6 +138,7 @@ def create_treehole_post(
         result = TreeholeService(
             session,
             deepseek_service=request.app.state.deepseek_service,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
         ).create_post(
             student=student,
             content=payload.content,
@@ -184,12 +189,16 @@ def create_treehole_post(
 )
 def delete_treehole_post(
     post_id: int,
+    request: Request,
     student: Annotated[StudentUser, Depends(get_current_student)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> TreeholeDeletePostSuccessResponse | JSONResponse:
     """Soft-delete one owned treehole post for the authenticated student."""
     try:
-        post = TreeholeService(session).delete_post(
+        post = TreeholeService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).delete_post(
             student_id=student.id,
             post_id=post_id,
         )
@@ -218,12 +227,16 @@ def delete_treehole_post(
 def react_to_treehole_post(
     post_id: int,
     payload: TreeholeReactionRequest,
+    request: Request,
     student: Annotated[StudentUser, Depends(get_current_student)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> TreeholeReactionSuccessResponse | JSONResponse:
     """Submit one preset support reaction on a published treehole post."""
     try:
-        result = TreeholeService(session).submit_reaction(
+        result = TreeholeService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).submit_reaction(
             student_id=student.id,
             post_id=post_id,
             reaction_type=payload.reaction_type,

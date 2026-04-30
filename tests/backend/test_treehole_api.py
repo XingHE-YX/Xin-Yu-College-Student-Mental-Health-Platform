@@ -60,12 +60,30 @@ def create_treehole_api_test_app(
     database_file: Path,
     *,
     deepseek_result: DeepSeekJsonCompletionResult | None = None,
+    override_deepseek_service: bool = True,
+    enable_mock_ai: bool = False,
+    show_seeded_cases: bool = True,
 ):
     """Create an application backed by a temporary SQLite file."""
-    app = create_app(build_settings(database_file))
-    app.state.deepseek_service = FakeDeepSeekService(
-        result=deepseek_result or build_mock_treehole_ai_result()
+    app = create_app(
+        Settings(
+            APP_NAME="心语树洞 API 测试后端",
+            APP_ENV="testing",
+            API_V1_PREFIX="/api/v1",
+            DATABASE_URL=f"sqlite+pysqlite:///{database_file}",
+            JWT_SECRET_KEY="jwt-test-secret",
+            DEEPSEEK_API_KEY="deepseek-test-key",
+            WECHAT_APP_ID="test-wechat-app-id",
+            WECHAT_APP_SECRET="test-wechat-app-secret",
+            ENABLE_DEMO_LOGIN=False,
+            ENABLE_MOCK_AI=enable_mock_ai,
+            SHOW_SEEDED_CASES=show_seeded_cases,
+        )
     )
+    if override_deepseek_service:
+        app.state.deepseek_service = FakeDeepSeekService(
+            result=deepseek_result or build_mock_treehole_ai_result()
+        )
     Base.metadata.create_all(app.state.db_engine)
     return app
 
@@ -526,6 +544,51 @@ def test_create_treehole_post_blocks_high_risk_content_and_creates_alert_case(
     )
     assert feed_response.status_code == 200
     assert feed_response.json()["data"]["posts"] == []
+
+
+def test_enable_mock_ai_blocks_high_risk_treehole_post_without_remote_http(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    """Forced mock AI should still intercept high-risk content without upstream access."""
+    app = create_treehole_api_test_app(
+        tmp_path / "treehole-create-mock-ai.db",
+        override_deepseek_service=False,
+        enable_mock_ai=True,
+    )
+    _, token = create_student_with_token(app, suffix="015")
+    client = TestClient(app)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("remote DeepSeek HTTP should not be called when mock AI is enabled")
+
+    monkeypatch.setattr("src.services.deepseek_service.httpx.Client", fail_if_called)
+
+    response = client.post(
+        "/api/v1/treehole/posts",
+        json={"content": "我真的不想活了，今晚一直在想从楼上跳下去。"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["message"] == "safety_intercepted"
+    assert payload["data"]["risk_level"] == "high"
+    assert payload["data"]["publish_status"] == "blocked_high_risk"
+    assert payload["data"]["allow_publication"] is False
+
+    with app.state.db_session_factory() as session:
+        analysis = session.scalar(select(AIAnalysisRecord))
+        assert analysis is not None
+        assert analysis.fallback_used is True
+        assert analysis.parsed_risk_level is QuestionnaireRiskLevel.HIGH
+        assert analysis.recommended_action is AIRecommendedAction.MANUAL_REVIEW_HIGH
+        assert analysis.response_raw_json["mock_mode"] == "forced_enabled"
+        assert analysis.response_raw_json["mock_classification"] == "high"
+        assert "不想活了" in analysis.trigger_phrases_json
+        alert_case = session.scalar(select(AlertCase))
+        assert alert_case is not None
+        assert alert_case.queue_status is AlertQueueStatus.PENDING_REVIEW
 
 
 def test_create_treehole_post_uses_focus_list_for_history_only_review_hint(

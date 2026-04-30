@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from pathlib import Path
 
+from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from src.constants.account_enums import StudentRiskStatus
@@ -36,7 +37,11 @@ from src.utils.seed_demo_dataset import main as seed_demo_dataset_main
 FIXED_NOW = datetime(2026, 4, 30, 12, 0, 0)
 
 
-def build_settings(database_file: Path) -> Settings:
+def build_settings(
+    database_file: Path,
+    *,
+    show_seeded_cases: bool = True,
+) -> Settings:
     """Create runtime settings for isolated demo-seed tests."""
     return Settings(
         APP_NAME="心语演示种子数据测试后端",
@@ -48,14 +53,36 @@ def build_settings(database_file: Path) -> Settings:
         WECHAT_APP_ID="test-wechat-app-id",
         WECHAT_APP_SECRET="test-wechat-app-secret",
         ENABLE_DEMO_LOGIN=False,
+        SHOW_SEEDED_CASES=show_seeded_cases,
     )
 
 
-def create_demo_seed_test_app(database_file: Path):
+def create_demo_seed_test_app(
+    database_file: Path,
+    *,
+    show_seeded_cases: bool = True,
+):
     """Create an application backed by a temporary SQLite file."""
-    app = create_app(build_settings(database_file))
+    app = create_app(build_settings(database_file, show_seeded_cases=show_seeded_cases))
     Base.metadata.create_all(app.state.db_engine)
     return app
+
+
+def create_regular_student_with_token(app) -> str:
+    """Insert one non-seeded student row and return a bearer token for feed reads."""
+    with app.state.db_session_factory() as session:
+        student = StudentUser(
+            phone_e164="+8613811111111",
+            wechat_openid="wx-runtime-regular-user",
+            display_nickname="普通同学",
+            display_avatar_seed="seed-regular",
+            college_name="普通学院",
+            class_name="2026级普通班",
+        )
+        session.add(student)
+        session.commit()
+        session.refresh(student)
+        return app.state.access_token_service.issue_student_access_token(student)
 
 
 def test_demo_seed_service_populates_admin_ready_dataset(tmp_path: Path) -> None:
@@ -210,3 +237,88 @@ def test_demo_seed_cli_seeds_database_and_reports_summary(
         assert session.scalar(select(func.count()).select_from(StudentUser)) == 3
         assert session.scalar(select(func.count()).select_from(AlertCase)) == 2
         assert session.scalar(select(func.count()).select_from(AuditLog)) == 4
+
+
+def test_show_seeded_cases_false_hides_preloaded_demo_data_from_read_apis(
+    tmp_path: Path,
+) -> None:
+    """Seeded demo users, posts, alerts, and audits should disappear when the flag is off."""
+    app = create_demo_seed_test_app(
+        tmp_path / "demo-seed-hidden.db",
+        show_seeded_cases=False,
+    )
+    with app.state.db_session_factory() as session:
+        DemoSeedService(session, now=FIXED_NOW).seed_demo_dataset()
+
+    client = TestClient(app)
+    admin_login = client.post(
+        "/api/v1/admin/auth/login",
+        json={"username": "platform.admin", "password": "Admin#2026"},
+    )
+    assert admin_login.status_code == 200
+    admin_token = admin_login.json()["data"]["access_token"]
+
+    dashboard = client.get(
+        "/api/v1/admin/dashboard/summary",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    alerts = client.get(
+        "/api/v1/admin/alerts",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    posts = client.get(
+        "/api/v1/admin/posts",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    users = client.get(
+        "/api/v1/admin/users",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    audit_logs = client.get(
+        "/api/v1/admin/audit-logs",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    analytics = client.get(
+        "/api/v1/admin/analytics/trends",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    student_token = create_regular_student_with_token(app)
+    feed = client.get(
+        "/api/v1/treehole/feed",
+        headers={"Authorization": f"Bearer {student_token}"},
+    )
+
+    assert dashboard.status_code == 200
+    assert dashboard.json()["data"]["summary"]["kpis"] == {
+        "pending_review_count": 0,
+        "open_high_risk_case_count": 0,
+        "confirmed_high_risk_count": 0,
+        "focus_student_count": 0,
+        "published_post_count": 0,
+    }
+    assert dashboard.json()["data"]["summary"]["stats"] == {
+        "highest_priority_pending_count": 0,
+        "blocked_post_count": 0,
+        "high_risk_student_count": 0,
+        "questionnaire_submission_count": 0,
+    }
+    assert alerts.status_code == 200
+    assert alerts.json()["data"]["items"] == []
+    assert [item["count"] for item in alerts.json()["data"]["status_counts"]] == [0, 0, 0, 0]
+    assert posts.status_code == 200
+    assert posts.json()["data"]["items"] == []
+    assert [item["count"] for item in posts.json()["data"]["status_counts"]] == [0, 0, 0, 0]
+    assert users.status_code == 200
+    assert users.json()["data"]["items"] == []
+    assert [item["count"] for item in users.json()["data"]["status_counts"]] == [0, 0, 0]
+    assert audit_logs.status_code == 200
+    assert audit_logs.json()["data"]["filtered_count"] == 1
+    assert audit_logs.json()["data"]["records"][0]["action_code"] == "ADMIN_LOGIN_SUCCESS"
+    assert analytics.status_code == 200
+    analytics_payload = analytics.json()["data"]["analytics"]
+    assert analytics_payload["risk_distribution"]["total_students"] == 0
+    assert [item["student_count"] for item in analytics_payload["risk_distribution"]["items"]] == [0, 0, 0]
+    assert analytics_payload["alert_processing"]["total_alert_case_count"] == 0
+    assert [item["case_count"] for item in analytics_payload["alert_processing"]["items"]] == [0, 0, 0, 0]
+    assert feed.status_code == 200
+    assert feed.json()["data"]["posts"] == []

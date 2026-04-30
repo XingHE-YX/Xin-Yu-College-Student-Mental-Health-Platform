@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     wechat_app_id: str = Field(validation_alias="WECHAT_APP_ID")
     wechat_app_secret: SecretStr = Field(validation_alias="WECHAT_APP_SECRET")
     enable_demo_login: bool = Field(default=False, validation_alias="ENABLE_DEMO_LOGIN")
+    enable_mock_ai: bool = Field(default=False, validation_alias="ENABLE_MOCK_AI")
+    show_seeded_cases: bool = Field(default=False, validation_alias="SHOW_SEEDED_CASES")
 
 
 @lru_cache(maxsize=1)

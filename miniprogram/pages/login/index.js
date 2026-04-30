@@ -1,5 +1,9 @@
-const { PAGE_ROUTES, shouldShowDemoEntry } = require("../../constants/config");
+const {
+  PAGE_ROUTES,
+  buildDefaultRuntimeFeatures,
+} = require("../../constants/config");
 const { loginWithDemo, loginWithWechat } = require("../../services/auth");
+const { fetchRuntimeFeatures } = require("../../services/runtime");
 const {
   clearStudentSession,
   hasValidStudentSession,
@@ -11,6 +15,20 @@ function normalizePhoneInput(rawValue) {
   return String(rawValue || "").replace(/[^\d+]/g, "");
 }
 
+function buildDemoModeHint(features) {
+  const hints = [];
+  if (features.enableMockAi) {
+    hints.push("已启用本地模拟 AI 分析");
+  }
+  if (features.showSeededCases) {
+    hints.push("后台将显示预置演示案例");
+  }
+  if (!hints.length) {
+    return "";
+  }
+  return `当前演示容错模式：${hints.join("；")}。`;
+}
+
 Page({
   data: {
     loginCodeReady: false,
@@ -18,7 +36,9 @@ Page({
     wechatLoading: false,
     loginLoading: false,
     demoLoading: false,
-    showDemoEntry: true,
+    showDemoEntry: false,
+    runtimeFeatures: buildDefaultRuntimeFeatures(),
+    demoModeHint: "",
     errorMessage: "",
     statusMessage: "",
     phoneRefused: false,
@@ -30,9 +50,7 @@ Page({
   },
 
   onLoad() {
-    this.setData({
-      showDemoEntry: shouldShowDemoEntry(),
-    });
+    this.loadRuntimeFeatures();
   },
 
   onShow() {
@@ -193,5 +211,30 @@ Page({
           error.message || "演示登录失败，请稍后重试或改用微信登录。",
       });
     }
+  },
+
+  async loadRuntimeFeatures() {
+    const app = getApp();
+    const cachedFeatures =
+      app.globalData.runtimeFeatures || buildDefaultRuntimeFeatures();
+    this.applyRuntimeFeatures(cachedFeatures);
+
+    try {
+      const runtimeFeatures =
+        typeof app.syncRuntimeFeatures === "function"
+          ? await app.syncRuntimeFeatures()
+          : await fetchRuntimeFeatures();
+      this.applyRuntimeFeatures(runtimeFeatures);
+    } catch (error) {
+      this.applyRuntimeFeatures(buildDefaultRuntimeFeatures());
+    }
+  },
+
+  applyRuntimeFeatures(runtimeFeatures) {
+    this.setData({
+      runtimeFeatures,
+      showDemoEntry: runtimeFeatures.enableDemoLogin,
+      demoModeHint: buildDemoModeHint(runtimeFeatures),
+    });
   },
 });

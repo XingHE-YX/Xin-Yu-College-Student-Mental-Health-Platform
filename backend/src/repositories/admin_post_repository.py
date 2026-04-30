@@ -9,6 +9,7 @@ from src.constants.treehole_enums import TreeholePublishStatus
 from src.models.audit_log import AuditLog
 from src.models.post_reaction import PostReaction
 from src.models.treehole_post import TreeholePost
+from src.repositories.demo_visibility import exclude_seeded_students_clause
 
 
 class AdminPostRepository:
@@ -21,6 +22,7 @@ class AdminPostRepository:
         self,
         *,
         publish_status: TreeholePublishStatus | None,
+        show_seeded_cases: bool,
     ) -> list[TreeholePost]:
         """Return posts for A05 ordered by latest visible activity."""
         ordering_expression = func.coalesce(
@@ -35,18 +37,34 @@ class AdminPostRepository:
         )
         if publish_status is not None:
             statement = statement.where(TreeholePost.publish_status == publish_status)
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
+            )
         return list(self.session.scalars(statement).all())
 
-    def count_posts_by_status(self) -> dict[TreeholePublishStatus, int]:
+    def count_posts_by_status(
+        self,
+        *,
+        show_seeded_cases: bool,
+    ) -> dict[TreeholePublishStatus, int]:
         """Return post counts grouped by publication status."""
-        rows = self.session.execute(
-            select(TreeholePost.publish_status, func.count()).group_by(
-                TreeholePost.publish_status
+        statement = select(TreeholePost.publish_status, func.count()).group_by(
+            TreeholePost.publish_status
+        )
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
             )
-        ).all()
+        rows = self.session.execute(statement).all()
         return {publish_status: int(count) for publish_status, count in rows}
 
-    def get_post_detail(self, post_id: int) -> TreeholePost | None:
+    def get_post_detail(
+        self,
+        post_id: int,
+        *,
+        show_seeded_cases: bool,
+    ) -> TreeholePost | None:
         """Return one post with relationships required by the A05 detail pane."""
         statement = (
             select(TreeholePost)
@@ -58,11 +76,24 @@ class AdminPostRepository:
             )
             .where(TreeholePost.id == post_id)
         )
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
+            )
         return self.session.scalar(statement)
 
-    def get_post_by_id(self, post_id: int) -> TreeholePost | None:
+    def get_post_by_id(
+        self,
+        post_id: int,
+        *,
+        show_seeded_cases: bool,
+    ) -> TreeholePost | None:
         """Return one post by primary key without loading extra relationships."""
         statement = select(TreeholePost).where(TreeholePost.id == post_id)
+        if not show_seeded_cases:
+            statement = statement.where(
+                exclude_seeded_students_clause(TreeholePost.student_id)
+            )
         return self.session.scalar(statement)
 
     def add_audit_log(self, audit_log: AuditLog) -> AuditLog:

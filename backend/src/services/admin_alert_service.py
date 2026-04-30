@@ -95,9 +95,10 @@ class AlertQueueSnapshot:
 class AdminAlertService:
     """Build alert queue snapshots and audited alert detail payloads."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
         self.session = session
         self.repository = AdminAlertRepository(session)
+        self.show_seeded_cases = show_seeded_cases
 
     def list_alert_queue(
         self,
@@ -105,10 +106,15 @@ class AdminAlertService:
         queue_status: AlertQueueStatus | None,
     ) -> AlertQueueSnapshot:
         """Return the filtered alert queue and all status counts for A03."""
-        counts_by_status = self.repository.count_alert_cases_by_status()
+        counts_by_status = self.repository.count_alert_cases_by_status(
+            show_seeded_cases=self.show_seeded_cases
+        )
         items = [
             self._build_list_item(alert_case)
-            for alert_case in self.repository.list_alert_cases(queue_status=queue_status)
+            for alert_case in self.repository.list_alert_cases(
+                queue_status=queue_status,
+                show_seeded_cases=self.show_seeded_cases,
+            )
         ]
         return AlertQueueSnapshot(
             applied_queue_status=queue_status,
@@ -492,7 +498,10 @@ class AdminAlertService:
 
     def _load_alert_case(self, alert_case_id: int) -> AlertCase:
         """Load one alert case or raise a business error."""
-        alert_case = self.repository.get_alert_case_detail(alert_case_id)
+        alert_case = self.repository.get_alert_case_detail(
+            alert_case_id,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         if alert_case is None:
             raise AlertCaseNotFoundError(f"alert case '{alert_case_id}' does not exist")
         return alert_case

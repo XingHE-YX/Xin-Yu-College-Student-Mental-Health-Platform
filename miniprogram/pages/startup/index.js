@@ -7,7 +7,7 @@ const {
 
 Page({
   data: {
-    statusText: "正在检查本地会话…",
+    statusText: "正在检查本地会话与演示模式…",
   },
 
   onShow() {
@@ -17,6 +17,11 @@ Page({
   bootstrap() {
     if (this.redirecting) {
       return;
+    }
+
+    const app = getApp();
+    if (typeof app.syncRuntimeFeatures === "function") {
+      app.syncRuntimeFeatures();
     }
 
     try {

@@ -44,12 +44,15 @@ class AdminDashboardSummarySnapshot:
 class AdminDashboardService:
     """Build the A02 administrator dashboard summary snapshot."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
         self.repository = AdminDashboardRepository(session)
+        self.show_seeded_cases = show_seeded_cases
 
     def build_summary(self) -> AdminDashboardSummarySnapshot:
         """Return the latest dashboard KPI snapshot from persisted data."""
-        counts = self.repository.load_summary_counts()
+        counts = self.repository.load_summary_counts(
+            show_seeded_cases=self.show_seeded_cases
+        )
         return AdminDashboardSummarySnapshot(
             generated_at=utc_now(),
             kpis=AdminDashboardKpiSnapshot(

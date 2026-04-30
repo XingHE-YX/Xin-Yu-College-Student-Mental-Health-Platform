@@ -13,3 +13,13 @@
   font-family: "DIN Alternate", "PingFang SC", sans-serif;
   color: #1e645c;
 }
+
+.login-page__demo-hint {
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 20rpx;
+  background: #fff1e3;
+  color: #8a5716;
+  font-size: 24rpx;
+  line-height: 1.5;
+}

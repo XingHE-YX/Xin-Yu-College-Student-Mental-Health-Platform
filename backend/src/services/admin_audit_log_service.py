@@ -39,9 +39,10 @@ class AuditLogListSnapshot:
 class AdminAuditLogService:
     """Build filtered audit-log snapshots and stable actor/target labels."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
         self.session = session
         self.repository = AdminAuditLogRepository(session)
+        self.show_seeded_cases = show_seeded_cases
 
     def list_audit_logs(
         self,
@@ -69,6 +70,7 @@ class AdminAuditLogService:
             target_type=target_type,
             created_from=created_from,
             created_to_exclusive=created_to_exclusive,
+            show_seeded_cases=self.show_seeded_cases,
         )
         admin_by_id, student_by_id = self._load_actor_reference_maps(logs)
         records = [
@@ -88,16 +90,23 @@ class AdminAuditLogService:
                 target_type=target_type,
                 created_from=created_from,
                 created_to_exclusive=created_to_exclusive,
+                show_seeded_cases=self.show_seeded_cases,
             ),
             actor_options=actor_options,
-            action_code_options=self.repository.list_distinct_action_codes(),
-            target_type_options=self.repository.list_distinct_target_types(),
+            action_code_options=self.repository.list_distinct_action_codes(
+                show_seeded_cases=self.show_seeded_cases
+            ),
+            target_type_options=self.repository.list_distinct_target_types(
+                show_seeded_cases=self.show_seeded_cases
+            ),
             records=records,
         )
 
     def _build_actor_options(self) -> list[AuditActorOption]:
         """Return all distinct audit actor options with stable display labels."""
-        actor_refs = self.repository.list_distinct_actor_refs()
+        actor_refs = self.repository.list_distinct_actor_refs(
+            show_seeded_cases=self.show_seeded_cases
+        )
         admin_ids = [
             actor_id
             for actor_type, actor_id in actor_refs

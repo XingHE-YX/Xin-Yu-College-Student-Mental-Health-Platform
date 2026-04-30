@@ -6,7 +6,7 @@ from datetime import date
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from src.constants.workflow_enums import AuditActorType
@@ -36,6 +36,7 @@ def build_request_id() -> str:
     status_code=status.HTTP_200_OK,
 )
 def list_admin_audit_logs(
+    request: Request,
     _admin: Annotated[AdminUser, Depends(get_current_admin)],
     session: Annotated[Session, Depends(get_db_session)],
     actor_type: AuditActorType | None = None,
@@ -46,7 +47,10 @@ def list_admin_audit_logs(
     date_to: date | None = None,
 ) -> AdminAuditLogListSuccessResponse:
     """Return the filtered A07 audit-log payload."""
-    snapshot = AdminAuditLogService(session).list_audit_logs(
+    snapshot = AdminAuditLogService(
+        session,
+        show_seeded_cases=request.app.state.settings.show_seeded_cases,
+    ).list_audit_logs(
         actor_type=actor_type,
         actor_id=actor_id,
         action_code=action_code,

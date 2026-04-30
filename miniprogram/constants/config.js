@@ -18,6 +18,15 @@ const PAGE_ROUTES = {
   REPORT_FULL: "/pages/reports/full/index",
 };
 
+function buildDefaultRuntimeFeatures() {
+  return {
+    enableDemoLogin: false,
+    enableMockAi: false,
+    showSeededCases: false,
+    demoModeEnabled: false,
+  };
+}
+
 function shouldShowDemoEntry() {
   try {
     const accountInfo = wx.getAccountInfoSync();
@@ -29,6 +38,7 @@ function shouldShowDemoEntry() {
 
 module.exports = {
   API_BASE_URL,
+  buildDefaultRuntimeFeatures,
   CONSENT_VERSION,
   HOTLINE_PHONE,
   PAGE_ROUTES,

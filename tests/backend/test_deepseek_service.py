@@ -15,7 +15,7 @@ from src.services.deepseek_service import (
 )
 
 
-def build_settings() -> Settings:
+def build_settings(*, enable_mock_ai: bool = False) -> Settings:
     """Create runtime settings for isolated DeepSeek client tests."""
     return Settings(
         APP_NAME="心语 DeepSeek 测试后端",
@@ -27,6 +27,7 @@ def build_settings() -> Settings:
         WECHAT_APP_ID="test-wechat-app-id",
         WECHAT_APP_SECRET="test-wechat-app-secret",
         ENABLE_DEMO_LOGIN=False,
+        ENABLE_MOCK_AI=enable_mock_ai,
     )
 
 
@@ -384,3 +385,47 @@ def test_create_json_completion_with_fallback_raises_when_mock_file_is_invalid(
             response_example={"risk_level": "low"},
             mock_response_path=mock_response_path,
         )
+
+
+def test_enable_mock_ai_skips_remote_call_and_escalates_high_risk_keywords(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    """When mock AI is enabled, the client should skip upstream HTTP and classify locally."""
+    mock_response_path = tmp_path / "mock_response.json"
+    mock_response_path.write_text(
+        json.dumps(
+            {
+                "risk_level": "low",
+                "risk_score": 0.12,
+                "emotion_tags": ["fatigue"],
+                "trigger_phrases": [],
+                "reason_text": "mocked fallback response",
+                "recommended_action": "publish",
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("remote DeepSeek HTTP should not be called when mock AI is enabled")
+
+    monkeypatch.setattr("src.services.deepseek_service.httpx.Client", fail_if_called)
+
+    result = DeepSeekService(
+        build_settings(enable_mock_ai=True)
+    ).create_json_completion_with_fallback(
+        system_prompt="Analyze treehole safety risk.",
+        user_prompt="我真的不想活了，甚至想从楼上跳下去。",
+        response_example={"risk_level": "low"},
+        mock_response_path=mock_response_path,
+    )
+
+    assert result.fallback_used is True
+    assert result.fallback_reason == "mock AI enabled by runtime setting"
+    assert result.response_payload["mock_mode"] == "forced_enabled"
+    assert result.response_payload["mock_classification"] == "high"
+    assert result.content_json["risk_level"] == "high"
+    assert result.content_json["recommended_action"] == "manual_review_high"
+    assert "不想活了" in result.content_json["trigger_phrases"]

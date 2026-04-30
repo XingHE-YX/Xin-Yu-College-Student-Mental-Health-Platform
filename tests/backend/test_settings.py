@@ -14,6 +14,8 @@ def test_settings_load_from_environment(monkeypatch) -> None:
     monkeypatch.setenv("WECHAT_APP_ID", "wx-test-app-id")
     monkeypatch.setenv("WECHAT_APP_SECRET", "wx-test-secret")
     monkeypatch.setenv("ENABLE_DEMO_LOGIN", "false")
+    monkeypatch.setenv("ENABLE_MOCK_AI", "true")
+    monkeypatch.setenv("SHOW_SEEDED_CASES", "true")
 
     get_settings.cache_clear()
     settings = get_settings()
@@ -27,5 +29,7 @@ def test_settings_load_from_environment(monkeypatch) -> None:
     assert settings.wechat_app_id == "wx-test-app-id"
     assert settings.wechat_app_secret.get_secret_value() == "wx-test-secret"
     assert settings.enable_demo_login is False
+    assert settings.enable_mock_ai is True
+    assert settings.show_seeded_cases is True
 
     get_settings.cache_clear()

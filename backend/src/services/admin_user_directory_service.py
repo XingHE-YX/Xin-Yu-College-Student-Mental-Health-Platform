@@ -66,9 +66,10 @@ class AdminStudentListSnapshot:
 class AdminUserDirectoryService:
     """Build masked student-directory snapshots and audited sensitive user actions."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
         self.session = session
         self.repository = AdminUserDirectoryRepository(session)
+        self.show_seeded_cases = show_seeded_cases
 
     def list_students(
         self,
@@ -76,16 +77,25 @@ class AdminUserDirectoryService:
         risk_status: StudentRiskStatus | None,
     ) -> AdminStudentListSnapshot:
         """Return the filtered A06 user list and grouped risk-status counts."""
-        counts_by_status = self.repository.count_students_by_risk_status()
-        focus_counts = self.repository.count_active_focus_entries_by_student()
-        open_alert_counts = self.repository.count_open_alert_cases_by_student()
+        counts_by_status = self.repository.count_students_by_risk_status(
+            show_seeded_cases=self.show_seeded_cases
+        )
+        focus_counts = self.repository.count_active_focus_entries_by_student(
+            show_seeded_cases=self.show_seeded_cases
+        )
+        open_alert_counts = self.repository.count_open_alert_cases_by_student(
+            show_seeded_cases=self.show_seeded_cases
+        )
         items = [
             self._build_list_item(
                 student,
                 active_focus_count=focus_counts.get(student.id, 0),
                 open_alert_count=open_alert_counts.get(student.id, 0),
             )
-            for student in self.repository.list_students(risk_status=risk_status)
+            for student in self.repository.list_students(
+                risk_status=risk_status,
+                show_seeded_cases=self.show_seeded_cases,
+            )
         ]
         return AdminStudentListSnapshot(
             applied_risk_status=risk_status,
@@ -338,7 +348,10 @@ class AdminUserDirectoryService:
 
     def _load_student(self, student_id: int) -> StudentUser:
         """Load one student with detail relationships or raise a business error."""
-        student = self.repository.get_student_detail(student_id)
+        student = self.repository.get_student_detail(
+            student_id,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         if student is None:
             raise AdminStudentNotFoundError(f"student '{student_id}' does not exist")
         return student

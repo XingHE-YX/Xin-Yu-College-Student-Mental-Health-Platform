@@ -17,6 +17,10 @@ from src.constants.account_enums import (
     ConsentType,
     StudentRiskStatus,
 )
+from src.constants.demo_constants import (
+    SEEDED_DEMO_AUDIT_IP_ADDRESS,
+    SEEDED_DEMO_STUDENT_OPENIDS,
+)
 from src.constants.questionnaire_enums import (
     QuestionnaireRiskLevel,
     QuestionnaireSubmissionStatus,
@@ -68,12 +72,6 @@ PASSWORD_HASHER = PasswordHash.recommended()
 DEMO_ADMIN_USERNAME = "platform.admin"
 DEMO_ADMIN_PASSWORD = "Admin#2026"
 DEMO_ADMIN_DISPLAY_NAME = "平台管理员"
-DEMO_AUDIT_IP_ADDRESS = "demo-seed"
-DEMO_STUDENT_OPENIDS = (
-    "demo-low-risk-openid",
-    "demo-watch-risk-openid",
-    "demo-high-risk-openid",
-)
 QUESTIONNAIRE_CODES = ("SCREEN", "SDS", "SAS", "SLEEP", "UPI")
 
 
@@ -194,11 +192,13 @@ class DemoSeedService:
         """Remove previous demo students and their dependent records before reseeding."""
         demo_students = list(
             self.session.scalars(
-                select(StudentUser).where(StudentUser.wechat_openid.in_(DEMO_STUDENT_OPENIDS))
+                select(StudentUser).where(
+                    StudentUser.wechat_openid.in_(SEEDED_DEMO_STUDENT_OPENIDS)
+                )
             ).all()
         )
         self.session.execute(
-            delete(AuditLog).where(AuditLog.ip_address == DEMO_AUDIT_IP_ADDRESS)
+            delete(AuditLog).where(AuditLog.ip_address == SEEDED_DEMO_AUDIT_IP_ADDRESS)
         )
         if not demo_students:
             self.session.flush()
@@ -285,7 +285,7 @@ class DemoSeedService:
         students = {
             "low": StudentUser(
                 phone_e164="+8613800001001",
-                wechat_openid="demo-low-risk-openid",
+                wechat_openid=SEEDED_DEMO_STUDENT_OPENIDS[0],
                 display_nickname="平和银杏",
                 display_avatar_seed="seed-ginkgo",
                 college_name="心理学院",
@@ -299,7 +299,7 @@ class DemoSeedService:
             ),
             "watch": StudentUser(
                 phone_e164="+8613800001002",
-                wechat_openid="demo-watch-risk-openid",
+                wechat_openid=SEEDED_DEMO_STUDENT_OPENIDS[1],
                 display_nickname="微澜雪松",
                 display_avatar_seed="seed-cedar",
                 college_name="教育学院",
@@ -313,7 +313,7 @@ class DemoSeedService:
             ),
             "high": StudentUser(
                 phone_e164="+8613800001003",
-                wechat_openid="demo-high-risk-openid",
+                wechat_openid=SEEDED_DEMO_STUDENT_OPENIDS[2],
                 display_nickname="静海港湾",
                 display_avatar_seed="seed-harbor",
                 college_name="计算机学院",
@@ -346,7 +346,7 @@ class DemoSeedService:
                         consent_version="v1.0",
                         granted=True,
                         granted_at=granted_at,
-                        ip_address=DEMO_AUDIT_IP_ADDRESS,
+                        ip_address=SEEDED_DEMO_AUDIT_IP_ADDRESS,
                         user_agent="demo-seed-script",
                     ),
                     ConsentRecord(
@@ -355,7 +355,7 @@ class DemoSeedService:
                         consent_version="v1.0",
                         granted=True,
                         granted_at=granted_at,
-                        ip_address=DEMO_AUDIT_IP_ADDRESS,
+                        ip_address=SEEDED_DEMO_AUDIT_IP_ADDRESS,
                         user_agent="demo-seed-script",
                     ),
                 ]
@@ -789,7 +789,7 @@ class DemoSeedService:
                     "previous_status": "published",
                     "next_status": "hidden_by_admin",
                 },
-                ip_address=DEMO_AUDIT_IP_ADDRESS,
+                ip_address=SEEDED_DEMO_AUDIT_IP_ADDRESS,
                 created_at=self._at(days_ago=1, hour=20, minute=18),
             ),
             AuditLog(
@@ -801,7 +801,7 @@ class DemoSeedService:
                 metadata_json={
                     "queue_status": AlertQueueStatus.CONFIRMED_PENDING_INTERVENTION.value,
                 },
-                ip_address=DEMO_AUDIT_IP_ADDRESS,
+                ip_address=SEEDED_DEMO_AUDIT_IP_ADDRESS,
                 created_at=self._at(days_ago=1, hour=21, minute=0),
             ),
             AuditLog(
@@ -813,7 +813,7 @@ class DemoSeedService:
                 metadata_json={
                     "queue_status": AlertQueueStatus.CONFIRMED_PENDING_INTERVENTION.value,
                 },
-                ip_address=DEMO_AUDIT_IP_ADDRESS,
+                ip_address=SEEDED_DEMO_AUDIT_IP_ADDRESS,
                 created_at=self._at(days_ago=1, hour=21, minute=10),
             ),
             AuditLog(
@@ -825,7 +825,7 @@ class DemoSeedService:
                 metadata_json={
                     "queue_status": AlertQueueStatus.CONFIRMED_PENDING_INTERVENTION.value,
                 },
-                ip_address=DEMO_AUDIT_IP_ADDRESS,
+                ip_address=SEEDED_DEMO_AUDIT_IP_ADDRESS,
                 created_at=self._at(days_ago=0, hour=8, minute=30),
             ),
         ]

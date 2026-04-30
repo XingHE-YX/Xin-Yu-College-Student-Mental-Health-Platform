@@ -74,12 +74,16 @@ def build_error_response(
     status_code=status.HTTP_200_OK,
 )
 def list_admin_alerts(
+    request: Request,
     _admin: Annotated[AdminUser, Depends(get_current_admin)],
     session: Annotated[Session, Depends(get_db_session)],
     queue_status: AlertQueueStatus | None = None,
 ) -> AdminAlertListSuccessResponse:
     """Return the filtered A03 alert queue for the authenticated administrator."""
-    queue_snapshot = AdminAlertService(session).list_alert_queue(
+    queue_snapshot = AdminAlertService(
+        session,
+        show_seeded_cases=request.app.state.settings.show_seeded_cases,
+    ).list_alert_queue(
         queue_status=queue_status
     )
     return AdminAlertListSuccessResponse(
@@ -130,7 +134,10 @@ def get_admin_alert_detail(
 ) -> AdminAlertDetailSuccessResponse | JSONResponse:
     """Return one A04 alert detail payload and audit the sensitive view."""
     try:
-        alert_payload = AdminAlertService(session).get_alert_detail(
+        alert_payload = AdminAlertService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).get_alert_detail(
             alert_case_id=alert_id,
             admin_user_id=admin.id,
             ip_address=request.client.host if request.client is not None else None,
@@ -161,7 +168,10 @@ def reveal_admin_alert_content(
 ) -> AdminAlertRevealContentSuccessResponse | JSONResponse:
     """Reveal one treehole alert's raw content after explicit admin confirmation."""
     try:
-        content_payload = AdminAlertService(session).reveal_treehole_content(
+        content_payload = AdminAlertService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).reveal_treehole_content(
             alert_case_id=alert_id,
             admin_user_id=admin.id,
             ip_address=request.client.host if request.client is not None else None,

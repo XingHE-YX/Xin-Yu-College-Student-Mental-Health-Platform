@@ -64,12 +64,16 @@ def build_error_response(
     status_code=status.HTTP_200_OK,
 )
 def list_admin_posts(
+    request: Request,
     _admin: Annotated[AdminUser, Depends(get_current_admin)],
     session: Annotated[Session, Depends(get_db_session)],
     publish_status: TreeholePublishStatus | None = None,
 ) -> AdminPostListSuccessResponse:
     """Return the filtered A05 post list for the authenticated administrator."""
-    post_snapshot = AdminPostService(session).list_posts(publish_status=publish_status)
+    post_snapshot = AdminPostService(
+        session,
+        show_seeded_cases=request.app.state.settings.show_seeded_cases,
+    ).list_posts(publish_status=publish_status)
     return AdminPostListSuccessResponse(
         request_id=build_request_id(),
         data=AdminPostListData(
@@ -110,12 +114,16 @@ def list_admin_posts(
 )
 def get_admin_post_detail(
     post_id: int,
+    request: Request,
     _admin: Annotated[AdminUser, Depends(get_current_admin)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> AdminPostDetailSuccessResponse | JSONResponse:
     """Return one A05 post detail payload with masked content by default."""
     try:
-        post_payload = AdminPostService(session).get_post_detail(post_id=post_id)
+        post_payload = AdminPostService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).get_post_detail(post_id=post_id)
     except AdminPostNotFoundError as exc:
         return build_error_response(
             http_status=status.HTTP_404_NOT_FOUND,
@@ -142,7 +150,10 @@ def reveal_admin_post_content(
 ) -> AdminPostRevealContentSuccessResponse | JSONResponse:
     """Reveal one post's raw content after explicit admin confirmation."""
     try:
-        content_payload = AdminPostService(session).reveal_post_content(
+        content_payload = AdminPostService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).reveal_post_content(
             post_id=post_id,
             admin_user_id=admin.id,
             ip_address=request.client.host if request.client is not None else None,
@@ -180,7 +191,10 @@ def update_admin_post_visibility(
 ) -> AdminPostVisibilityUpdateSuccessResponse | JSONResponse:
     """Apply one audited admin visibility action to the selected post."""
     try:
-        result = AdminPostService(session).update_visibility(
+        result = AdminPostService(
+            session,
+            show_seeded_cases=request.app.state.settings.show_seeded_cases,
+        ).update_visibility(
             post_id=post_id,
             admin_user_id=admin.id,
             action=payload.action,

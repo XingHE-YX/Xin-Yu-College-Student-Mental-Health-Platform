@@ -108,9 +108,10 @@ class AdminPostVisibilityResult:
 class AdminPostService:
     """Build A05 post snapshots and apply audited admin visibility actions."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
         self.session = session
         self.repository = AdminPostRepository(session)
+        self.show_seeded_cases = show_seeded_cases
 
     def list_posts(
         self,
@@ -118,10 +119,15 @@ class AdminPostService:
         publish_status: TreeholePublishStatus | None,
     ) -> AdminPostListSnapshot:
         """Return the filtered A05 post list and grouped status counts."""
-        counts_by_status = self.repository.count_posts_by_status()
+        counts_by_status = self.repository.count_posts_by_status(
+            show_seeded_cases=self.show_seeded_cases
+        )
         items = [
             self._build_list_item(post)
-            for post in self.repository.list_posts(publish_status=publish_status)
+            for post in self.repository.list_posts(
+                publish_status=publish_status,
+                show_seeded_cases=self.show_seeded_cases,
+            )
         ]
         return AdminPostListSnapshot(
             applied_publish_status=publish_status,
@@ -431,14 +437,20 @@ class AdminPostService:
 
     def _load_post_detail(self, post_id: int) -> TreeholePost:
         """Load one managed post with detail relationships or raise a business error."""
-        post = self.repository.get_post_detail(post_id)
+        post = self.repository.get_post_detail(
+            post_id,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         if post is None:
             raise AdminPostNotFoundError(f"treehole post '{post_id}' does not exist")
         return post
 
     def _load_post(self, post_id: int) -> TreeholePost:
         """Load one managed post without extra relations or raise a business error."""
-        post = self.repository.get_post_by_id(post_id)
+        post = self.repository.get_post_by_id(
+            post_id,
+            show_seeded_cases=self.show_seeded_cases,
+        )
         if post is None:
             raise AdminPostNotFoundError(f"treehole post '{post_id}' does not exist")
         return post
