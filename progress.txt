@@ -276,3 +276,11 @@
 当前状态补充：本步没有新增业务代码、前端页面或自动化测试；主要验证工作是对现有启动路径、环境变量名、页面路由、后台入口按钮和已落地的接口地址进行文档级核对，确保手册引用的命令、页面编号和按钮文案与仓库当前实现一致。由于本步产物是“人工演练脚本”，尚未由真实人工按文档完整跑一遍界面链路，这一实际走查动作将由后续演练执行。
 当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试`、`13.2 API 集成测试` 与 `13.3 人工端到端演练脚本` 三项内容；后续继续按 `IMPLEMENTATION_PLAN.md` 的 `14.1` 进入演示种子数据准备，以进一步降低人工造数成本和外部依赖风险。
 待办：见 IMPLEMENTATION_PLAN.md 步骤14.1。
+已完成：IMPLEMENTATION_PLAN.md 步骤14.1（演示种子数据准备）。
+当前状态补充：已新增 `backend/src/services/demo_seed_service.py` 与 `backend/src/utils/seed_demo_dataset.py`，形成可重复执行的 `14.1` 演示数据造数链路。当前可通过 `cd backend && .venv/bin/python -m src.utils.seed_demo_dataset` 一次性导入五份问卷模板与题库，并预置 3 个演示学生（低风险 / 需关注 / 高风险）及其对应的授权记录、量表提交、树洞帖子、AI 分析、预警工单、重点关注、干预时间线和审计示例。
+当前状态补充：新 seed 数据当前专门围绕后台展示面构造，保证 `A02 总览页`、`A03/A04 预警队列与详情`、`A05 帖子管理`、`A06 用户目录`、`A07 审计日志` 与 `A08 统计分析` 打开后立即有可解释的数据：学生风险分布当前固定为 `normal / watch / high = 1 / 1 / 1`，帖子状态当前固定覆盖 `published / hidden_by_admin / blocked_high_risk` 三档，工单状态当前固定覆盖 `pending_review` 与 `confirmed_pending_intervention` 两档，并同时补齐重点关注、干预记录和审计日志，从而不再依赖现场手动造数。
+当前状态补充：该 seed 服务当前具备幂等刷新能力。重复执行时会先清理既有 demo 学生及其关联的帖子、工单、反应、关注项、干预记录和同批审计样例，再按固定时序重建数据，不会重复累加演示样本；同时若数据库中尚不存在 `platform.admin`，会自动创建默认管理员 `platform.admin / Admin#2026`，从而把“管理员账号准备”和“后台演示数据准备”合并成单条稳定命令。
+当前状态补充：已同步更新 `tests/integration/manual_e2e_rehearsal.md`，将原先的“一次性手写管理员创建脚本”替换为统一的 `seed_demo_dataset` 命令，并修正文档末尾“当前还没有 14.1 演示种子数据”的陈旧说明，避免演练手册与仓库真实能力冲突。
+当前状态补充：已新增 `tests/backend/test_demo_seed_service.py`，覆盖三类关键验证：`14.1` 统一 seed 后后台服务层可直接消费预置数据、重复执行保持幂等不重复造数、CLI 入口可对指定数据库正常执行并输出摘要；同时本地已执行 `ruff check --no-cache`（`backend/src/services/demo_seed_service.py`、`backend/src/utils/seed_demo_dataset.py`、`tests/backend/test_demo_seed_service.py`）以及定向 pytest（`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/backend/test_admin_posts_api.py`、`tests/backend/test_admin_users_api.py`、`tests/backend/test_admin_audit_logs_api.py`、`tests/backend/test_admin_analytics_api.py`、`tests/backend/test_demo_seed_service.py`），当前共 25 项测试通过。
+当前状态补充：第十四阶段当前已完成 `14.1 演示种子数据准备`；项目现已具备“从空数据库迁移完成后，单命令得到后台可展示样例”的能力。后续继续按 `IMPLEMENTATION_PLAN.md` 的 `14.2` 补齐 `ENABLE_MOCK_AI`、`SHOW_SEEDED_CASES` 等演示容错开关，以进一步降低外网依赖和现场抖动风险。
+待办：见 IMPLEMENTATION_PLAN.md 步骤14.2。
