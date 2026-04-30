@@ -268,3 +268,11 @@
 当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（新增集成测试文件）、定向 pytest（`tests/integration/test_api_integration_flows.py` 以及与本步直接相关的 `tests/backend/test_student_auth_api.py`、`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_report_api.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_admin_alerts_api.py`）以及完整回归（`tests/backend tests/admin tests/integration`）；当前 `tests/backend` 共 140 项通过，`tests/admin` 共 14 项通过，`tests/integration` 共 2 项通过，合计 156 项测试通过。
 当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试` 与 `13.2 API 集成测试`；项目现在同时具备规则层单测、接口层集成测试和后台 / 学生端关键闭环测试，为后续 `13.3` 的人工端到端演练脚本提供可复核的自动化基础。
 待办：见 IMPLEMENTATION_PLAN.md 步骤13.3。
+已完成：IMPLEMENTATION_PLAN.md 步骤13.3（人工端到端演练脚本准备完成）。
+当前状态补充：已新增 `tests/integration/manual_e2e_rehearsal.md`，作为当前 MVP 的统一人工演练手册。文档现已把“环境准备 -> 账号准备 -> 开场自检 -> 四条演练脚本 -> 演练记录模板 -> 当前边界”整理成单一入口，避免答辩前仍靠口头记忆或临时翻代码找页面名、按钮文案和启动命令。
+当前状态补充：手册当前明确覆盖四条人工链路：`S01 -> S10A` 的完整测评与报告解锁、`S11 -> S13` 的低风险树洞发布、`S11 -> S14` 的高风险树洞拦截，以及 `A01 -> A03/A04` 的管理员复核与模拟干预。每条脚本都包含固定测试账号、建议输入文案、页面级操作步骤、预期结果和“失败即停条件”，对应 `APP_FLOW.md` 中的学生端 / 后台状态机，目标是让现场演练节奏稳定且无需 improvisation。
+当前状态补充：为减少现场准备成本，手册已补齐最小运行前置，包括：`.env` 的关键字段、题库导入命令、`uvicorn` 启动命令、`streamlit run admin/app.py` 启动命令、微信开发者工具打开 `miniprogram/` 的要求，以及管理员账号 `platform.admin / Admin#2026` 的一次性创建命令。这样即使数据库是新库，也能按文档独立完成一轮演练准备。
+当前状态补充：本步同时把当前实现边界写进了脚本，而没有用模糊表述掩盖风险：由于项目尚未完成 `14.2` 的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，且 `backend/mock_response.json` 当前默认是低风险回退结果，所以“高风险树洞拦截”人工演练目前仍依赖可用的 DeepSeek 外网调用；文档已把这一前提作为硬性检查项写明，避免现场到高风险脚本时才临时排查。
+当前状态补充：本步没有新增业务代码、前端页面或自动化测试；主要验证工作是对现有启动路径、环境变量名、页面路由、后台入口按钮和已落地的接口地址进行文档级核对，确保手册引用的命令、页面编号和按钮文案与仓库当前实现一致。由于本步产物是“人工演练脚本”，尚未由真实人工按文档完整跑一遍界面链路，这一实际走查动作将由后续演练执行。
+当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试`、`13.2 API 集成测试` 与 `13.3 人工端到端演练脚本` 三项内容；后续继续按 `IMPLEMENTATION_PLAN.md` 的 `14.1` 进入演示种子数据准备，以进一步降低人工造数成本和外部依赖风险。
+待办：见 IMPLEMENTATION_PLAN.md 步骤14.1。
