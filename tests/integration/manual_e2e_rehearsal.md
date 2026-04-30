@@ -2,6 +2,8 @@
 
 本文档对应 `IMPLEMENTATION_PLAN.md` 步骤 `13.3`，用于在答辩前按固定顺序人工演练当前 MVP 的关键闭环，避免现场临时 improvisation。
 
+若需要更短、专门面向现场答辩的单链路顺序，请直接配合 [final_defense_demo_runbook.md](/Users/xingheluqi/心语大学生心理健康平台/tests/integration/final_defense_demo_runbook.md) 使用；当前文档继续负责“全量人工走查”，而不是最终现场节奏。
+
 ## 1. 演练范围
 
 本轮人工脚本覆盖 4 条链路：
@@ -329,6 +331,8 @@ cd /Users/xingheluqi/心语大学生心理健康平台/backend
 
 这样可以把学生端“平静、可信、低压”的常规路径与后台“高信息密度、可审计”的风险路径分开演示，节奏更稳定。
 
+若目标已经从“全量回归演练”切换为“最终答辩现场顺序”，请改用 [final_defense_demo_runbook.md](/Users/xingheluqi/心语大学生心理健康平台/tests/integration/final_defense_demo_runbook.md)。`14.3` 当前推荐把链路收敛成“学生登录 -> 快速筛查局部展示 -> 高风险树洞提交 -> 后台队列复核 -> 模拟通知日志展示”这一条主线，而不是继续按本手册完整跑四条独立脚本。
+
 ## 9. 演练记录模板
 
 每次演练后，至少记录以下结果：
@@ -349,4 +353,4 @@ cd /Users/xingheluqi/心语大学生心理健康平台/backend
 
 1. 当前已经完成 `14.2` 的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，因此答辩演示可在“真实 DeepSeek 模式”和“本地 mock 容错模式”之间切换；推荐正式答辩优先使用 `ENABLE_MOCK_AI=true` 与 `SHOW_SEEDED_CASES=true`，降低外网抖动风险。
 2. 当前已经提供 `14.1` 的演示种子数据脚本，因此 A02 / A03 / A05 / A06 / A07 / A08 可以通过统一 seed 命令直接获得展示样例；学生端若需要证明实时状态机仍然可用，仍建议至少手动走一遍树洞发布和报告查看链路。
-3. 当前手册已经可以支撑“从空库到一轮稳定答辩演练”；后续若继续推进 `14.3`，重点将转向固定演示顺序与话术节奏，而不是继续补基础容错能力。
+3. 当前手册已经可以支撑“从空库到一轮稳定答辩演练”；`14.3` 对应的最终现场顺序与兜底策略现已独立沉淀在 [final_defense_demo_runbook.md](/Users/xingheluqi/心语大学生心理健康平台/tests/integration/final_defense_demo_runbook.md)。
