@@ -73,51 +73,20 @@ backend/.venv/bin/streamlit run admin/app.py
   - `ADMIN_API_BASE_URL`
 - 学生端需要同步修改 [miniprogram/constants/config.js](/Users/xingheluqi/心语大学生心理健康平台/miniprogram/constants/config.js)
 
-### 2.3 管理员账号准备
+### 2.3 管理员账号与演示数据准备
 
-若数据库里还没有管理员账号，先创建一条本地演练账号。推荐口径：
+若希望后台在打开后就直接看到可演示的数据，推荐先执行 `14.1` 对应的统一 seed 命令。该命令会自动导入题库、在缺失时创建管理员账号，并预置 3 个演示学生及对应的帖子、工单、重点关注和审计示例：
+
+```bash
+cd /Users/xingheluqi/心语大学生心理健康平台/backend
+.venv/bin/python -m src.utils.seed_demo_dataset
+```
+
+默认管理员口径仍然是：
 
 - 用户名：`platform.admin`
 - 密码：`Admin#2026`
 - 角色：`platform_admin`
-
-可用下面的一次性命令插入：
-
-```bash
-cd /Users/xingheluqi/心语大学生心理健康平台/backend
-.venv/bin/python - <<'PY'
-from pwdlib import PasswordHash
-from sqlalchemy import select
-from src.constants.account_enums import AdminRoleCode
-from src.core.database import create_database_engine, create_session_factory
-from src.core.settings import get_settings
-from src.models import AdminUser
-
-settings = get_settings()
-engine = create_database_engine(settings)
-SessionFactory = create_session_factory(engine)
-password_hasher = PasswordHash.recommended()
-
-with SessionFactory() as session:
-    existing = session.scalar(
-        select(AdminUser).where(AdminUser.username == "platform.admin")
-    )
-    if existing is None:
-        session.add(
-            AdminUser(
-                username="platform.admin",
-                password_hash=password_hasher.hash("Admin#2026"),
-                role_code=AdminRoleCode.PLATFORM_ADMIN,
-                display_name="平台管理员",
-                is_active=True,
-            )
-        )
-        session.commit()
-        print("created platform.admin / Admin#2026")
-    else:
-        print("platform.admin already exists")
-PY
-```
 
 ### 2.4 演练账号规划
 
@@ -376,5 +345,5 @@ PY
 ## 10. 与当前实现的边界
 
 1. 当前还没有 `14.2` 里的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，所以高风险树洞演练依赖可用的 DeepSeek 外网调用。
-2. 当前还没有 `14.1` 的演示种子数据，因此工单、帖子和用户目录主要依赖现场手动制造。
-3. 当前手册已经能指导“从空库到一轮可走通演练”，但若要做到答辩现场完全离线、完全可控，后续仍应继续完成 `14.1` 和 `14.2`。
+2. 当前已经提供 `14.1` 的演示种子数据脚本，因此 A02 / A03 / A05 / A06 / A07 / A08 可以通过统一 seed 命令直接获得展示样例；但学生端“高风险树洞拦截”链路本身仍建议用手动输入再走一遍，以证明实时状态机仍然可用。
+3. 当前手册已经能指导“从空库到一轮可走通演练”，但若要做到答辩现场完全离线、完全可控，后续仍应继续完成 `14.2`。
