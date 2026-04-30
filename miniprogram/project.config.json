@@ -1,0 +1,20 @@
+{
+  "appid": "touristappid",
+  "projectname": "xinyu-mental-health-miniprogram",
+  "compileType": "miniprogram",
+  "libVersion": "3.6.6",
+  "miniprogramRoot": "./",
+  "srcMiniprogramRoot": "./",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "packNpmManually": false,
+    "ignoreUploadUnusedFiles": true
+  },
+  "condition": {}
+}
