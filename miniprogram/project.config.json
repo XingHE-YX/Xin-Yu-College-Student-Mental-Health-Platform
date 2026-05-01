@@ -1,5 +1,5 @@
 {
-  "appid": "touristappid",
+  "appid": "wx22f399558d68bc7f",
   "projectname": "xinyu-mental-health-miniprogram",
   "compileType": "miniprogram",
   "libVersion": "3.6.6",
@@ -14,7 +14,30 @@
     "coverView": true,
     "showShadowRootInWxmlPanel": true,
     "packNpmManually": false,
-    "ignoreUploadUnusedFiles": true
+    "ignoreUploadUnusedFiles": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

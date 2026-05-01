@@ -57,7 +57,7 @@ class AIAnalysisRecord(PrimaryKeyMixin, CreatedAtMixin, Base):
         nullable=False,
     )
     model_name: Mapped[str] = mapped_column(
-        String(64), default="deepseek-chat", nullable=False
+        String(64), default="deepseek-v4-flash", nullable=False
     )
     request_payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     response_raw_json: Mapped[dict[str, Any] | None] = mapped_column(

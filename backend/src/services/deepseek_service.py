@@ -12,7 +12,7 @@ import httpx
 from src.core.settings import Settings
 
 DEEPSEEK_CHAT_COMPLETIONS_URL = "https://api.deepseek.com/chat/completions"
-DEEPSEEK_MODEL_NAME = "deepseek-chat"
+DEEPSEEK_MODEL_NAME = "deepseek-v4-flash"
 DEFAULT_DEEPSEEK_MOCK_RESPONSE_PATH = (
     Path(__file__).resolve().parents[2] / "mock_response.json"
 )

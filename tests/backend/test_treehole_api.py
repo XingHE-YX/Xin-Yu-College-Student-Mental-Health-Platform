@@ -11,7 +11,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
 from src.constants.account_enums import ConsentStatus, StudentRiskStatus
-from src.constants.questionnaire_enums import QuestionnaireRiskLevel
+from src.constants.questionnaire_enums import (
+    QuestionnaireCategory,
+    QuestionnaireRiskLevel,
+    QuestionnaireScoringMode,
+    QuestionnaireSubmissionStatus,
+)
 from src.constants.treehole_enums import (
     AIRecommendedAction,
     PostReactionType,
@@ -32,6 +37,8 @@ from src.models import (
     Base,
     FocusListEntry,
     PostReaction,
+    QuestionnaireSubmission,
+    QuestionnaireTemplate,
     StudentUser,
     TreeholePost,
 )
@@ -233,6 +240,54 @@ def create_reaction(
         session.commit()
         session.refresh(reaction)
         return reaction
+
+
+def create_questionnaire_submission(
+    app,
+    *,
+    student_id: int,
+    questionnaire_code: str,
+    risk_level: QuestionnaireRiskLevel,
+    hard_trigger_hit: bool,
+    raw_score: int,
+    standardized_score: int | None = None,
+) -> QuestionnaireSubmission:
+    """Create one questionnaire submission row for treehole aggregation tests."""
+    with app.state.db_session_factory() as session:
+        template = session.scalar(
+            select(QuestionnaireTemplate).where(
+                QuestionnaireTemplate.code == questionnaire_code
+            )
+        )
+        if template is None:
+            template = QuestionnaireTemplate(
+                code=questionnaire_code,
+                name=f"{questionnaire_code} 模板",
+                category=QuestionnaireCategory.REQUIRED,
+                question_count=20,
+                scoring_mode=QuestionnaireScoringMode.ZUNG_STANDARD,
+                unlock_required=True,
+                is_active=True,
+            )
+            session.add(template)
+            session.flush()
+
+        submission = QuestionnaireSubmission(
+            student_id=student_id,
+            template_id=template.id,
+            started_at=datetime(2026, 4, 24, 8, 0, 0),
+            submitted_at=datetime(2026, 4, 24, 8, 20, 0),
+            status=QuestionnaireSubmissionStatus.SCORED,
+            raw_score=raw_score,
+            standardized_score=standardized_score,
+            risk_level=risk_level,
+            hard_trigger_hit=hard_trigger_hit,
+            scoring_snapshot_json={"questionnaire_code": questionnaire_code},
+        )
+        session.add(submission)
+        session.commit()
+        session.refresh(submission)
+        return submission
 
 
 def test_feed_returns_only_public_posts_with_masked_content_and_reaction_state(
@@ -591,10 +646,78 @@ def test_enable_mock_ai_blocks_high_risk_treehole_post_without_remote_http(
         assert alert_case.queue_status is AlertQueueStatus.PENDING_REVIEW
 
 
+def test_create_treehole_post_does_not_block_when_only_questionnaire_history_is_high(
+    tmp_path,
+) -> None:
+    """High-risk questionnaire history should add backend follow-up without blocking a benign post."""
+    app = create_treehole_api_test_app(
+        tmp_path / "treehole-questionnaire-history-high.db",
+        deepseek_result=build_mock_treehole_ai_result(
+            fallback_used=False,
+            risk_level="low",
+            risk_score="0.0200",
+            recommended_action="publish",
+            emotion_tags=["joy"],
+            trigger_phrases=[],
+            reason_text="当前文本积极稳定，未出现高风险信号。",
+        ),
+    )
+    student, token = create_student_with_token(
+        app,
+        suffix="016",
+        risk_status=StudentRiskStatus.HIGH,
+    )
+    create_questionnaire_submission(
+        app,
+        student_id=student.id,
+        questionnaire_code="UPI",
+        risk_level=QuestionnaireRiskLevel.HIGH,
+        hard_trigger_hit=True,
+        raw_score=2,
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/treehole/posts",
+        json={"content": "今天天气真好，路上遇到了一只可爱的小猫，我真开心。"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["message"] == "success"
+    assert payload["data"]["risk_level"] == "low"
+    assert payload["data"]["publish_status"] == "published"
+    assert payload["data"]["allow_publication"] is True
+    assert payload["data"]["content_masked"] == "今天天气真好，路上遇到了一只可爱的小猫，我真开心。"
+
+    with app.state.db_session_factory() as session:
+        post = session.get(TreeholePost, payload["data"]["post_id"])
+        assert post is not None
+        assert post.risk_level is QuestionnaireRiskLevel.LOW
+        assert post.publish_status is TreeholePublishStatus.PUBLISHED
+        assert post.allow_publication is True
+
+        analysis = session.scalar(
+            select(AIAnalysisRecord).where(AIAnalysisRecord.target_id == post.id)
+        )
+        assert analysis is not None
+        assert analysis.parsed_risk_level is QuestionnaireRiskLevel.LOW
+        assert analysis.recommended_action is AIRecommendedAction.PUBLISH
+
+        focus_entry = session.scalar(select(FocusListEntry))
+        assert focus_entry is not None
+        assert focus_entry.student_id == post.student_id
+        assert focus_entry.source_id == post.id
+        assert focus_entry.reason_code == "QUESTIONNAIRE_HARD_TRIGGER"
+        assert "QUESTIONNAIRE_HARD_TRIGGER" in focus_entry.reason_text
+        assert session.scalar(select(func.count()).select_from(AlertCase)) == 0
+
+
 def test_create_treehole_post_uses_focus_list_for_history_only_review_hint(
     tmp_path,
 ) -> None:
-    """Historical high risk with neutral current content should stay on the watch list."""
+    """Historical high risk should not block publication for neutral current content."""
     app = create_treehole_api_test_app(
         tmp_path / "treehole-history-watch.db",
         deepseek_result=build_mock_treehole_ai_result(
@@ -623,7 +746,7 @@ def test_create_treehole_post_uses_focus_list_for_history_only_review_hint(
     assert response.status_code == 200
     payload = response.json()
     assert payload["message"] == "success"
-    assert payload["data"]["risk_level"] == "watch"
+    assert payload["data"]["risk_level"] == "low"
     assert payload["data"]["publish_status"] == "published"
     assert payload["data"]["allow_publication"] is True
 

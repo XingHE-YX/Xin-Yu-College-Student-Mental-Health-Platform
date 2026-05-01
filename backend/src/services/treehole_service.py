@@ -197,11 +197,14 @@ class TreeholeService:
             student=student,
             ai_risk_level=analysis_snapshot.parsed_risk_level,
         )
+        publication_risk_level = self._resolve_publication_risk_level(
+            analysis_snapshot=analysis_snapshot
+        )
         self._apply_publish_decision(
             post=post,
             masked_content=masked_content,
             published_at=published_at,
-            aggregated_risk=aggregated_risk,
+            publication_risk_level=publication_risk_level,
         )
         self._apply_student_risk_status(
             student=student,
@@ -368,11 +371,11 @@ class TreeholeService:
         post: TreeholePost,
         masked_content: str,
         published_at: datetime,
-        aggregated_risk: AggregatedRiskResult,
+        publication_risk_level: QuestionnaireRiskLevel,
     ) -> None:
         """Map the aggregated risk level into publication state and public fields."""
-        post.risk_level = aggregated_risk.risk_level
-        if aggregated_risk.risk_level is QuestionnaireRiskLevel.HIGH:
+        post.risk_level = publication_risk_level
+        if publication_risk_level is QuestionnaireRiskLevel.HIGH:
             post.publish_status = TreeholePublishStatus.BLOCKED_HIGH_RISK
             post.allow_publication = False
             post.published_at = None
@@ -416,19 +419,7 @@ class TreeholeService:
         aggregated_risk: AggregatedRiskResult,
     ) -> None:
         """Create watch-list or alert records from the final publication decision."""
-        if aggregated_risk.risk_level is QuestionnaireRiskLevel.WATCH:
-            self.focus_list_service.create_treehole_watch_entry(
-                student_id=student.id,
-                post_id=post.id,
-                reason_code=aggregated_risk.reason_codes[0],
-                reason_text=self._build_follow_up_reason_text(
-                    analysis_snapshot=analysis_snapshot,
-                    aggregated_risk=aggregated_risk,
-                ),
-            )
-            return
-
-        if aggregated_risk.risk_level is QuestionnaireRiskLevel.HIGH:
+        if analysis_snapshot.parsed_risk_level is QuestionnaireRiskLevel.HIGH:
             self.alert_case_service.create_treehole_high_risk_case(
                 student_id=student.id,
                 post_id=post.id,
@@ -437,6 +428,24 @@ class TreeholeService:
                     aggregated_risk=aggregated_risk,
                 ),
             )
+            return
+
+        if aggregated_risk.risk_level in {
+            QuestionnaireRiskLevel.WATCH,
+            QuestionnaireRiskLevel.HIGH,
+        }:
+            self.focus_list_service.create_treehole_watch_entry(
+                student_id=student.id,
+                post_id=post.id,
+                reason_code=self._resolve_treehole_follow_up_reason_code(
+                    aggregated_risk=aggregated_risk,
+                ),
+                reason_text=self._build_follow_up_reason_text(
+                    analysis_snapshot=analysis_snapshot,
+                    aggregated_risk=aggregated_risk,
+                ),
+            )
+            return
 
     def _build_follow_up_reason_text(
         self,
@@ -454,6 +463,22 @@ class TreeholeService:
         if history_hint:
             return f"{analysis_snapshot.reason_text}（{reason_prefix}）。{history_hint}"
         return f"{analysis_snapshot.reason_text}（{reason_prefix}）。"
+
+    def _resolve_publication_risk_level(
+        self,
+        *,
+        analysis_snapshot: TreeholeAIAnalysisSnapshot,
+    ) -> QuestionnaireRiskLevel:
+        """Use the current treehole content risk to decide whether the post can go public."""
+        return analysis_snapshot.parsed_risk_level
+
+    def _resolve_treehole_follow_up_reason_code(
+        self,
+        *,
+        aggregated_risk: AggregatedRiskResult,
+    ) -> str:
+        """Return the persisted reason code for treehole follow-up records."""
+        return aggregated_risk.reason_codes[0]
 
     def _analyze_treehole_content(
         self,

@@ -601,7 +601,7 @@ class DemoSeedService:
                 target_type=AIAnalysisTargetType.TREEHOLE_POST,
                 target_id=posts["low_published"].id,
                 provider=AIAnalysisProvider.DEEPSEEK,
-                model_name="deepseek-chat",
+                model_name="deepseek-v4-flash",
                 request_payload_json={
                     "content": posts["low_published"].content_raw,
                 },
@@ -619,7 +619,7 @@ class DemoSeedService:
                 target_type=AIAnalysisTargetType.TREEHOLE_POST,
                 target_id=posts["watch_hidden"].id,
                 provider=AIAnalysisProvider.DEEPSEEK,
-                model_name="deepseek-chat",
+                model_name="deepseek-v4-flash",
                 request_payload_json={
                     "content": posts["watch_hidden"].content_raw,
                 },
@@ -637,7 +637,7 @@ class DemoSeedService:
                 target_type=AIAnalysisTargetType.TREEHOLE_POST,
                 target_id=posts["high_blocked"].id,
                 provider=AIAnalysisProvider.DEEPSEEK,
-                model_name="deepseek-chat",
+                model_name="deepseek-v4-flash",
                 request_payload_json={
                     "content": posts["high_blocked"].content_raw,
                 },
