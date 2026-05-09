@@ -38,7 +38,29 @@ function ensureAuthenticatedSession(pageInstance) {
   return session;
 }
 
-function buildHeroCopy(post) {
+function buildDeleteCopy(student) {
+  const isDemo = Boolean(student && student.is_demo);
+  return {
+    deletedHeroSummary: isDemo
+      ? "这条内容已经按软删除规则从学生端广场和详情链路中移除，后台仍会保留记录。"
+      : "这条内容已经从学生端广场和详情页中移除，你现在不会再在学生端看到它。",
+    deletedStatusMessage: isDemo
+      ? "这条帖子已从学生端移除。后台仍会保留记录，以满足审计与复核需要。"
+      : "这条帖子已从学生端移除。",
+    deletedCardBody: isDemo
+      ? "删除采用软删除方式：广场和学生端详情不再公开显示这条内容，但后台仍会保留记录，用于后续审计与复核。"
+      : "删除完成后，这条内容不会再出现在学生端广场和你的详情页中。当前阶段不支持恢复，请确认后再执行删除。",
+    deleteInfoBody: isDemo
+      ? "删除采用软删除方式：学生端将不再显示这条帖子，但后台仍会保留记录以满足审计与复核需要。"
+      : "删除后，这条帖子会从学生端广场和你的详情页中移除。当前阶段不支持恢复，请确认后再执行删除。",
+    deleteConfirmMessage: isDemo
+      ? "删除后，这条内容会从学生端广场中消失，但后台仍会保留记录。这个操作无法在当前阶段恢复。"
+      : "删除后，这条内容会从学生端广场和你的详情页中移除。这个操作当前无法恢复。",
+    deletedChipLabel: isDemo ? "后台仍保留记录" : "学生端已移除",
+  };
+}
+
+function buildHeroCopy(post, student) {
   if (!post) {
     return {
       title: "帖子详情",
@@ -48,10 +70,10 @@ function buildHeroCopy(post) {
   }
 
   if (post.publishStatus === "deleted_by_user") {
+    const deleteCopy = buildDeleteCopy(student);
     return {
       title: "帖子已从学生端移除",
-      summary:
-        "这条内容已经按软删除规则从学生端广场和详情链路中移除，后台仍会保留记录。",
+      summary: deleteCopy.deletedHeroSummary,
       tone: "warm",
     };
   }
@@ -85,6 +107,7 @@ Page({
     heroTitle: "帖子详情",
     heroSummary: "这里会展示帖子的完整内容、发布时间与当前支持反馈。",
     heroTone: "brand",
+    deleteCopy: buildDeleteCopy(null),
   },
 
   onLoad(options) {
@@ -140,18 +163,20 @@ Page({
         }
       }
 
-      const heroCopy = buildHeroCopy(post);
+      const heroCopy = buildHeroCopy(post, session.student);
+      const deleteCopy = buildDeleteCopy(session.student);
       this.setData({
         post,
         loading: false,
         loadError: "",
         statusMessage:
           post && post.publishStatus === "deleted_by_user"
-            ? "这条帖子已从学生端移除。后台仍会保留记录，以满足审计与复核需要。"
+            ? deleteCopy.deletedStatusMessage
             : "",
         heroTitle: heroCopy.title,
         heroSummary: heroCopy.summary,
         heroTone: heroCopy.tone,
+        deleteCopy,
       });
     } catch (error) {
       if (error && error.statusCode === 401) {
@@ -208,18 +233,21 @@ Page({
       const deletedPost = buildDeletedTreeholePost(this.data.post, {
         deletedAt: deleteResult.deleted_at,
       });
-      const heroCopy = buildHeroCopy(deletedPost);
+      const deleteCopy = buildDeleteCopy(currentSession.student);
+      const heroCopy = buildHeroCopy(deletedPost, currentSession.student);
       cacheTreeholePost(deletedPost);
-      setRecentTreeholeDeleteNotice(deletedPost);
+      setRecentTreeholeDeleteNotice(deletedPost, {
+        isDemo: currentSession.student.is_demo === true,
+      });
       this.setData({
         post: deletedPost,
         deleting: false,
         loadError: "",
-        statusMessage:
-          "这条帖子已从学生端移除。后台仍会保留记录，以满足审计与复核需要。",
+        statusMessage: deleteCopy.deletedStatusMessage,
         heroTitle: heroCopy.title,
         heroSummary: heroCopy.summary,
         heroTone: heroCopy.tone,
+        deleteCopy,
       });
       wx.showToast({
         title: "已从学生端移除",

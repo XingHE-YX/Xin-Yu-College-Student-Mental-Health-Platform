@@ -192,6 +192,13 @@ function buildDeletedTreeholePost(rawPost, options = {}) {
   );
 }
 
+function buildTreeholeDeleteNoticeMessage(isDemo) {
+  if (isDemo) {
+    return "你删除的帖子已从学生端广场移除。后台仍会保留记录，以满足审计与复核需要。";
+  }
+  return "你删除的帖子已从广场移除。";
+}
+
 function cacheTreeholePost(post) {
   if (!post || !post.postId) {
     return;
@@ -236,17 +243,17 @@ function buildTreeholeDetailRoute(postId) {
   return `${PAGE_ROUTES.TREEHOLE_DETAIL}?postId=${encodeURIComponent(postId)}`;
 }
 
-function setRecentTreeholeDeleteNotice(post) {
+function setRecentTreeholeDeleteNotice(post, options = {}) {
   if (!post || !post.postId) {
     return;
   }
 
   try {
+    const isDemo = options.isDemo === true;
     wx.setStorageSync(TREEHOLE_RECENT_DELETE_NOTICE_KEY, {
       postId: post.postId,
       deletedAt: post.deletedAt || "",
-      message:
-        "你删除的帖子已从学生端广场移除。后台仍会保留记录，以满足审计与复核需要。",
+      message: buildTreeholeDeleteNoticeMessage(isDemo),
     });
   } catch (error) {}
 }
@@ -326,6 +333,7 @@ module.exports = {
   applyOptimisticTreeholeReaction,
   buildCreatedTreeholePost,
   buildDeletedTreeholePost,
+  buildTreeholeDeleteNoticeMessage,
   buildTreeholeDetailRoute,
   cacheTreeholePost,
   consumeRecentTreeholeDeleteNotice,
