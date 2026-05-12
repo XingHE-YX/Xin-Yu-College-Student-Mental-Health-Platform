@@ -7,7 +7,6 @@
       data-key="{{item.key}}"
       bindtap="handleItemTap"
     >
-      <view class="floating-tab-bar__icon">{{item.icon}}</view>
       <view class="floating-tab-bar__label">{{item.label}}</view>
     </view>
   </view>
