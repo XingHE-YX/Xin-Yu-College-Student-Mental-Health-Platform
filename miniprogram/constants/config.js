@@ -6,6 +6,8 @@ const PAGE_ROUTES = {
   LOGIN: "/pages/login/index",
   CONSENT: "/pages/consent/index",
   HOME: "/pages/home/index",
+  PROFILE: "/pages/profile/index",
+  HELP: "/pages/help/index",
   TREEHOLE_FEED: "/pages/treehole/feed/index",
   TREEHOLE_CREATE: "/pages/treehole/create/index",
   TREEHOLE_DETAIL: "/pages/treehole/detail/index",

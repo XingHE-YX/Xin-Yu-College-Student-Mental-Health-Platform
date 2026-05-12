@@ -4,6 +4,8 @@
     "pages/login/index",
     "pages/consent/index",
     "pages/home/index",
+    "pages/profile/index",
+    "pages/help/index",
     "pages/treehole/feed/index",
     "pages/treehole/create/index",
     "pages/treehole/detail/index",
@@ -17,9 +19,9 @@
   ],
   "window": {
     "navigationBarTitleText": "心语",
-    "navigationBarBackgroundColor": "#EEF7F5",
+    "navigationBarBackgroundColor": "#F3F8F7",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#F8FAFA",
+    "backgroundColor": "#EDF4F2",
     "backgroundTextStyle": "light"
   },
   "style": "v2",

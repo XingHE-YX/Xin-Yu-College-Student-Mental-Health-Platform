@@ -1,43 +1,50 @@
 .hero-card {
   position: relative;
   overflow: hidden;
-  border-radius: 40rpx;
-  padding: 40rpx 36rpx;
+  border-radius: 36rpx;
+  padding: 38rpx 34rpx;
   box-sizing: border-box;
-  box-shadow: 0 16rpx 48rpx rgba(18, 63, 58, 0.1);
+  border: 2rpx solid rgba(217, 228, 227, 0.75);
+  box-shadow: 0 18rpx 48rpx rgba(18, 63, 58, 0.1);
 }
 
 .hero-card--brand {
-  background: linear-gradient(160deg, #ffffff 0%, #eef7f5 55%, #d7ece6 100%);
+  background:
+    radial-gradient(circle at top right, rgba(79, 158, 189, 0.18), transparent 30%),
+    linear-gradient(160deg, #ffffff 0%, #f3f8f7 48%, #e6f1ef 100%);
 }
 
 .hero-card--warm {
-  background: linear-gradient(160deg, #ffffff 0%, #fff8f0 55%, #fff1e3 100%);
+  background:
+    radial-gradient(circle at top right, rgba(247, 197, 138, 0.16), transparent 32%),
+    linear-gradient(160deg, #ffffff 0%, #fff9f3 55%, #fff2e5 100%);
 }
 
 .hero-card--danger {
-  background: linear-gradient(160deg, #ffffff 0%, #fff3f3 55%, #fbe7e7 100%);
+  background:
+    radial-gradient(circle at top right, rgba(216, 76, 76, 0.14), transparent 32%),
+    linear-gradient(160deg, #ffffff 0%, #fff4f4 55%, #fce9e9 100%);
 }
 
 .hero-card__eyebrow {
   margin-bottom: 12rpx;
-  font-size: 24rpx;
+  font-size: 22rpx;
   line-height: 1.4;
   letter-spacing: 4rpx;
-  color: #2f8f83;
+  color: #2d7c84;
   text-transform: uppercase;
 }
 
 .hero-card__title {
-  font-size: 56rpx;
+  font-size: 54rpx;
   font-weight: 700;
-  line-height: 1.2;
-  color: #123f3a;
+  line-height: 1.15;
+  color: #1f3436;
 }
 
 .hero-card__summary {
   margin-top: 20rpx;
-  font-size: 30rpx;
+  font-size: 28rpx;
   line-height: 1.6;
-  color: #41504c;
+  color: #41585b;
 }

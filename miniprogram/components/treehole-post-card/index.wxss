@@ -1,12 +1,12 @@
 .treehole-post-card {
-  background: #ffffff;
-  border-radius: 36rpx;
-  padding: 32rpx;
-  border: 2rpx solid #e3eae7;
-  box-shadow: 0 14rpx 36rpx rgba(18, 63, 58, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 32rpx;
+  padding: 30rpx;
+  border: 2rpx solid rgba(217, 228, 227, 0.92);
+  box-shadow: 0 14rpx 34rpx rgba(18, 63, 58, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 18rpx;
 }
 
 .treehole-post-card__head {
@@ -24,8 +24,8 @@
 }
 
 .treehole-post-card__avatar {
-  width: 72rpx;
-  height: 72rpx;
+  width: 68rpx;
+  height: 68rpx;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
@@ -37,7 +37,7 @@
 }
 
 .treehole-post-card__avatar--brand {
-  background: linear-gradient(135deg, #d7ece6 0%, #eef7f5 100%);
+  background: linear-gradient(135deg, #d7edf1 0%, #edf4f2 100%);
 }
 
 .treehole-post-card__avatar--warm {
@@ -46,8 +46,8 @@
 }
 
 .treehole-post-card__avatar--deep {
-  background: linear-gradient(135deg, #dceae8 0%, #eef2f1 100%);
-  color: #1e645c;
+  background: linear-gradient(135deg, #dbe9ea 0%, #eef2f1 100%);
+  color: #185b62;
 }
 
 .treehole-post-card__avatar--mist {
@@ -63,22 +63,22 @@
 }
 
 .treehole-post-card__name {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   line-height: 1.4;
-  color: #1f2a28;
+  color: #1f3436;
 }
 
 .treehole-post-card__time {
   font-size: 24rpx;
   line-height: 1.4;
-  color: #70807c;
+  color: #7a8a8c;
 }
 
 .treehole-post-card__content {
   font-size: 28rpx;
   line-height: 1.7;
-  color: #41504c;
+  color: #41585b;
   white-space: pre-wrap;
   word-break: break-word;
 }

@@ -1,0 +1,49 @@
+<app-shell>
+  <view class="screen">
+    <view class="screen__stack">
+      <hero-card
+        eyebrow="S15 Help"
+        title="帮助资源"
+        summary="如果你现在已经感到明显急迫，请优先联系可信赖的人、校内心理中心，或直接拨打求助热线。"
+        tone="warm"
+      />
+
+      <content-section-card
+        tone="warm"
+        eyebrow="High Priority"
+        title="当下更优先的支持"
+        summary="高风险帮助信息要高于普通自助建议。请先处理安全与联络，再考虑继续浏览其他内容。"
+      >
+        <view class="list-group">
+          <view class="list-cell">
+            <view class="list-cell__content">
+              <view class="list-cell__title">求助热线</view>
+              <view class="list-cell__summary">{{hotlinePhone}}</view>
+            </view>
+            <view class="list-cell__meta">热线</view>
+          </view>
+          <view class="list-cell">
+            <view class="list-cell__content">
+              <view class="list-cell__title">校内心理中心</view>
+              <view class="list-cell__summary">建议优先联系辅导员、学院心理老师或校心理中心预约通道。</view>
+            </view>
+            <view class="list-cell__meta">校内</view>
+          </view>
+        </view>
+      </content-section-card>
+
+      <content-section-card tone="default" eyebrow="Self Support" title="冷静处理建议">
+        <view class="inline-list">
+          <view class="inline-list__item">1. 先把注意力拉回呼吸，尝试慢慢吸气 4 秒、停 2 秒、呼气 6 秒，重复几轮。</view>
+          <view class="inline-list__item">2. 主动联系一个你信任的人，不要独自承受当下压力。</view>
+          <view class="inline-list__item">3. 如果已经明显影响安全，请立即离开危险环境并寻求线下支持。</view>
+        </view>
+      </content-section-card>
+
+      <view class="button-stack">
+        <danger-button label="拨打求助热线" bind:tap="handleCallHotline" />
+        <secondary-button label="返回我的频道" bind:tap="handleBackProfile" />
+      </view>
+    </view>
+  </view>
+</app-shell>

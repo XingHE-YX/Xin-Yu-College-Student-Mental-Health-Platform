@@ -1,0 +1,15 @@
+<view class="quick-action-row">
+  <view
+    wx:for="{{items}}"
+    wx:key="key"
+    class="quick-action-row__item"
+    data-key="{{item.key}}"
+    bindtap="handleActionTap"
+  >
+    <view class="quick-action-row__badge">{{item.badge}}</view>
+    <view class="quick-action-row__text">
+      <view class="quick-action-row__title">{{item.title}}</view>
+      <view class="quick-action-row__summary">{{item.summary}}</view>
+    </view>
+  </view>
+</view>

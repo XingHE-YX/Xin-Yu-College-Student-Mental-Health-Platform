@@ -1,7 +1,7 @@
 .btn-base {
-  min-height: 96rpx;
-  border-radius: 28rpx;
-  font-size: 30rpx;
+  min-height: 92rpx;
+  border-radius: 24rpx;
+  font-size: 28rpx;
   font-weight: 500;
   line-height: 1.4;
   padding: 0 28rpx;
@@ -17,14 +17,15 @@
 }
 
 .btn-base--primary {
-  background: #2f8f83;
+  background: linear-gradient(135deg, #2d7c84 0%, #4f9ebd 100%);
   color: #ffffff;
-  box-shadow: 0 12rpx 28rpx rgba(47, 143, 131, 0.22);
+  box-shadow: 0 14rpx 30rpx rgba(45, 124, 132, 0.24);
 }
 
 .btn-base--secondary {
-  background: #eef7f5;
-  color: #1e645c;
+  background: #eef4f3;
+  color: #185b62;
+  border: 2rpx solid rgba(217, 228, 227, 0.92);
 }
 
 .btn-base--danger {
@@ -36,5 +37,6 @@
 .btn-base[disabled] {
   background: #e6ecea;
   color: #98a4a1;
+  border-color: transparent;
   box-shadow: none;
 }

@@ -1,65 +1,77 @@
 <app-shell>
-  <view class="screen">
-    <view class="screen__stack">
-      <hero-card
-        eyebrow="S04 Home"
-        title="欢迎回来，{{student.display_nickname}}"
-        summary="你可以从这里继续查看问卷目录、当前必做进度，以及已经接入的报告与树洞模块。"
-        tone="brand"
-      />
+  <view class="channel-screen">
+    <view class="channel-screen__stack">
+      <channel-header
+        eyebrow="Assessment"
+        title="测评"
+        summary="把五份问卷整理成一条清晰的任务主线。先完成必做 70 题，再决定是否补充 UPI 辅助筛查。"
+      >
+        <view slot="side" class="channel-identity">
+          <view class="channel-identity__name">{{student.display_nickname}}</view>
+          <view class="channel-identity__summary">{{student.college_name}}</view>
+        </view>
+      </channel-header>
 
       <view wx:if="{{consentDeclined}}" class="status-banner status-banner--warning">
-        你已拒绝危机干预授权。树洞入口会保持禁用，但基础测评与报告链路不受影响。
+        你当前拒绝了危机干预授权。树洞频道会保持禁用，但测评和报告链路不受影响。
       </view>
 
-      <view class="surface-card surface-card--soft">
-        <view class="eyebrow">当前进度</view>
-        <view class="section-subtitle">{{progressTitle}}</view>
-        <view class="body-text">{{progressSummary}}</view>
-        <view class="chip-row home-page__chip-row">
-          <view class="chip">{{student.college_name}}</view>
-          <view class="chip chip--warm">
-            {{student.consent_status === 'granted' ? '授权已完成' : '授权已拒绝'}}
+      <content-section-card tone="soft">
+        <view class="channel-page-card__head">
+          <view>
+            <view class="eyebrow">主线进度</view>
+            <view class="section-subtitle">{{progressHeadline}}</view>
           </view>
           <view class="chip {{requiredProgress.full_profile_unlocked ? 'chip--success' : 'chip--muted'}}">
-            {{requiredProgress.full_profile_unlocked ? '完整报告可查看' : '完整报告未解锁'}}
+            {{requiredProgress.full_profile_unlocked ? '已解锁' : '未解锁'}}
+          </view>
+        </view>
+        <view class="body-text">{{progressSummary}}</view>
+        <view class="chip-row home-page__chip-row">
+          <view class="chip">必做 {{requiredProgress.completed_required_questionnaires}} / {{requiredProgress.total_required_questionnaires}}</view>
+          <view class="chip chip--muted">{{requiredProgress.completed_required_questions}} / {{requiredProgress.total_required_questions}} 题</view>
+          <view class="chip {{student.consent_status === 'granted' ? '' : 'chip--warm'}}">
+            {{student.consent_status === 'granted' ? '授权已完成' : '授权已拒绝'}}
           </view>
         </view>
         <view class="home-page__progress">
           <progress-bar
-            label="必做进度"
+            label="70 题主线"
             current="{{requiredProgress.completed_required_questions}}"
             total="{{requiredProgress.total_required_questions}}"
           ></progress-bar>
         </view>
         <view wx:if="{{missingRequiredNames.length}}" class="home-page__missing">
-          <view class="helper-text">待完成问卷</view>
+          <view class="helper-text">剩余必做问卷</view>
           <view class="chip-row">
             <view wx:for="{{missingRequiredNames}}" wx:key="*this" class="chip chip--muted">
               {{item}}
             </view>
           </view>
         </view>
-      </view>
+      </content-section-card>
 
-      <view class="surface-card">
-        <view class="home-page__section-head">
-          <view>
-            <view class="eyebrow">Assessment</view>
-            <view class="section-subtitle">问卷中心</view>
-          </view>
-          <view class="helper-text">按 S05 - S09 逐步完成</view>
-        </view>
+      <content-section-card tone="default" eyebrow="Quick Actions" title="现在可以直接去做">
+        <quick-action-row items="{{quickActions}}" bind:action="handleQuickAction" />
+      </content-section-card>
 
-        <view wx:if="{{dashboardError}}" class="status-banner status-banner--error">
-          {{dashboardError}}
+      <block wx:if="{{dashboardError}}">
+        <view class="status-banner status-banner--error">{{dashboardError}}</view>
+        <view class="button-stack home-page__retry">
+          <secondary-button label="重新加载问卷目录" bind:tap="handleRetryTap" />
         </view>
-        <view wx:if="{{loadingDashboard}}" class="helper-text home-page__loading">
-          正在同步问卷目录与当前进度...
-        </view>
-        <view wx:elif="{{questionnaires.length}}" class="module-grid">
+      </block>
+
+      <content-section-card
+        tone="default"
+        eyebrow="Required Track"
+        title="必做主线"
+        summary="这四份问卷共同决定完整报告是否解锁。建议按当前顺序连续完成。"
+      >
+        <view wx:if="{{loadingDashboard}}" class="helper-text">正在同步主线问卷目录与当前进度...</view>
+        <view wx:elif="{{requiredCards.length}}" class="module-grid">
           <view
-            wx:for="{{questionnaires}}"
+            wx:for="{{requiredCards}}"
             wx:key="code"
             class="module-card"
             data-code="{{item.code}}"
@@ -68,54 +80,62 @@
             <view class="module-card__head">
               <view>
                 <view class="module-card__title">{{item.name}}</view>
-                <view class="helper-text">{{item.flowStepLabel}}</view>
+                <view class="helper-text">{{item.flowStepLabel}} · {{item.badge}}</view>
               </view>
-              <view class="module-card__meta {{item.metaToneClass}}">
-                {{item.statusLabel}}
+              <view class="module-card__meta {{item.stateTone === 'success' ? 'module-card__meta--success' : ''}} {{item.stateTone === 'warning' ? 'module-card__meta--warning' : ''}}">
+                {{item.stateLabel}}
               </view>
             </view>
             <view class="chip-row">
-              <view class="chip {{item.categoryChipClass}}">{{item.categoryLabel}}</view>
-              <view class="chip chip--muted">{{item.questionCountLabel}}</view>
+              <view class="chip">{{item.questionCountLabel}}</view>
               <view class="chip chip--warm">{{item.chainLabel}}</view>
             </view>
             <view class="body-text">{{item.summary}}</view>
             <view wx:if="{{item.latestResultLabel}}" class="chip-row">
-              <view class="chip {{item.resultChipClass}}">{{item.latestResultLabel}}</view>
+              <view class="chip {{item.latestResultTone}}">{{item.latestResultLabel}}</view>
             </view>
             <view class="helper-text">{{item.helper}}</view>
           </view>
         </view>
-        <view wx:else class="helper-text home-page__loading">
-          当前暂无可展示问卷。
-        </view>
-        <view wx:if="{{dashboardError}}" class="button-stack home-page__retry">
-          <secondary-button
-            label="重新加载问卷目录"
-            bind:tap="handleRetryTap"
-          />
-        </view>
-      </view>
+      </content-section-card>
 
-      <view class="module-grid">
-        <view
-          wx:for="{{supportModules}}"
-          wx:key="key"
-          class="module-card {{item.disabled ? 'module-card--disabled' : ''}}"
-          data-key="{{item.key}}"
-          data-disabled="{{item.disabled}}"
-          bindtap="handleModuleTap"
-        >
-          <view class="module-card__head">
-            <view class="module-card__title">{{item.title}}</view>
-            <view class="module-card__meta {{item.metaTone === 'success' ? 'module-card__meta--success' : ''}} {{item.metaTone === 'warning' ? 'module-card__meta--warning' : ''}} {{item.metaTone === 'disabled' ? 'module-card__meta--disabled' : ''}}">
-              {{item.meta}}
+      <content-section-card
+        tone="warm"
+        eyebrow="Optional"
+        title="辅助筛查"
+        summary="可选问卷不会阻塞完整报告解锁，但可以为综合判断补充风险信号。"
+      >
+        <view wx:if="{{optionalCards.length}}" class="module-grid">
+          <view
+            wx:for="{{optionalCards}}"
+            wx:key="code"
+            class="module-card"
+            data-code="{{item.code}}"
+            bindtap="handleQuestionnaireTap"
+          >
+            <view class="module-card__head">
+              <view>
+                <view class="module-card__title">{{item.name}}</view>
+                <view class="helper-text">{{item.flowStepLabel}} · {{item.badge}}</view>
+              </view>
+              <view class="module-card__meta {{item.stateTone === 'success' ? 'module-card__meta--success' : ''}}">
+                {{item.stateLabel}}
+              </view>
             </view>
+            <view class="chip-row">
+              <view class="chip chip--warm">{{item.questionCountLabel}}</view>
+              <view class="chip chip--muted">{{item.chainLabel}}</view>
+            </view>
+            <view class="body-text">{{item.summary}}</view>
+            <view wx:if="{{item.latestResultLabel}}" class="chip-row">
+              <view class="chip {{item.latestResultTone}}">{{item.latestResultLabel}}</view>
+            </view>
+            <view class="helper-text">{{item.helper}}</view>
           </view>
-          <view class="body-text">{{item.summary}}</view>
-          <view class="helper-text">{{item.hint}}</view>
         </view>
-      </view>
+      </content-section-card>
     </view>
   </view>
+
+  <floating-tab-bar activeKey="assessment" bind:change="handleChannelChange" />
 </app-shell>

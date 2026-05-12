@@ -1,9 +1,9 @@
 .safety-banner {
   background: #ffffff;
   border-top: 8rpx solid #d84c4c;
-  border-radius: 40rpx;
+  border-radius: 36rpx;
   padding: 32rpx;
-  box-shadow: 0 16rpx 40rpx rgba(18, 63, 58, 0.16);
+  box-shadow: 0 18rpx 40rpx rgba(18, 63, 58, 0.14);
   display: flex;
   flex-direction: column;
   gap: 16rpx;
@@ -17,9 +17,9 @@
 }
 
 .safety-banner__message {
-  font-size: 28rpx;
+  font-size: 26rpx;
   line-height: 1.6;
-  color: #41504c;
+  color: #41585b;
 }
 
 .safety-banner__hotline {

@@ -1,4 +1,5 @@
 const { HOTLINE_PHONE, PAGE_ROUTES } = require("../../constants/config");
+const { getPrimaryChannelRoute } = require("../../constants/navigation");
 const { getQuestionnaireRouteByCode } = require("../../constants/questionnaires");
 const {
   fetchReportHistory,
@@ -83,7 +84,7 @@ function mapAction(action) {
   } else if (action.flow_step === "S10A") {
     route = PAGE_ROUTES.REPORT_FULL;
   } else if (action.flow_step === "S15") {
-    available = false;
+    route = PAGE_ROUTES.HELP;
   } else {
     available = false;
   }
@@ -124,6 +125,26 @@ function mapHistoryRecord(item) {
   };
 }
 
+function buildSummaryHeadline(summaryState, progress) {
+  if (summaryState === "unlocked") {
+    return "完整报告已解锁";
+  }
+  if (summaryState === "partial") {
+    return `已完成 ${progress.required_questions_completed} / ${progress.required_questions_total} 题`;
+  }
+  return "完整报告仍处于锁定状态";
+}
+
+function buildSummaryText(summaryState) {
+  if (summaryState === "unlocked") {
+    return "你已经完成四份必做问卷。现在可以先看摘要，也可以直接进入完整综合画像页。";
+  }
+  if (summaryState === "partial") {
+    return "你已经完成了部分量表，当前摘要和最近结果会先展示在这里。";
+  }
+  return "当前还没有完整的量表结果，先从快速筛查开始即可。";
+}
+
 Page({
   data: {
     student: null,
@@ -140,6 +161,11 @@ Page({
     safetyBanner: null,
     summaryState: "locked",
     missingRequiredNames: [],
+    summaryHeadline: buildSummaryHeadline(
+      "locked",
+      buildFallbackSummary().progress
+    ),
+    summaryBody: buildSummaryText("locked"),
   },
 
   onLoad() {
@@ -189,6 +215,8 @@ Page({
           disclaimer: summary.disclaimer || buildFallbackSummary().disclaimer,
           safetyBanner: summary.safety_banner || null,
           summaryState: summary.state || "locked",
+          summaryHeadline: buildSummaryHeadline(summary.state || "locked", progress),
+          summaryBody: buildSummaryText(summary.state || "locked"),
           missingRequiredNames: (progress.missing_required_questionnaires || []).map(
             (item) => item.name
           ),
@@ -241,5 +269,14 @@ Page({
 
   handleBackHome() {
     wx.reLaunch({ url: PAGE_ROUTES.HOME });
+  },
+
+  handleChannelChange(event) {
+    const { key } = event.detail || {};
+    const route = getPrimaryChannelRoute(key);
+    if (!route || route === PAGE_ROUTES.REPORT_SUMMARY) {
+      return;
+    }
+    wx.reLaunch({ url: route });
   },
 });

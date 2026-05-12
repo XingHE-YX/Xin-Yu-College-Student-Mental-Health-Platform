@@ -1,4 +1,5 @@
 const { PAGE_ROUTES } = require("../../../constants/config");
+const { getPrimaryChannelRoute } = require("../../../constants/navigation");
 const {
   fetchTreeholeFeed,
   submitTreeholeReaction,
@@ -27,6 +28,13 @@ function buildFeedMetrics(posts = []) {
       0
     ),
   };
+}
+
+function buildFeedSummary(metrics) {
+  if (!metrics.publicCount) {
+    return "广场还没有公开帖子。你可以先写下第一条匿名心情。";
+  }
+  return `当前有 ${metrics.publicCount} 条公开帖子，其中 ${metrics.myCount} 条来自你自己，累计 ${metrics.supportCount} 次支持反馈。`;
 }
 
 function ensureAuthenticatedSession(pageInstance) {
@@ -61,6 +69,7 @@ Page({
     deleteNotice: "",
     posts: [],
     metrics: buildFeedMetrics(),
+    feedSummary: buildFeedSummary(buildFeedMetrics()),
   },
 
   onShow() {
@@ -87,6 +96,8 @@ Page({
         deleteNotice,
         posts: [],
         metrics: buildFeedMetrics(),
+        feedSummary:
+          "你当前还没有开放危机干预授权，因此树洞频道会保持禁用状态。",
       });
       wx.stopPullDownRefresh();
       return;
@@ -113,6 +124,7 @@ Page({
         loadError: "",
         posts,
         metrics: buildFeedMetrics(posts),
+        feedSummary: buildFeedSummary(buildFeedMetrics(posts)),
       });
     } catch (error) {
       if (error && error.statusCode === 401) {
@@ -126,6 +138,7 @@ Page({
         loadError: error.message || "树洞广场加载失败，请稍后重试。",
         posts: [],
         metrics: buildFeedMetrics(),
+        feedSummary: "广场暂时未能同步。你可以稍后重试，或先写下新的匿名心情。",
       });
     } finally {
       wx.stopPullDownRefresh();
@@ -186,6 +199,7 @@ Page({
     this.setData({
       posts: optimisticPosts,
       metrics: buildFeedMetrics(optimisticPosts),
+      feedSummary: buildFeedSummary(buildFeedMetrics(optimisticPosts)),
     });
 
     try {
@@ -205,6 +219,7 @@ Page({
         this.setData({
           posts: nextPosts,
           metrics: buildFeedMetrics(nextPosts),
+          feedSummary: buildFeedSummary(buildFeedMetrics(nextPosts)),
         });
       }
     } catch (error) {
@@ -223,6 +238,7 @@ Page({
       this.setData({
         posts: rollbackPosts,
         metrics: buildFeedMetrics(rollbackPosts),
+        feedSummary: buildFeedSummary(buildFeedMetrics(rollbackPosts)),
       });
       wx.showToast({
         title: error.message || "互动提交失败，请稍后重试。",
@@ -233,5 +249,14 @@ Page({
 
   handleBackHome() {
     wx.reLaunch({ url: PAGE_ROUTES.HOME });
+  },
+
+  handleChannelChange(event) {
+    const { key } = event.detail || {};
+    const route = getPrimaryChannelRoute(key);
+    if (!route || route === PAGE_ROUTES.TREEHOLE_FEED) {
+      return;
+    }
+    wx.reLaunch({ url: route });
   },
 });

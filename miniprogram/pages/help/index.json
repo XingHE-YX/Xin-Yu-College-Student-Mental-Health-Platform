@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "帮助资源",
+  "usingComponents": {
+    "app-shell": "/components/app-shell/index",
+    "hero-card": "/components/hero-card/index",
+    "content-section-card": "/components/content-section-card/index",
+    "secondary-button": "/components/secondary-button/index",
+    "danger-button": "/components/danger-button/index"
+  }
+}

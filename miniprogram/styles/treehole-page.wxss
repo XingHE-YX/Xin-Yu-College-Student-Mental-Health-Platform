@@ -10,6 +10,25 @@
   color: #a92a2a;
 }
 
+.treehole-page__header-side {
+  display: flex;
+  align-items: center;
+}
+
+.treehole-page__header-pill {
+  min-width: 120rpx;
+  min-height: 56rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border: 2rpx solid rgba(217, 228, 227, 0.8);
+  color: #185b62;
+  font-size: 24rpx;
+  line-height: 56rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
 .treehole-page__section-head {
   display: flex;
   align-items: flex-start;

@@ -1,6 +1,7 @@
 <view class="app-shell {{padded ? 'app-shell--padded' : ''}}">
   <view class="app-shell__mist app-shell__mist--brand"></view>
   <view class="app-shell__mist app-shell__mist--warm"></view>
+  <view class="app-shell__mist app-shell__mist--deep"></view>
   <view class="app-shell__safe">
     <slot></slot>
   </view>

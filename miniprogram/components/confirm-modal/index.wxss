@@ -13,7 +13,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  background: rgba(18, 42, 40, 0.38);
+  background: rgba(18, 42, 40, 0.32);
 }
 
 .confirm-modal__panel {
@@ -23,10 +23,10 @@
   top: 50%;
   transform: translateY(-50%);
   background: #ffffff;
-  border-radius: 40rpx;
+  border-radius: 36rpx;
   border-top: 8rpx solid #d84c4c;
   padding: 40rpx 32rpx 32rpx;
-  box-shadow: 0 32rpx 80rpx rgba(18, 63, 58, 0.18);
+  box-shadow: 0 28rpx 72rpx rgba(18, 63, 58, 0.16);
   display: flex;
   flex-direction: column;
   gap: 24rpx;
@@ -40,9 +40,9 @@
 }
 
 .confirm-modal__message {
-  font-size: 30rpx;
+  font-size: 28rpx;
   line-height: 1.6;
-  color: #41504c;
+  color: #41585b;
 }
 
 .confirm-modal__actions {
@@ -63,8 +63,8 @@
 }
 
 .confirm-modal__button--ghost {
-  background: #eef7f5;
-  color: #1e645c;
+  background: #eef4f3;
+  color: #185b62;
 }
 
 .confirm-modal__button--danger {

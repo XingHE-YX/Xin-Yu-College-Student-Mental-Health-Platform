@@ -3,13 +3,14 @@
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(143, 201, 189, 0.26), transparent 38%),
-    radial-gradient(circle at top right, rgba(247, 197, 138, 0.18), transparent 34%),
-    linear-gradient(180deg, #eef7f5 0%, #f8fafa 42%, #ffffff 100%);
+    radial-gradient(circle at top left, rgba(79, 158, 189, 0.14), transparent 34%),
+    radial-gradient(circle at top right, rgba(45, 124, 132, 0.12), transparent 32%),
+    radial-gradient(circle at 20% 88%, rgba(247, 197, 138, 0.14), transparent 30%),
+    linear-gradient(180deg, #f3f8f7 0%, #edf4f2 52%, #f7fbfb 100%);
 }
 
 .app-shell--padded {
-  padding-bottom: 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 36rpx);
 }
 
 .app-shell__safe {
@@ -21,21 +22,29 @@
 .app-shell__mist {
   position: absolute;
   border-radius: 999rpx;
-  opacity: 0.8;
+  opacity: 0.92;
 }
 
 .app-shell__mist--brand {
-  top: 80rpx;
-  right: -80rpx;
-  width: 280rpx;
-  height: 280rpx;
-  background: rgba(143, 201, 189, 0.24);
+  top: 88rpx;
+  right: -100rpx;
+  width: 320rpx;
+  height: 320rpx;
+  background: rgba(79, 158, 189, 0.14);
 }
 
 .app-shell__mist--warm {
-  bottom: 120rpx;
-  left: -100rpx;
-  width: 320rpx;
-  height: 320rpx;
-  background: rgba(247, 197, 138, 0.18);
+  bottom: 180rpx;
+  left: -80rpx;
+  width: 280rpx;
+  height: 280rpx;
+  background: rgba(247, 197, 138, 0.15);
+}
+
+.app-shell__mist--deep {
+  top: 420rpx;
+  left: -120rpx;
+  width: 360rpx;
+  height: 360rpx;
+  background: rgba(45, 124, 132, 0.08);
 }

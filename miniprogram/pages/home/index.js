@@ -1,4 +1,5 @@
 const { PAGE_ROUTES } = require("../../constants/config");
+const { getPrimaryChannelRoute } = require("../../constants/navigation");
 const {
   getQuestionnaireRouteByCode,
 } = require("../../constants/questionnaires");
@@ -15,25 +16,31 @@ const {
 const QUESTIONNAIRE_COPY = {
   SCREEN: {
     summary: "先用 15 道题快速了解最近一周的情绪、压力和精力状态。",
-    helper: "建议作为首个入口完成，后续必做量表会按固定 70 题链路继续展开。",
+    helper: "建议作为主线第一步完成，后续四份必做问卷会按固定 70 题链路继续展开。",
+    badge: "起点",
   },
   SDS: {
     summary: "20 道 SDS 题目聚焦抑郁相关体验，结果会进入完整画像报告。",
-    helper: "完成后会与快速筛查、SAS 和睡眠问卷一起参与完整报告解锁。",
+    helper: "建议在快速筛查后继续完成，帮助系统建立更完整的状态判断。",
+    badge: "主线",
   },
   SAS: {
     summary: "20 道 SAS 题目帮助识别焦虑相关困扰，采用标准分换算。",
-    helper: "建议在完成 SDS 后继续作答，保持同一阶段体验的一致性。",
+    helper: "与 SDS 一起构成核心情绪量表主线。",
+    badge: "主线",
   },
   SLEEP: {
-    summary: "15 道睡眠问卷聚焦入睡、醒来和作息恢复情况。",
-    helper: "睡眠结果会与情绪量表一起汇总到综合画像中。",
+    summary: "15 道睡眠问卷聚焦入睡、醒来和恢复感，补齐作息维度。",
+    helper: "完成后即可判断 70 题主线是否已满足完整报告解锁条件。",
+    badge: "完成主线",
   },
   UPI: {
     summary: "4 道 UPI 辅助题用于补充识别风险信号，不阻塞完整报告解锁。",
-    helper: "可在任意时间主动完成，结果仅作为辅助参考和风险升级信号。",
+    helper: "你可以任意时间主动完成，它只作为辅助参考。",
+    badge: "可选",
   },
 };
+
 const RISK_LABELS = {
   low: "低风险",
   watch: "需关注",
@@ -51,13 +58,6 @@ function buildFallbackProgress() {
   };
 }
 
-function buildProgressTitle(progress) {
-  if (progress.full_profile_unlocked) {
-    return "完整报告已达到解锁条件";
-  }
-  return "完整报告仍需完成必做问卷";
-}
-
 function buildMissingRequiredNames(progress) {
   if (!progress || !Array.isArray(progress.required_questionnaires)) {
     return [];
@@ -68,34 +68,38 @@ function buildMissingRequiredNames(progress) {
     .map((item) => item.name);
 }
 
+function buildProgressHeadline(progress) {
+  if (progress.full_profile_unlocked) {
+    return "完整报告已达到查看条件";
+  }
+  if (progress.completed_required_questions <= 0) {
+    return "先从快速筛查开始建立当前状态";
+  }
+  return `当前已完成 ${progress.completed_required_questions} / ${progress.total_required_questions} 题`;
+}
+
 function buildProgressSummary(progress) {
   if (progress.full_profile_unlocked) {
-    return "四份必做问卷均已完成，后续可直接查看完整综合画像报告。";
+    return "四份必做问卷均已完成。你现在可以前往报告频道查看完整综合画像。";
   }
 
   const missingNames = buildMissingRequiredNames(progress);
+  if (!missingNames.length) {
+    return "主线问卷即将完成，提交最新结果后会自动刷新完整报告解锁状态。";
+  }
+
   if (progress.completed_required_questions <= 0) {
-    return "先从快速筛查开始。完成四份必做问卷后，完整报告会按固定 70 题链路自动解锁。";
+    return "完成四份必做问卷后，完整报告会按固定 70 题链路自动解锁。";
   }
 
-  if (missingNames.length) {
-    return `当前已完成 ${progress.completed_required_questions} / ${progress.total_required_questions} 题，还差 ${missingNames.join("、")}。`;
-  }
-
-  return `当前已完成 ${progress.completed_required_questions} / ${progress.total_required_questions} 题，剩余必做问卷完成后即可解锁完整报告。`;
+  return `剩余主线任务：${missingNames.join("、")}。每次提交后，报告频道都会自动同步最新进度。`;
 }
 
-function buildMetaToneClass(tone) {
-  if (tone === "warning") {
-    return "module-card__meta--warning";
+function buildCardTone(isCompleted, isRequired) {
+  if (isCompleted) {
+    return "success";
   }
-  if (tone === "success") {
-    return "module-card__meta--success";
-  }
-  if (tone === "disabled") {
-    return "module-card__meta--disabled";
-  }
-  return "";
+  return isRequired ? "warning" : "default";
 }
 
 function buildRiskChipClass(riskLevel) {
@@ -111,96 +115,96 @@ function buildRiskChipClass(riskLevel) {
 function buildQuestionnaireCards(questionnaires) {
   return questionnaires.map((questionnaire) => {
     const copy = QUESTIONNAIRE_COPY[questionnaire.code] || {
-      summary: "问卷元数据已同步，可在后续步骤进入正式作答页。",
-      helper: "当前阶段已接通目录和详情接口，提交流程将在后续步骤开放。",
+      summary: "问卷元数据已同步，可直接进入作答页。",
+      helper: "提交后会自动刷新最新结果与整体进度。",
+      badge: "问卷",
     };
     const latestSubmission = questionnaire.latest_submission;
     const isCompleted = Boolean(latestSubmission);
     const isRequired = questionnaire.category === "required";
-
     return {
       code: questionnaire.code,
       name: questionnaire.name,
-      flowStepLabel: questionnaire.flow_step
-        ? `${questionnaire.flow_step} 问卷入口`
-        : "问卷入口",
-      statusLabel: isCompleted ? "已完成" : isRequired ? "待完成" : "可选",
-      metaToneClass: buildMetaToneClass(
-        isCompleted ? "success" : isRequired ? "warning" : "default"
-      ),
-      categoryLabel: isRequired ? "必做" : "可选",
-      categoryChipClass: isRequired ? "" : "chip--warm",
-      questionCountLabel: `${questionnaire.question_count} 题`,
-      chainLabel: questionnaire.unlock_required ? "70 题链路" : "辅助参考",
       summary: copy.summary,
       helper: copy.helper,
+      badge: copy.badge,
+      questionCountLabel: `${questionnaire.question_count} 题`,
+      stateLabel: isCompleted ? "已完成" : isRequired ? "待完成" : "可选",
+      stateTone: buildCardTone(isCompleted, isRequired),
+      chainLabel: isRequired ? "70 题主线" : "辅助参考",
       latestResultLabel: latestSubmission
         ? `最近结果：${RISK_LABELS[latestSubmission.risk_level] || "已保存"}`
         : "",
-      resultChipClass: latestSubmission
+      latestResultTone: latestSubmission
         ? buildRiskChipClass(latestSubmission.risk_level)
         : "",
+      flowStepLabel: questionnaire.flow_step || "",
+      isCompleted,
+      isRequired,
     };
   });
 }
 
-function buildModules(student, progress) {
-  const treeholeDisabled = student.consent_status !== "granted";
-  const missingNames = buildMissingRequiredNames(progress);
-  const reportUnlocked = progress.full_profile_unlocked;
+function buildQuickActions(progress, questionnaires) {
+  const nextRequired = questionnaires.find(
+    (item) => item.isRequired && !item.isCompleted
+  );
+  const optionalUpi = questionnaires.find((item) => item.code === "UPI");
 
   return [
     {
+      key: nextRequired ? `questionnaire:${nextRequired.code}` : "report",
+      badge: nextRequired ? "继续" : "查看",
+      title: nextRequired ? nextRequired.name : "完整报告",
+      summary: nextRequired
+        ? "继续主线任务，刷新完整报告解锁进度。"
+        : "四份主线问卷已完成，可直接查看完整综合画像。",
+    },
+    {
       key: "report",
-      title: "我的报告",
-      meta: reportUnlocked
-        ? "已解锁"
-        : `${progress.completed_required_questions} / ${progress.total_required_questions}`,
-      metaTone: reportUnlocked ? "success" : "warning",
-      summary: reportUnlocked
-        ? "四份必做问卷均已完成。完整综合画像报告已经达到查看条件。"
-        : "完整报告仍处于锁定状态。继续完成剩余必做问卷后，可查看综合画像与调节建议。",
-      hint:
-        missingNames.length > 0
-          ? `还需完成：${missingNames.join("、")}，也可先查看已完成量表结果`
-          : "可进入报告页查看当前摘要与完整画像",
-      disabled: false,
+      badge: "报告",
+      title: "报告频道",
+      summary: progress.full_profile_unlocked
+        ? "查看当前摘要与完整综合画像。"
+        : "随时查看锁定状态、已完成结果和下一步建议。",
+    },
+    {
+      key: optionalUpi ? `questionnaire:${optionalUpi.code}` : "help",
+      badge: optionalUpi && !optionalUpi.isCompleted ? "可选" : "帮助",
+      title:
+        optionalUpi && !optionalUpi.isCompleted ? "UPI 辅助筛查" : "帮助资源",
+      summary:
+        optionalUpi && !optionalUpi.isCompleted
+          ? "不阻塞主线解锁，但可补充辅助风险信号。"
+          : "查看热线、校内资源和冷静处理建议。",
     },
     {
       key: "treehole",
-      title: "树洞",
-      meta: treeholeDisabled ? "暂不可用" : "可进入",
-      metaTone: treeholeDisabled ? "disabled" : "default",
-      summary: treeholeDisabled
-        ? "你当前拒绝了危机干预授权，因此树洞入口会保持禁用。"
-        : "授权已完成，你现在可以进入匿名广场、发布树洞内容，并查看自己的帖子详情。",
-      hint: treeholeDisabled
-        ? "拒绝授权不会影响测评与报告功能"
-        : "支持浏览广场、提交预设互动，以及进入我的帖子详情页",
-      disabled: treeholeDisabled,
-    },
-    {
-      key: "help",
-      title: "帮助资源",
-      meta: "静态资源",
-      metaTone: "default",
-      summary: "求助电话、呼吸调节建议与校内心理中心信息会放在帮助页统一展示。",
-      hint: "将在后续步骤开放帮助资源页",
-      disabled: false,
+      badge: "树洞",
+      title: "匿名广场",
+      summary: "如你已经开放授权，也可以去树洞频道写下当下心情。",
     },
   ];
+}
+
+function splitQuestionnaireGroups(questionnaires) {
+  return {
+    requiredCards: questionnaires.filter((item) => item.isRequired),
+    optionalCards: questionnaires.filter((item) => !item.isRequired),
+  };
 }
 
 Page({
   data: {
     student: null,
-    questionnaires: [],
-    supportModules: [],
     consentDeclined: false,
     requiredProgress: buildFallbackProgress(),
-    progressTitle: buildProgressTitle(buildFallbackProgress()),
+    progressHeadline: buildProgressHeadline(buildFallbackProgress()),
     progressSummary: buildProgressSummary(buildFallbackProgress()),
     missingRequiredNames: [],
+    requiredCards: [],
+    optionalCards: [],
+    quickActions: [],
     loadingDashboard: true,
     dashboardError: "",
   },
@@ -224,17 +228,19 @@ Page({
         return;
       }
 
+      const fallbackProgress = buildFallbackProgress();
       this.setData({
         student: session.student,
         consentDeclined: session.student.consent_status === "declined",
-        requiredProgress: buildFallbackProgress(),
-        progressTitle: buildProgressTitle(buildFallbackProgress()),
-        progressSummary: buildProgressSummary(buildFallbackProgress()),
+        requiredProgress: fallbackProgress,
+        progressHeadline: buildProgressHeadline(fallbackProgress),
+        progressSummary: buildProgressSummary(fallbackProgress),
         missingRequiredNames: [],
+        requiredCards: [],
+        optionalCards: [],
+        quickActions: buildQuickActions(fallbackProgress, []),
         loadingDashboard: true,
         dashboardError: "",
-        questionnaires: [],
-        supportModules: buildModules(session.student, buildFallbackProgress()),
       });
       this.loadDashboardData(session);
     } catch (error) {
@@ -250,15 +256,19 @@ Page({
     ])
       .then(([questionnaireData, progressData]) => {
         const progress = progressData.progress || buildFallbackProgress();
+        const questionnaires = buildQuestionnaireCards(
+          questionnaireData.questionnaires || []
+        );
+        const { requiredCards, optionalCards } =
+          splitQuestionnaireGroups(questionnaires);
         this.setData({
-          questionnaires: buildQuestionnaireCards(
-            questionnaireData.questionnaires || []
-          ),
-          supportModules: buildModules(session.student, progress),
           requiredProgress: progress,
-          progressTitle: buildProgressTitle(progress),
+          progressHeadline: buildProgressHeadline(progress),
           progressSummary: buildProgressSummary(progress),
           missingRequiredNames: buildMissingRequiredNames(progress),
+          requiredCards,
+          optionalCards,
+          quickActions: buildQuickActions(progress, questionnaires),
           loadingDashboard: false,
           dashboardError: "",
         });
@@ -272,12 +282,14 @@ Page({
 
         const fallbackProgress = buildFallbackProgress();
         this.setData({
-          questionnaires: [],
-          supportModules: buildModules(session.student, fallbackProgress),
           requiredProgress: fallbackProgress,
-          progressTitle: buildProgressTitle(fallbackProgress),
-          progressSummary: "问卷目录暂时未能同步，已保留首页主入口。你可以稍后重试。",
+          progressHeadline: buildProgressHeadline(fallbackProgress),
+          progressSummary:
+            "问卷目录暂时未能同步。你仍可以稍后重试，或先前往其他频道。",
           missingRequiredNames: [],
+          requiredCards: [],
+          optionalCards: [],
+          quickActions: buildQuickActions(fallbackProgress, []),
           loadingDashboard: false,
           dashboardError:
             (error && error.message) || "问卷目录加载失败，请稍后重试。",
@@ -322,33 +334,42 @@ Page({
     wx.navigateTo({ url: route });
   },
 
-  handleModuleTap(event) {
-    const { key, disabled } = event.currentTarget.dataset;
-    if (disabled) {
-      wx.showToast({
-        title: "当前入口受授权状态限制",
-        icon: "none",
-      });
+  handleQuickAction(event) {
+    const { key } = event.detail || {};
+    if (!key) {
+      return;
+    }
+
+    if (key.startsWith("questionnaire:")) {
+      const code = key.split(":")[1];
+      const route = getQuestionnaireRouteByCode(code);
+      if (route) {
+        wx.navigateTo({ url: route });
+      }
       return;
     }
 
     if (key === "report") {
-      wx.navigateTo({ url: PAGE_ROUTES.REPORT_SUMMARY });
+      wx.reLaunch({ url: PAGE_ROUTES.REPORT_SUMMARY });
       return;
     }
 
     if (key === "treehole") {
-      wx.navigateTo({ url: PAGE_ROUTES.TREEHOLE_FEED });
+      wx.reLaunch({ url: PAGE_ROUTES.TREEHOLE_FEED });
       return;
     }
 
-    const titles = {
-      help: "帮助资源页将在后续步骤接入",
-    };
+    if (key === "help") {
+      wx.navigateTo({ url: PAGE_ROUTES.HELP });
+    }
+  },
 
-    wx.showToast({
-      title: titles[key] || "该功能将在后续步骤接入",
-      icon: "none",
-    });
+  handleChannelChange(event) {
+    const { key } = event.detail || {};
+    const route = getPrimaryChannelRoute(key);
+    if (!route || route === PAGE_ROUTES.HOME) {
+      return;
+    }
+    wx.reLaunch({ url: route });
   },
 });

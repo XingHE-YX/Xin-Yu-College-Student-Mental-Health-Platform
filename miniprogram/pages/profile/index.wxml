@@ -1,0 +1,79 @@
+<app-shell>
+  <view class="channel-screen">
+    <view class="channel-screen__stack">
+      <channel-header
+        eyebrow="My"
+        title="我的"
+        summary="把授权状态、帮助资源、演示环境提示和退出登录统一收拢到个人频道，不再和主功能入口混在一起。"
+      />
+
+      <content-section-card tone="soft">
+        <view class="channel-page-card__head">
+          <view>
+            <view class="eyebrow">当前身份</view>
+            <view class="section-subtitle">{{student.display_nickname}}</view>
+          </view>
+          <view class="chip">{{student.is_demo ? '演示账号' : '正式账号'}}</view>
+        </view>
+        <view class="list-group">
+          <view class="list-cell">
+            <view class="list-cell__content">
+              <view class="list-cell__title">学院与班级</view>
+              <view class="list-cell__summary">{{student.college_name}} · {{student.class_name}}</view>
+            </view>
+            <view class="list-cell__meta">身份</view>
+          </view>
+          <view class="list-cell">
+            <view class="list-cell__content">
+              <view class="list-cell__title">危机干预授权</view>
+              <view class="list-cell__summary">授权只影响树洞发布能力，不影响测评与报告。</view>
+            </view>
+            <view class="list-cell__meta">
+              {{student.consent_status === 'granted' ? '已同意' : '已拒绝'}}
+            </view>
+          </view>
+        </view>
+      </content-section-card>
+
+      <content-section-card tone="default" eyebrow="Support" title="帮助与说明">
+        <view class="list-group">
+          <view class="list-cell" bindtap="handleOpenHelp">
+            <view class="list-cell__content">
+              <view class="list-cell__title">帮助资源</view>
+              <view class="list-cell__summary">查看热线、校内心理中心信息和冷静处理建议。</view>
+            </view>
+            <view class="list-cell__meta">进入</view>
+          </view>
+          <view class="list-cell" bindtap="handleOpenReport">
+            <view class="list-cell__content">
+              <view class="list-cell__title">我的报告</view>
+              <view class="list-cell__summary">返回报告频道查看当前结果和完整画像解锁状态。</view>
+            </view>
+            <view class="list-cell__meta">查看</view>
+          </view>
+        </view>
+      </content-section-card>
+
+      <content-section-card
+        wx:if="{{runtimeHints.length}}"
+        tone="warm"
+        eyebrow="Runtime"
+        title="当前环境提示"
+        summary="仅在存在演示或容错开关时展示，用于帮助你理解当前环境口径。"
+      >
+        <view class="inline-list">
+          <view wx:for="{{runtimeHints}}" wx:key="*this" class="inline-list__item">
+            {{index + 1}}. {{item}}
+          </view>
+        </view>
+      </content-section-card>
+
+      <view class="button-stack">
+        <secondary-button label="打开帮助资源" bind:tap="handleOpenHelp" />
+        <danger-button label="退出登录" bind:tap="handleLogout" />
+      </view>
+    </view>
+  </view>
+
+  <floating-tab-bar activeKey="my" bind:change="handleChannelChange" />
+</app-shell>

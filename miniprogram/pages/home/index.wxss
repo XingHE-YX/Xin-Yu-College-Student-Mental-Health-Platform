@@ -15,25 +15,8 @@
   gap: 12rpx;
 }
 
-.home-page__section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24rpx;
-  margin-bottom: 24rpx;
-}
-
-.home-page__loading {
-  margin-top: 12rpx;
-}
-
 .home-page__retry {
-  margin-top: 20rpx;
-}
-
-.module-card__meta--success {
-  background: #e9f6ed;
-  color: #2f7d49;
+  margin-top: -8rpx;
 }
 
 .chip--success {

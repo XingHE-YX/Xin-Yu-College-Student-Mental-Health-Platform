@@ -3,7 +3,9 @@
   "enablePullDownRefresh": true,
   "usingComponents": {
     "app-shell": "/components/app-shell/index",
-    "hero-card": "/components/hero-card/index",
+    "channel-header": "/components/channel-header/index",
+    "content-section-card": "/components/content-section-card/index",
+    "floating-tab-bar": "/components/floating-tab-bar/index",
     "primary-button": "/components/primary-button/index",
     "secondary-button": "/components/secondary-button/index",
     "treehole-post-card": "/components/treehole-post-card/index",

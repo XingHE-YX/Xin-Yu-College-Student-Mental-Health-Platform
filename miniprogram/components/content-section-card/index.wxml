@@ -1,0 +1,6 @@
+<view class="content-section-card content-section-card--{{tone}}">
+  <view wx:if="{{eyebrow}}" class="content-section-card__eyebrow">{{eyebrow}}</view>
+  <view wx:if="{{title}}" class="content-section-card__title">{{title}}</view>
+  <view wx:if="{{summary}}" class="content-section-card__summary">{{summary}}</view>
+  <slot></slot>
+</view>

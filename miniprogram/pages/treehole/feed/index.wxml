@@ -1,64 +1,78 @@
 <app-shell>
-  <view class="screen">
-    <view class="screen__stack">
-      <hero-card
-        eyebrow="S11 Treehole"
-        title="匿名树洞广场"
-        summary="这里展示已公开的匿名表达。你可以用预设互动传递支持，也可以写下一条自己的心情。"
-        tone="brand"
-      />
+  <view class="channel-screen">
+    <view class="channel-screen__stack">
+      <channel-header
+        eyebrow="Treehole"
+        title="树洞"
+        summary="一个只展示匿名昵称、脱敏正文和预设支持反馈的公开广场。你可以浏览内容流，也可以写下一条自己的心情。"
+      >
+        <view slot="side" class="treehole-page__header-side">
+          <view class="treehole-page__header-pill">{{feedDisabled ? '未开放' : '可发布'}}</view>
+        </view>
+      </channel-header>
 
-      <view wx:if="{{feedDisabled}}" class="surface-card surface-card--warm">
-        <view class="eyebrow">当前不可用</view>
-        <view class="section-subtitle">你尚未开放危机干预授权，因此不能进入树洞发布链路</view>
-        <view class="body-text">
-          你仍然可以继续完成问卷与查看报告；若之后开放授权，树洞入口会自动恢复可用。
-        </view>
-        <view class="button-stack treehole-page__actions">
-          <secondary-button label="返回首页" bind:tap="handleBackHome" />
-        </view>
+      <view wx:if="{{feedDisabled}}" class="status-banner status-banner--warning">
+        你尚未开放危机干预授权，因此当前不能进入树洞发布链路。
       </view>
 
-      <block wx:else>
-        <view wx:if="{{deleteNotice}}" class="status-banner status-banner--success">
-          {{deleteNotice}}
-        </view>
+      <view wx:if="{{deleteNotice}}" class="status-banner status-banner--success">
+        {{deleteNotice}}
+      </view>
 
-        <view class="surface-card surface-card--soft">
-          <view class="treehole-page__section-head">
-            <view>
-              <view class="eyebrow">Public Feed</view>
-              <view class="section-subtitle">只展示匿名昵称、头像和脱敏正文</view>
-            </view>
-            <view class="helper-text">不开放评论和私信</view>
+      <content-section-card tone="soft">
+        <view class="channel-page-card__head">
+          <view>
+            <view class="eyebrow">频道摘要</view>
+            <view class="section-subtitle">公开内容流</view>
           </view>
-          <view class="body-text">
-            广场里的每条内容都以匿名形式公开呈现。互动只保留“抱抱 / 点亮 / 陪伴”三种支持反馈，避免讨论区失控和身份暴露。
+          <view class="chip chip--muted">无评论 · 无私信</view>
+        </view>
+        <view class="body-text">{{feedSummary}}</view>
+        <view class="metrics-grid treehole-page__metrics-grid">
+          <view class="metric-panel">
+            <view class="metric-panel__label">公开帖子</view>
+            <view class="metric-panel__value">{{metrics.publicCount}}</view>
+            <view class="metric-panel__summary">仅展示允许公开发布的内容</view>
           </view>
-          <view class="treehole-page__metric-row">
-            <view class="treehole-page__metric">
-              <view class="treehole-page__metric-label">公开帖子</view>
-              <view class="treehole-page__metric-value">{{metrics.publicCount}}</view>
+          <view class="metric-panel">
+            <view class="metric-panel__label">我的帖子</view>
+            <view class="metric-panel__value">{{metrics.myCount}}</view>
+            <view class="metric-panel__summary">可进入详情查看完整内容或删除</view>
+          </view>
+          <view class="metric-panel">
+            <view class="metric-panel__label">支持反馈</view>
+            <view class="metric-panel__value">{{metrics.supportCount}}</view>
+            <view class="metric-panel__summary">只保留抱抱、点亮、陪伴三种反馈</view>
+          </view>
+          <view class="metric-panel">
+            <view class="metric-panel__label">当前状态</view>
+            <view class="metric-panel__value metric-panel__value--sm">
+              {{feedDisabled ? '受限' : '开放'}}
             </view>
-            <view class="treehole-page__metric">
-              <view class="treehole-page__metric-label">我的帖子</view>
-              <view class="treehole-page__metric-value">{{metrics.myCount}}</view>
-            </view>
-            <view class="treehole-page__metric">
-              <view class="treehole-page__metric-label">支持反馈</view>
-              <view class="treehole-page__metric-value">{{metrics.supportCount}}</view>
+            <view class="metric-panel__summary">
+              {{feedDisabled ? '授权后可恢复发布能力' : '可以继续写下一条匿名心情'}}
             </view>
           </view>
+        </view>
+      </content-section-card>
+
+      <view wx:if="{{loadError}}" class="status-banner status-banner--error">{{loadError}}</view>
+
+      <block wx:if="{{feedDisabled}}">
+        <content-section-card
+          tone="warm"
+          eyebrow="当前不可用"
+          title="树洞频道已暂时关闭"
+          summary="拒绝授权不会影响测评和报告。如果之后需要恢复树洞能力，可在后续版本重新提交授权决策。"
+        >
           <view class="button-stack treehole-page__actions">
-            <primary-button label="发布一条匿名心情" bind:tap="handleCreateTap" />
+            <secondary-button label="返回测评频道" bind:tap="handleBackHome" />
           </view>
-        </view>
+        </content-section-card>
+      </block>
 
-        <view wx:if="{{loadError}}" class="status-banner status-banner--error">
-          {{loadError}}
-        </view>
-
-        <view wx:if="{{loading}}" class="surface-card">
+      <block wx:else>
+        <view wx:if="{{loading}}" class="channel-page-card channel-page-card--default">
           <view class="eyebrow">加载中</view>
           <view class="section-subtitle">正在同步树洞广场</view>
           <view class="body-text">请稍候，系统正在加载已公开的匿名内容与最新互动状态。</view>
@@ -95,7 +109,7 @@
 
             <view class="treehole-page__post-foot">
               <view class="helper-text">
-                {{item.isMine ? '这条帖子来自你自己。可进入详情查看完整内容并执行删除。' : '当前阶段只开放预设互动，不开放评论和私信。'}}
+                {{item.isMine ? '这条帖子来自你自己。可进入详情查看完整内容并执行删除。' : '当前阶段只开放预设互动，不开放评论、私信和联系方式交换。'}}
               </view>
               <view
                 class="treehole-page__detail-link"
@@ -108,23 +122,28 @@
           </treehole-post-card>
         </view>
 
-        <view wx:elif="{{!loadError}}" class="surface-card surface-card--warm">
-          <view class="treehole-page__empty-state">
-            <view class="treehole-page__empty-mark">匿</view>
-            <view class="section-subtitle">广场还没有公开帖子</view>
-            <view class="body-text">
-              你可以先发布一条自己的匿名心情。公开前会自动去除手机号和邮箱等明显联系方式。
-            </view>
-            <view class="button-stack">
-              <primary-button label="写下第一条树洞" bind:tap="handleCreateTap" />
-            </view>
+        <content-section-card
+          wx:elif="{{!loadError}}"
+          tone="warm"
+          eyebrow="空状态"
+          title="广场还没有公开帖子"
+          summary="你可以先发布一条自己的匿名心情。公开前系统会自动隐藏手机号和邮箱等明显联系方式。"
+        >
+          <view class="button-stack">
+            <primary-button label="写下第一条树洞" bind:tap="handleCreateTap" />
           </view>
-        </view>
+        </content-section-card>
 
         <view wx:if="{{loadError}}" class="button-stack">
           <secondary-button label="重新加载广场" bind:tap="handleRetryLoad" />
         </view>
+
+        <view class="sticky-primary-action">
+          <primary-button label="发布一条匿名心情" bind:tap="handleCreateTap" />
+        </view>
       </block>
     </view>
   </view>
+
+  <floating-tab-bar activeKey="treehole" bind:change="handleChannelChange" />
 </app-shell>

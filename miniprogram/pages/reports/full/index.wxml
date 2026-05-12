@@ -1,6 +1,6 @@
 <app-shell>
-  <view class="screen">
-    <view class="screen__stack">
+  <view class="channel-screen">
+    <view class="channel-screen__stack">
       <hero-card
         wx:if="{{hero}}"
         eyebrow="{{hero.eyebrow}}"
@@ -31,7 +31,7 @@
           hotline="{{hotlinePhone}}"
         />
 
-        <view class="surface-card surface-card--soft">
+        <view class="channel-page-card channel-page-card--soft">
           <view class="report-page__section-head">
             <view>
               <view class="eyebrow">综合结果</view>
@@ -53,7 +53,7 @@
           </view>
         </view>
 
-        <view class="surface-card">
+        <view class="channel-page-card channel-page-card--default">
           <view class="eyebrow">量表摘要</view>
           <view class="section-subtitle">各量表结果</view>
           <view class="report-page__card-list">
@@ -69,13 +69,13 @@
           </view>
         </view>
 
-        <view wx:if="{{trendPlaceholder}}" class="surface-card surface-card--warm">
+        <view wx:if="{{trendPlaceholder}}" class="channel-page-card channel-page-card--warm">
           <view class="eyebrow">趋势占位</view>
           <view class="section-subtitle">{{trendPlaceholder.title}}</view>
           <view class="body-text">{{trendPlaceholder.summary}}</view>
         </view>
 
-        <view class="surface-card surface-card--muted">
+        <view class="channel-page-card channel-page-card--muted">
           <view class="eyebrow">调节建议</view>
           <view class="section-subtitle">当前更值得优先做的事</view>
           <view class="inline-list">
@@ -85,7 +85,7 @@
           </view>
         </view>
 
-        <view class="surface-card surface-card--soft">
+        <view class="channel-page-card channel-page-card--soft">
           <view class="eyebrow">说明</view>
           <view class="body-text">{{disclaimer}}</view>
         </view>

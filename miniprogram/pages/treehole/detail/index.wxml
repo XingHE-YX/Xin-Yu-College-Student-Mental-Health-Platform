@@ -1,6 +1,6 @@
 <app-shell>
-  <view class="screen">
-    <view class="screen__stack">
+  <view class="channel-screen">
+    <view class="channel-screen__stack">
       <hero-card
         eyebrow="S16 Treehole Detail"
         title="{{heroTitle}}"
@@ -12,7 +12,7 @@
         {{statusMessage}}
       </view>
 
-      <view wx:if="{{loading}}" class="surface-card">
+      <view wx:if="{{loading}}" class="channel-page-card channel-page-card--default">
         <view class="eyebrow">加载中</view>
         <view class="section-subtitle">正在同步帖子详情</view>
         <view class="body-text">请稍候，系统正在读取这条匿名帖子的完整内容与当前支持反馈。</view>
@@ -27,7 +27,7 @@
       </block>
 
       <block wx:elif="{{!post}}">
-        <view class="surface-card surface-card--warm">
+        <view class="channel-page-card channel-page-card--warm">
           <view class="treehole-page__empty-state">
             <view class="treehole-page__empty-mark">匿</view>
             <view class="section-subtitle">当前找不到这条帖子了</view>
@@ -42,7 +42,7 @@
       </block>
 
       <block wx:elif="{{post.publishStatus === 'deleted_by_user'}}">
-        <view class="surface-card surface-card--warm">
+        <view class="channel-page-card channel-page-card--warm">
           <view class="eyebrow">删除已完成</view>
           <view class="section-subtitle">这条帖子已经从学生端移除</view>
           <view class="body-text">
@@ -80,7 +80,7 @@
           </view>
         </treehole-post-card>
 
-        <view class="surface-card surface-card--soft">
+        <view class="channel-page-card channel-page-card--soft">
           <view class="eyebrow">支持反馈</view>
           <view class="body-text treehole-page__support-note">
             {{post.isMine ? '这里展示的是其他同学在广场里留下的预设支持反馈。' : '当前阶段只开放预设互动，不开放评论、私信和联系方式交换。'}}
@@ -97,7 +97,7 @@
           </view>
         </view>
 
-        <view wx:if="{{post.isMine && post.publishStatus === 'published'}}" class="surface-card surface-card--warm">
+        <view wx:if="{{post.isMine && post.publishStatus === 'published'}}" class="channel-page-card channel-page-card--warm">
           <view class="eyebrow">删除说明</view>
           <view class="section-subtitle">删除后，这条帖子会从学生端广场中消失</view>
           <view class="body-text">

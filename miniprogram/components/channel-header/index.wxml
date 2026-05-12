@@ -1,0 +1,10 @@
+<view class="channel-header">
+  <view class="channel-header__main">
+    <view wx:if="{{eyebrow}}" class="channel-header__eyebrow">{{eyebrow}}</view>
+    <view class="channel-header__title">{{title}}</view>
+    <view wx:if="{{summary}}" class="channel-header__summary">{{summary}}</view>
+  </view>
+  <view class="channel-header__side">
+    <slot name="side"></slot>
+  </view>
+</view>

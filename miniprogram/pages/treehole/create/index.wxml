@@ -1,6 +1,6 @@
 <app-shell>
-  <view class="screen">
-    <view class="screen__stack">
+  <view class="channel-screen">
+    <view class="channel-screen__stack">
       <hero-card
         eyebrow="S12 Treehole"
         title="{{heroTitle}}"
@@ -8,7 +8,7 @@
         tone="{{heroTone}}"
       />
 
-      <view wx:if="{{pageMode === 'disabled'}}" class="surface-card surface-card--warm">
+      <view wx:if="{{pageMode === 'disabled'}}" class="channel-page-card channel-page-card--warm">
         <view class="eyebrow">当前不可用</view>
         <view class="section-subtitle">你还没有开放危机干预授权，因此不能发帖</view>
         <view class="body-text">
@@ -22,7 +22,7 @@
       <block wx:elif="{{pageMode === 'success' && createdPost}}">
         <view class="status-banner status-banner--success">{{successMessage}}</view>
 
-        <view class="surface-card surface-card--soft">
+        <view class="channel-page-card channel-page-card--soft">
           <view class="treehole-page__section-head">
             <view>
               <view class="eyebrow">发布结果</view>
@@ -66,7 +66,7 @@
           hotline="{{hotlinePhone}}"
         />
 
-        <view class="surface-card surface-card--warm">
+        <view class="channel-page-card channel-page-card--warm">
           <view class="eyebrow">安全提醒</view>
           <view class="section-subtitle">请先联系可信赖的人，或及时使用求助热线</view>
           <view class="body-text">
@@ -85,7 +85,7 @@
           {{submitError}}
         </view>
 
-        <view class="surface-card surface-card--soft">
+        <view class="channel-page-card channel-page-card--soft">
           <view class="treehole-page__section-head">
             <view>
               <view class="eyebrow">Anonymous Composer</view>
@@ -113,16 +113,34 @@
           </view>
         </view>
 
-        <view class="surface-card">
-          <view class="eyebrow">发布守则</view>
-          <view class="treehole-page__principles">
-            <view class="treehole-page__principle">1. 前台只展示匿名昵称与头像标识，不公开真实身份。</view>
-            <view class="treehole-page__principle">2. 公开正文会自动隐藏手机号、邮箱等明显联系方式。</view>
-            <view class="treehole-page__principle">3. 如内容包含高风险信号，系统会优先进入安全提示流程而不是直接公开。</view>
+        <view class="channel-page-card channel-page-card--muted">
+          <view class="eyebrow">发布规则</view>
+          <view class="list-group">
+            <view class="list-cell">
+              <view class="list-cell__content">
+                <view class="list-cell__title">匿名展示</view>
+                <view class="list-cell__summary">前台只展示匿名昵称与头像标识，不公开真实身份。</view>
+              </view>
+              <view class="list-cell__meta">01</view>
+            </view>
+            <view class="list-cell">
+              <view class="list-cell__content">
+                <view class="list-cell__title">正文脱敏</view>
+                <view class="list-cell__summary">公开正文会自动隐藏手机号、邮箱等明显联系方式。</view>
+              </view>
+              <view class="list-cell__meta">02</view>
+            </view>
+            <view class="list-cell">
+              <view class="list-cell__content">
+                <view class="list-cell__title">安全分流</view>
+                <view class="list-cell__summary">如内容包含高风险信号，系统会优先进入安全提示流程而不是直接公开。</view>
+              </view>
+              <view class="list-cell__meta">03</view>
+            </view>
           </view>
         </view>
 
-        <view class="button-stack">
+        <view class="button-stack sticky-primary-action">
           <primary-button
             label="匿名发布"
             loading="{{submitting}}"

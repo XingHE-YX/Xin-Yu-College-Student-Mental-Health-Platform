@@ -1,0 +1,38 @@
+.channel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.channel-header__main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.channel-header__side {
+  flex-shrink: 0;
+}
+
+.channel-header__eyebrow {
+  font-size: 22rpx;
+  line-height: 1.4;
+  letter-spacing: 4rpx;
+  color: #2d7c84;
+  text-transform: uppercase;
+}
+
+.channel-header__title {
+  margin-top: 8rpx;
+  font-size: 54rpx;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #1f3436;
+}
+
+.channel-header__summary {
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #41585b;
+}

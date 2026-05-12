@@ -5,17 +5,17 @@
   min-height: 56rpx;
   padding: 0 18rpx;
   border-radius: 999rpx;
-  border: 2rpx solid #d7e1de;
+  border: 2rpx solid rgba(217, 228, 227, 0.92);
   background: #ffffff;
-  color: #1e645c;
+  color: #185b62;
   font-size: 24rpx;
   line-height: 1.4;
   box-sizing: border-box;
 }
 
 .reaction-chip--active {
-  background: #eef7f5;
-  border-color: #8fc9bd;
+  background: #edf4f2;
+  border-color: #8ebed0;
 }
 
 .reaction-chip--disabled {

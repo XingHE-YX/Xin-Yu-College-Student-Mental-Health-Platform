@@ -1,0 +1,14 @@
+<view class="floating-tab-bar">
+  <view class="floating-tab-bar__shell">
+    <view
+      wx:for="{{items}}"
+      wx:key="key"
+      class="floating-tab-bar__item {{item.key === activeKey ? 'floating-tab-bar__item--active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="handleItemTap"
+    >
+      <view class="floating-tab-bar__icon">{{item.icon}}</view>
+      <view class="floating-tab-bar__label">{{item.label}}</view>
+    </view>
+  </view>
+</view>

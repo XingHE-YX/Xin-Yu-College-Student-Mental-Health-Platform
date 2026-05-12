@@ -14,26 +14,26 @@
 .progress-bar__label {
   font-size: 28rpx;
   line-height: 1.5;
-  color: #41504c;
+  color: #41585b;
 }
 
 .progress-bar__value {
   font-family: "DIN Alternate", "PingFang SC", sans-serif;
   font-size: 30rpx;
   line-height: 1.4;
-  color: #123f3a;
+  color: #185b62;
 }
 
 .progress-bar__track {
   width: 100%;
   height: 20rpx;
   border-radius: 999rpx;
-  background: #e7efed;
+  background: #e4ecea;
   overflow: hidden;
 }
 
 .progress-bar__fill {
   height: 100%;
   border-radius: 999rpx;
-  background: linear-gradient(90deg, #2f8f83 0%, #8fc9bd 100%);
+  background: linear-gradient(90deg, #2d7c84 0%, #4f9ebd 100%);
 }
