@@ -104,7 +104,7 @@
           ></textarea>
           <view class="treehole-page__composer-foot">
             <view class="field__hint">
-              仅支持匿名公开与预设互动，不开放评论、私信和联系方式交换。
+              仅支持匿名公开与预设互动，公开前会自动处理明显联系方式。
             </view>
             <view class="treehole-page__count">{{contentLength}} / 2000</view>
           </view>

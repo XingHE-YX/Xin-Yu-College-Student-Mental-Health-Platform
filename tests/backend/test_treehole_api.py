@@ -846,8 +846,8 @@ def test_delete_treehole_post_soft_deletes_owner_post_and_hides_it_from_feed(
     assert [post["post_id"] for post in posts] == [kept_post.id]
 
 
-def test_reaction_endpoint_is_idempotent_for_duplicate_reaction_types(tmp_path) -> None:
-    """Submitting the same reaction twice should not create duplicate rows or counts."""
+def test_reaction_endpoint_toggles_same_reaction_type(tmp_path) -> None:
+    """Submitting the same reaction twice should add then remove that preset reaction."""
     app = create_treehole_api_test_app(tmp_path / "treehole-reactions.db")
     author, _ = create_student_with_token(app, suffix="041")
     _, token = create_student_with_token(app, suffix="042")
@@ -884,22 +884,28 @@ def test_reaction_endpoint_is_idempotent_for_duplicate_reaction_types(tmp_path) 
     assert duplicate_response.status_code == 200
     assert second_type_response.status_code == 200
     assert first_response.json()["data"]["total_reaction_count"] == 1
-    assert duplicate_response.json()["data"]["total_reaction_count"] == 1
+    assert duplicate_response.json()["data"]["total_reaction_count"] == 0
+
+    duplicate_map = {
+        item["reaction_type"]: item for item in duplicate_response.json()["data"]["reactions"]
+    }
+    assert duplicate_map["hug"]["count"] == 0
+    assert duplicate_map["hug"]["reacted_by_me"] is False
 
     final_data = second_type_response.json()["data"]
     reaction_map = {item["reaction_type"]: item for item in final_data["reactions"]}
-    assert final_data["total_reaction_count"] == 2
-    assert reaction_map["hug"]["count"] == 1
-    assert reaction_map["hug"]["reacted_by_me"] is True
+    assert final_data["total_reaction_count"] == 1
+    assert reaction_map["hug"]["count"] == 0
+    assert reaction_map["hug"]["reacted_by_me"] is False
     assert reaction_map["light"]["count"] == 1
     assert reaction_map["light"]["reacted_by_me"] is True
     assert reaction_map["accompany"]["count"] == 0
 
     with app.state.db_session_factory() as session:
-        assert session.scalar(select(func.count()).select_from(PostReaction)) == 2
+        assert session.scalar(select(func.count()).select_from(PostReaction)) == 1
         stored_post = session.get(TreeholePost, post.id)
         assert stored_post is not None
-        assert stored_post.hug_count == 2
+        assert stored_post.hug_count == 1
 
 
 def test_reaction_endpoint_rejects_non_public_posts(tmp_path) -> None:

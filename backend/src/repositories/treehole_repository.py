@@ -107,3 +107,8 @@ class TreeholeRepository:
         self.session.add(reaction)
         self.session.flush()
         return reaction
+
+    def remove_reaction(self, reaction: PostReaction) -> None:
+        """Delete one existing reaction row."""
+        self.session.delete(reaction)
+        self.session.flush()

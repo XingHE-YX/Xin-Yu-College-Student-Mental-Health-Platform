@@ -289,13 +289,14 @@ function applyOptimisticTreeholeReaction(post, reactionType) {
     publishStatus: post.publishStatus,
     riskLevel: post.riskLevel,
   });
-  if (hasReactedToTreehole(normalizedPost, reactionType)) {
-    return normalizedPost;
-  }
+  const alreadyReacted = hasReactedToTreehole(normalizedPost, reactionType);
 
   return {
     ...normalizedPost,
-    totalReactionCount: normalizedPost.totalReactionCount + 1,
+    totalReactionCount: Math.max(
+      0,
+      normalizedPost.totalReactionCount + (alreadyReacted ? -1 : 1)
+    ),
     reactions: normalizedPost.reactions.map((reaction) => {
       if (reaction.reactionType !== reactionType) {
         return {
@@ -306,8 +307,8 @@ function applyOptimisticTreeholeReaction(post, reactionType) {
 
       return {
         ...reaction,
-        count: reaction.count + 1,
-        reactedByMe: true,
+        count: Math.max(0, reaction.count + (alreadyReacted ? -1 : 1)),
+        reactedByMe: !alreadyReacted,
         busy: true,
       };
     }),

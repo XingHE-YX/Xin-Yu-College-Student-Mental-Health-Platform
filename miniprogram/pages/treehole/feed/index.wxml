@@ -25,7 +25,6 @@
             <view class="eyebrow">频道摘要</view>
             <view class="section-subtitle">公开内容流</view>
           </view>
-          <view class="chip chip--muted">无评论 · 无私信</view>
         </view>
         <view class="body-text">{{feedSummary}}</view>
         <view class="metrics-grid treehole-page__metrics-grid">
@@ -109,7 +108,7 @@
 
             <view class="treehole-page__post-foot">
               <view class="helper-text">
-                {{item.isMine ? '这条帖子来自你自己。可进入详情查看完整内容并执行删除。' : '当前阶段只开放预设互动，不开放评论、私信和联系方式交换。'}}
+                {{item.isMine ? '这条帖子来自你自己。可进入详情查看完整内容并执行删除。' : '当前支持通过预设反馈表达关心。'}}
               </view>
               <view
                 class="treehole-page__detail-link"

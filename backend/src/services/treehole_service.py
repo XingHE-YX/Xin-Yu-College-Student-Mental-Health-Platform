@@ -252,7 +252,7 @@ class TreeholeService:
         post_id: int,
         reaction_type: PostReactionType,
     ) -> TreeholeReactionResult:
-        """Record one preset reaction on a public post, treating duplicates idempotently."""
+        """Toggle one preset reaction on a public post for the current student."""
         post = self.repository.get_post_by_id(
             post_id,
             include_reactions=True,
@@ -280,6 +280,18 @@ class TreeholeService:
             )
             # `hug_count` stores the total support reaction count for quick summaries.
             post.hug_count += 1
+            self.session.commit()
+            self.session.expire_all()
+            post = self.repository.get_post_by_id(
+                post_id,
+                include_reactions=True,
+                show_seeded_cases=self.show_seeded_cases,
+            )
+            if post is None:
+                raise TreeholePostNotFoundError("treehole post does not exist")
+        else:
+            self.repository.remove_reaction(existing_reaction)
+            post.hug_count = max(0, post.hug_count - 1)
             self.session.commit()
             self.session.expire_all()
             post = self.repository.get_post_by_id(

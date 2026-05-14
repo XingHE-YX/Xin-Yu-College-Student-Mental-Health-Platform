@@ -40,9 +40,14 @@ function submitTreeholeReaction(options) {
   });
 }
 
+function toggleTreeholeReaction(options) {
+  return submitTreeholeReaction(options);
+}
+
 module.exports = {
   createTreeholePost,
   deleteTreeholePost,
   fetchTreeholeFeed,
   submitTreeholeReaction,
+  toggleTreeholeReaction,
 };

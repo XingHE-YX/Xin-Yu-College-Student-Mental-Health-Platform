@@ -2,7 +2,7 @@ const { PAGE_ROUTES } = require("../../../constants/config");
 const { getPrimaryChannelRoute } = require("../../../constants/navigation");
 const {
   fetchTreeholeFeed,
-  submitTreeholeReaction,
+  toggleTreeholeReaction,
 } = require("../../../services/treehole");
 const {
   clearStudentSession,
@@ -177,13 +177,7 @@ Page({
     }
 
     const originalPost = this.data.posts[postIndex];
-    if (hasReactedToTreehole(originalPost, reactionType)) {
-      wx.showToast({
-        title: "你已经表达过支持了",
-        icon: "none",
-      });
-      return;
-    }
+    const wasReacted = hasReactedToTreehole(originalPost, reactionType);
 
     const currentSession = ensureAuthenticatedSession();
     if (!currentSession) {
@@ -203,7 +197,7 @@ Page({
     });
 
     try {
-      const reactionData = await submitTreeholeReaction({
+      const reactionData = await toggleTreeholeReaction({
         accessToken: currentSession.accessToken,
         postId,
         reactionType,
@@ -244,7 +238,13 @@ Page({
         title: error.message || "互动提交失败，请稍后重试。",
         icon: "none",
       });
+      return;
     }
+
+    wx.showToast({
+      title: wasReacted ? "已取消支持" : "已表达支持",
+      icon: "none",
+    });
   },
 
   handleBackHome() {

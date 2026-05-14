@@ -51,7 +51,7 @@
         </view>
       </content-section-card>
 
-      <content-section-card tone="default" eyebrow="Quick Actions" title="现在可以直接去做">
+      <content-section-card tone="default" eyebrow="Quick Actions" title="快捷入口">
         <quick-action-row items="{{quickActions}}" bind:action="handleQuickAction" />
       </content-section-card>
 

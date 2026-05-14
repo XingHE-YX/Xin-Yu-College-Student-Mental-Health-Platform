@@ -2,6 +2,7 @@ const { PAGE_ROUTES } = require("../../../constants/config");
 const {
   deleteTreeholePost,
   fetchTreeholeFeed,
+  toggleTreeholeReaction,
 } = require("../../../services/treehole");
 const {
   clearStudentSession,
@@ -10,8 +11,11 @@ const {
 } = require("../../../utils/session");
 const {
   buildDeletedTreeholePost,
+  applyOptimisticTreeholeReaction,
   cacheTreeholePost,
+  hasReactedToTreehole,
   loadCachedTreeholePost,
+  mergeTreeholeReactionResult,
   normalizeTreeholePost,
   setRecentTreeholeDeleteNotice,
 } = require("../../../utils/treehole");
@@ -89,7 +93,7 @@ function buildHeroCopy(post, student) {
 
   return {
     title: "帖子详情",
-    summary: "这里展示帖子的完整内容与支持反馈。当前阶段不开放评论和私信。",
+    summary: "这里展示帖子的完整内容与支持反馈。",
     tone: "warm",
   };
 }
@@ -212,6 +216,60 @@ Page({
     this.setData({
       showDeleteConfirm: false,
     });
+  },
+
+  async handleReactionTap(event) {
+    const { post } = this.data;
+    const reactionType = event.currentTarget.dataset.reactionType;
+    if (!post || !reactionType || this.data.deleting) {
+      return;
+    }
+
+    const currentSession = ensureAuthenticatedSession();
+    if (!currentSession) {
+      return;
+    }
+
+    const wasReacted = hasReactedToTreehole(post, reactionType);
+    const optimisticPost = applyOptimisticTreeholeReaction(post, reactionType);
+    this.setData({
+      post: optimisticPost,
+    });
+
+    try {
+      const reactionData = await toggleTreeholeReaction({
+        accessToken: currentSession.accessToken,
+        postId: post.postId,
+        reactionType,
+      });
+      const mergedPost = mergeTreeholeReactionResult(post, reactionData);
+      cacheTreeholePost(mergedPost);
+      this.setData({
+        post: mergedPost,
+      });
+      wx.showToast({
+        title: wasReacted ? "已取消支持" : "已表达支持",
+        icon: "none",
+      });
+    } catch (error) {
+      if (error && error.statusCode === 401) {
+        clearStudentSession();
+        wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+        return;
+      }
+
+      this.setData({
+        post: normalizeTreeholePost(post, {
+          isMine: post.isMine,
+          publishStatus: post.publishStatus,
+          riskLevel: post.riskLevel,
+        }),
+      });
+      wx.showToast({
+        title: error.message || "互动提交失败，请稍后重试。",
+        icon: "none",
+      });
+    }
   },
 
   async handleDeleteConfirm() {

@@ -83,7 +83,7 @@
         <view class="channel-page-card channel-page-card--soft">
           <view class="eyebrow">支持反馈</view>
           <view class="body-text treehole-page__support-note">
-            {{post.isMine ? '这里展示的是其他同学在广场里留下的预设支持反馈。' : '当前阶段只开放预设互动，不开放评论、私信和联系方式交换。'}}
+            {{post.isMine ? '这里展示的是其他同学在广场里留下的预设支持反馈。' : '这里展示的是广场中留下的预设支持反馈。'}}
           </view>
           <view class="treehole-page__reaction-row">
             <reaction-chip
@@ -92,7 +92,9 @@
               label="{{item.label}}"
               count="{{item.count}}"
               active="{{item.reactedByMe}}"
-              disabled="{{true}}"
+              disabled="{{deleting}}"
+              data-reaction-type="{{item.reactionType}}"
+              bind:tap="handleReactionTap"
             />
           </view>
         </view>
