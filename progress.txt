@@ -1,323 +1,362 @@
-项目开始。已完成：规范文档（PRD.md, APP_FLOW.md, TECH_STACK.md, FRONTEND_GUIDELINES.md, BACKEND_STRUCTURE.md, IMPLEMENTATION_PLAN.md）和 CODEX.md。
-已完成：项目初始化与依赖安装。
-已完成：IMPLEMENTATION_PLAN.md 步骤2.1（FastAPI 应用骨架、路由聚合、/health 健康检查接口）。
-已完成：IMPLEMENTATION_PLAN.md 步骤2.2（环境变量配置系统、Settings 加载、.env.example、应用启动依赖环境变量）。
-当前状态：已完成 IMPLEMENTATION_PLAN.md 步骤1中的项目结构创建、backend 初始化、依赖安装、开发工具配置和小程序基础壳文件创建。
-当前状态补充：后端已具备最小可运行入口，GET /health 已通过本地 pytest 验证并返回 200。
-当前状态补充：Settings 已接入 app.state，测试环境下可通过环境变量成功启动应用。
-已完成：IMPLEMENTATION_PLAN.md 步骤2.3（SQLAlchemy engine、sessionmaker、数据库会话依赖、模型 Base、非测试环境启动连通性检查）。
-当前状态补充：FastAPI app.state 已挂载数据库引擎与会话工厂，后续模型与 Alembic 可直接复用同一套元数据和连接配置。
-当前状态补充：已通过本地 pytest 验证数据库基础设施相关测试，覆盖 engine 创建、会话依赖、启动检查与健康接口，共 8 项测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤2.4（Alembic 初始化、模型元数据接入、首个空迁移生成与执行验证）。
-当前状态补充：已新增 `backend/alembic.ini`、`backend/alembic/env.py`、迁移模板与首个 revision `ad77297002e7_initialize_alembic.py`，Alembic 已连接项目 `Base.metadata`。
-当前状态补充：已实际执行 `alembic revision --autogenerate -m "initialize alembic"` 和 `alembic upgrade head`，使用临时 SQLite 数据库验证空迁移链路可生成、可升级。
-当前状态补充：已通过本地 pytest 验证 Alembic upgrade/downgrade 与既有数据库基础设施，共 10 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤3.1（`student_users`、`consent_records`、`admin_users` 模型与迁移创建）。
-当前状态补充：已新增核心账户枚举与 ORM 模型，覆盖学生账户、不可变授权记录和管理员账户，并按 MySQL 规范落实 `BIGINT UNSIGNED`、`DATETIME(3)`、唯一约束、外键和 `utf8mb4` 表配置。
-当前状态补充：已生成 Alembic revision `49e5c01e7c6c_create_core_account_tables.py`，并实际执行 `alembic upgrade head` 验证三张核心账户表可成功迁移。
-当前状态补充：已通过本地 pytest 验证核心账户模型编译、约束、默认值以及 Alembic 升级链路，共 12 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤3.2（`questionnaire_templates`、`question_bank`、`questionnaire_submissions`、`questionnaire_answers`、`assessment_reports` 模型与迁移创建）。
-当前状态补充：已新增问卷模板、题库、提交记录、答案明细和报告表的 ORM 模型与枚举，并接入学生账户关系；按 MySQL 规范落实 `SMALLINT UNSIGNED`、`BIGINT UNSIGNED`、`DATETIME(3)`、JSON 字段、唯一约束、外键和 `utf8mb4` 表配置。
-当前状态补充：已生成 Alembic revision `7570a1e0c36e_create_questionnaire_tables.py`，并实际执行 `alembic upgrade head` 验证五张问卷相关表可成功迁移。
-当前状态补充：已通过本地 pytest 验证问卷表 DDL 编译、题库数据导入、答案明细写入、报告持久化以及最新 Alembic head，共 14 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤3.3（`treehole_posts`、`ai_analysis_records`、`post_reactions` 模型与迁移创建）。
-当前状态补充：已新增树洞帖子、AI 分析记录和预设互动的 ORM 模型与枚举，并接入学生账户关系；按 MySQL 规范落实 `MEDIUMTEXT`、`BIGINT UNSIGNED`、`INTEGER UNSIGNED`、`DATETIME(3)`、`DECIMAL(5,4)`、JSON 字段、复合唯一约束、外键和 `utf8mb4` 表配置。
-当前状态补充：`treehole_posts` 已在数据库层表达 AI 处理状态、发布状态机、软删除字段和公开发布控制；`ai_analysis_records` 已持久化请求快照、原始响应、结构化风险结果与推荐动作；`post_reactions` 已限制为抱抱 / 点亮 / 陪伴三种预设互动并落实唯一约束。
-当前状态补充：已生成 Alembic revision `84d79874b9ff_create_treehole_tables.py`，并实际执行 `alembic upgrade head` 验证三张树洞与 AI 相关表可成功迁移。
-当前状态补充：已通过本地 pytest 验证树洞表 DDL 编译、默认值、关系持久化、复合唯一约束以及最新 Alembic head，共 16 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤3.4（`alert_cases`、`intervention_logs`、`focus_list_entries`、`audit_logs` 模型与迁移创建）。
-当前状态补充：已新增预警工单、干预日志、重点关注和审计日志的 ORM 模型与枚举，并接入学生账户、管理员账户、树洞帖子和问卷提交关系；按 MySQL 规范落实 `BIGINT UNSIGNED`、`DATETIME(3)`、JSON 字段、TEXT 字段、多外键关系和 `utf8mb4` 表配置。
-当前状态补充：`alert_cases` 已在数据库层表达来源类型、案例级别、队列状态、复核优先级、复核人和模拟通知日志；`intervention_logs` 已形成与工单和管理员的时间线关系；`focus_list_entries` 已支持需关注来源追踪与生命周期状态；`audit_logs` 已支持对学生 / 管理员 / 系统敏感操作的通用追踪。
-当前状态补充：已生成 Alembic revision `5295854b6475_create_review_and_audit_tables.py`，并实际执行 `alembic upgrade head` 验证四张复核与审计相关表可成功迁移。
-当前状态补充：已通过本地 pytest 验证复核与审计表 DDL 编译、默认值、关系持久化、外键约束以及最新 Alembic head，共 18 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤4.1（统一题库种子 JSON 结构定义与校验脚本创建）。
-当前状态补充：已新增 `backend/src/schemas/question_bank_seed.py`，使用 Pydantic 定义题库种子文件统一结构，覆盖模板元数据、题目选项、分值映射、反向计分和硬触发规则，并校验 `question_id` 前缀、数组顺序、题量一致性、`yes_no` 题型约束和 `score_mapping` 完整性。
-当前状态补充：已新增 `backend/src/utils/validate_question_bank_seeds.py` 作为本地校验脚本，可按文件或目录验证 `appendices/question_bank/` 下的题库 JSON；当目录中暂无题库文件时会返回可读提示而非异常中断。
-当前状态补充：已新增 `appendices/question_bank/README.md`，明确统一种子文件顶层结构、必填字段、硬触发规则格式、`question_order` 与数组顺序映射关系，以及脚本运行方式，为后续 4.2 / 4.3 录入题库提供固定契约。
-当前状态补充：已通过本地 pytest 验证题库种子结构校验、题量一致性、`yes_no` 硬触发约束和目录扫描逻辑，并复跑全部后端测试，共 22 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤4.2（`appendices/question_bank/screen_questions.json`、`sleep_questions.json`、`upi_questions.json` 创建）。
-当前状态补充：已补齐三份项目自定义问卷种子文件，分别覆盖 15 题快速筛查、15 题睡眠问卷和 4 题可选 UPI；模板元数据已与冻结需求对齐，其中快速筛查和睡眠问卷为必做并参与完整报告解锁，UPI 为可选且不阻塞解锁。
-当前状态补充：快速筛查题目统一采用 1-5 分频率量表，睡眠问卷统一采用 0-3 分频率量表，UPI 统一采用 `yes/no` 选项；三份种子均可直接通过 4.1 中定义的校验结构。
-当前状态补充：已按冻结规则写入硬触发定义：`SCREEN_15 >= 4` 对应 `HT-01`，`UPI_01 = yes` 对应 `HT-04`，`UPI_02 = yes` 对应 `HT-05`；睡眠问卷不设置额外硬触发。
-当前状态补充：已通过本地校验脚本验证三份真实种子文件，并新增 pytest 覆盖真实文件存在性、题量、评分模式、解锁标记和硬触发规则，复跑全部后端测试后共 23 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤4.3（`appendices/question_bank/sds_questions.json`、`sas_questions.json` 创建）。
-当前状态补充：已补齐两份 20 题 Zung 量表种子文件，模板元数据对齐冻结需求，SDS 与 SAS 均设为 `required`、`question_count = 20`、`scoring_mode = zung_standard`、`unlock_required = true`，可供后续评分服务直接复用。
-当前状态补充：已按 PRD 固定题号写入反向计分定义：SDS 反向题为 `2、5、6、11、12、14、16、17、18、20`，SAS 反向题为 `5、9、13、17、19`；反向信息已落到每道题的 `reverse_scored` 元数据中。
-当前状态补充：已按冻结规则写入硬触发定义：`SDS_15 >= 4` 对应 `HT-02`，`SAS_13 >= 4` 对应 `HT-03`；两份种子均保持 4 级评分选项和完整 `score_mapping`，后续标准分计算可完全依赖题库元数据。
-当前状态补充：已通过本地校验脚本验证五份真实题库种子文件，并扩展 pytest 覆盖 SDS / SAS 的题量、评分模式、解锁标记、反向计分题号集合和硬触发配置；复跑全部后端测试后共 23 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤4.4（统一题库导入脚本创建，可插入或刷新 `questionnaire_templates` 与 `question_bank`）。
-当前状态补充：已新增 `backend/src/repositories/question_bank_seed_repository.py`、`backend/src/services/question_bank_seed_service.py` 和 `backend/src/utils/import_question_bank_seeds.py`，形成题库文件校验、模板/题目入库、刷新更新和 CLI 执行的完整导入链路。
-当前状态补充：导入服务支持按 `template.code` 刷新 `questionnaire_templates`，按 `question_id` 刷新 `question_bank`，自动写入 `question_order` 和 `seed_source`，并在重复导入时更新现有题目、删除已从种子中移除的旧题目，满足“插入或刷新”要求。
-当前状态补充：已为题库附录说明补充导入命令文档，并新增 pytest 覆盖空数据库初始化、重复导入刷新与 CLI `--database-url` 覆盖场景；复跑全部后端测试后共 26 项后端测试通过。
-当前状态补充：已实际执行 `PYTHONPATH=backend backend/.venv/bin/python -m src.utils.import_question_bank_seeds --database-url sqlite+pysqlite:////tmp/xinyu_question_bank_import.db appendices/question_bank`，在临时 SQLite 数据库中成功导入 5 个问卷模板和 74 条题库记录。
-已完成：IMPLEMENTATION_PLAN.md 步骤5.1（快速筛查、SDS、SAS、睡眠问卷、UPI 评分服务实现）。
-当前状态补充：已新增 `backend/src/services/questionnaire_scoring_service.py`，实现五类问卷评分器、统一评分结果结构、逐题标准化得分产物和快照输出；服务层可直接复用题库种子或后续 `question_bank` ORM 元数据进行评分。
-当前状态补充：快速筛查已按总分 `< 45 / >= 45` 输出低风险与需关注；睡眠问卷已按 `0-7 / 8-14 / >= 15` 输出低风险、需关注、高风险；SDS 与 SAS 已按 Zung 标准分 `int(1.25 * raw_score)` 计算标准分，并分别按 `53 / 63` 与 `50 / 60` 边界输出风险等级；UPI 在 5.1 阶段保持辅助评分，不在此步直接升级为高风险。
-当前状态补充：评分服务已支持漏答校验、意外题号校验、非法选项校验，以及 SDS / SAS 反向计分；`reverse_scored` 元数据已在评分时生效，后续 5.2 可直接在现有逐题结果基础上叠加硬触发判断。
-当前状态补充：已新增 pytest 覆盖五类问卷的阈值边界、Zung 反向计分和漏答错误场景，并复跑全部后端测试后共 33 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤5.2（硬触发判断逻辑实现）。
-当前状态补充：评分服务现已基于题库元数据执行硬触发判断，覆盖 `SCREEN_15 >= 4`、`SDS_15 >= 4`、`SAS_13 >= 4`、`UPI_01 = yes`、`UPI_02 = yes` 五条冻结规则；命中后会将原本按总分得到的结果直接提升为高风险。
-当前状态补充：已为评分结果新增 `hard_trigger_hit` 与 `hard_trigger_matches` 结构，记录命中题号、规则编码、比较运算符和实际命中值；`to_snapshot()` 现会输出硬触发信息，可直接供后续 `questionnaire_submissions.hard_trigger_hit` 和风险闭环逻辑复用。
-当前状态补充：硬触发比较统一使用题目原始作答值 / 原始分值进行判断，而不是反向计分后的标准化分值；因此 `SAS_13` 即使是反向计分题，也会按用户原始选择 `>= 4` 正确升级为高风险。
-当前状态补充：已新增 pytest 覆盖五条硬触发规则、无触发时的边界分层、UPI 从辅助结果升级为高风险、以及快照输出中的 `hard_trigger_hit` 字段；复跑全部后端测试后共 38 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤5.3（单量表结果、报告摘要状态与完整综合画像报告生成逻辑实现）。
-当前状态补充：已新增 `backend/src/services/assessment_report_service.py`，统一实现单量表报告生成、`S10` 报告摘要状态构建和 `S10A` 完整综合画像报告生成；输出结构已包含 `hero-card`、`result-badge`、`progress-bar`、`safety-banner` 与按钮变体提示，可直接供后续小程序报告页渲染使用，并遵循前端设计规范中的平静、可信、低压基调。
-当前状态补充：报告服务现已强制执行完整报告解锁规则，仅当快速筛查、SDS、SAS、睡眠问卷四份必做问卷全部完成时才允许生成 `full_profile` 报告；进度按固定 70 题链路计算，缺失问卷会在摘要状态中返回缺口列表与下一步动作；可选 UPI 不阻塞解锁，但若命中高风险硬触发，仍可升级完整报告风险等级。
-当前状态补充：完整报告综合风险聚合已按 PRD 的完整数据规则实现，支持基于最新一次提交生成各量表摘要、综合结论、趋势占位区、调节建议和免责声明；报告内容会优先采用每份问卷的最新提交，避免旧结果覆盖新结果。
-当前状态补充：已新增 pytest 覆盖单量表报告结构、70 题锁定 / 解锁、缺失必做问卷时报错、最新提交覆盖旧提交、睡眠高分在完整画像中维持 `watch` 聚合、以及可选 UPI 在不阻塞解锁的前提下升级综合风险等场景；复跑全部后端测试后共 43 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤6.1（学生微信登录 API 与演示登录 API 实现）。
-当前状态补充：已新增 `backend/src/core/security.py`，使用标准库实现 HS256 风格访问令牌签发与校验；`create_app()` 已将访问令牌服务与微信会话交换服务挂载到 `app.state`，供后续学生端认证依赖和管理员认证复用。
-当前状态补充：已新增 `backend/src/services/wechat_session_service.py`、`backend/src/services/student_auth_service.py`、`backend/src/repositories/student_user_repository.py`、`backend/src/schemas/student_auth.py` 与路由 `backend/src/api/routes/student_auth.py`，打通 `POST /api/v1/auth/student/wechat-login` 与 `POST /api/v1/auth/student/demo-login`；微信登录会调用 `jscode2session` 交换 openid，按手机号与 openid 创建或刷新 `student_users`，并返回学生访问令牌与基础资料。
-当前状态补充：为兼容 `APP_FLOW.md` 中“登录成功后若缺少授权记录则进入 S03 授权页”的主流程，登录接口当前只返回 `student.consent_status` 供前端判断，不在 6.1 阶段持久化授权决定；请求中的 `consent_status` 被保留为兼容字段，真正的授权写入将留到 6.2 的 `/api/v1/consents` 实现。
-当前状态补充：演示登录现已严格受 `ENABLE_DEMO_LOGIN` 控制；开启时会创建或复用固定 demo 学生账号并返回 JWT，关闭时返回业务错误 `DEMO_LOGIN_DISABLED`；登录服务同时覆盖手机号 / openid 冲突保护，避免两个学生账户被错误合并。
-当前状态补充：已新增 pytest 覆盖微信登录新建账号、返回用户刷新、手机号与 openid 冲突、演示登录开关、访问令牌 claims 校验等场景；复跑全部后端测试后共 48 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤6.2（授权提交接口、授权记录持久化与学生授权状态同步实现）。
-当前状态补充：已新增 `backend/src/core/auth.py`，实现学生 Bearer 令牌解析、JWT 校验和当前学生回查；受保护接口现在会按 `student_id` 从数据库读取最新学生状态，而不是直接信任令牌中的 `consent_status`，避免授权状态变更后出现旧令牌信息滞后。
-当前状态补充：已新增 `backend/src/schemas/consent.py`、`backend/src/repositories/consent_record_repository.py`、`backend/src/services/student_consent_service.py` 与路由 `backend/src/api/routes/consents.py`，打通 `POST /api/v1/consents`；接口支持提交 `privacy_policy` 与 `crisis_intervention_authorization` 两类授权记录，并以追加写入方式保存到 `consent_records`，保证授权决策可追溯。
-当前状态补充：当提交的是 `crisis_intervention_authorization` 时，服务层会同步更新 `student_users.consent_status` 为 `granted` 或 `declined`；提交成功后接口会返回最新学生资料、刚写入的 `consent_record` 以及刷新后的学生访问令牌，便于前端在 `S03` 成功后立即更新本地会话状态并按流程进入 `S04 首页`。
-当前状态补充：隐私授权记录不会错误覆盖危机干预授权状态；重复提交危机授权会继续追加不可变历史记录，同时以最新一次决策作为 `student_users.consent_status` 的当前值，满足“可追溯 + 当前态同步”两个目标。
-当前状态补充：已新增 pytest 覆盖危机授权同意、危机授权拒绝、重复提交形成历史、隐私授权不影响危机授权状态、未登录拒绝访问等场景；复跑全部后端测试后共 52 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤6.3（学生端启动页、登录页、授权页与首页主流程实现）。
-当前状态补充：已在 `miniprogram/` 下新增 `pages/startup/`、`pages/login/`、`pages/consent/`、`pages/home/` 四个页面，并更新 `app.json` 路由顺序；`S01` 现会检查本地会话与授权状态，自动在登录页、授权页和首页之间跳转，满足 `APP_FLOW.md` 中启动入口与授权分流逻辑。
-当前状态补充：已新增 `miniprogram/constants/`、`services/`、`utils/` 与 `styles/` 下的共享前端基础设施，包括 API 配置、会话存储、访问令牌本地解码、请求封装与认证服务调用；当前小程序端已可直接调用 `POST /api/v1/auth/student/wechat-login`、`POST /api/v1/auth/student/demo-login` 与 `POST /api/v1/consents`。
-当前状态补充：登录页已实现微信登录、失败重试、手机号授权拒绝阻断提示与演示登录入口；考虑到后端当前登录接口尚未对接真实微信手机号解密，本阶段采用“`wx.login` + 受控手机号表单”作为开发联调桥接方案，以保证 6.1 / 6.2 / 6.3 链路可在本地完整跑通，同时清晰提示该手机号授权为开发联调模式。
-当前状态补充：授权页已实现隐私说明、危机干预授权说明、同意 / 拒绝两条路径以及拒绝确认弹窗；无论同意还是拒绝，前端都会调用 `/api/v1/consents` 记录授权结果并刷新本地访问令牌，随后进入首页；首页已根据 `consent_status` 正确展示“树洞入口禁用”状态，并为报告锁定状态展示固定 `0 / 70` 进度占位。
-当前状态补充：已按 `FRONTEND_GUIDELINES.md` 新增并落盘学生端业务组件 `app-shell`、`hero-card`、`primary-button`、`secondary-button`、`danger-button`、`question-card`、`progress-bar`、`result-badge`、`safety-banner`、`treehole-post-card`、`reaction-chip`、`confirm-modal`，为后续 7.x / 8.x 页面复用统一视觉和交互骨架。
-当前状态补充：本地已完成小程序 `json` 文件结构校验，`miniprogram/` 下共 18 个 `json` 文件可成功解析；当前环境缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过人工检查关键 `js` 入口与页面流转逻辑完成本步最小验证。
-已完成：IMPLEMENTATION_PLAN.md 步骤7.1（问卷列表接口、问卷详情接口、必做进度接口与学生端首页元数据接入）。
-当前状态补充：已新增 `backend/src/services/questionnaire_query_service.py`、`backend/src/schemas/questionnaire.py` 与路由 `backend/src/api/routes/questionnaires.py`，打通 `GET /api/v1/questionnaires`、`GET /api/v1/questionnaires/{code}` 和 `GET /api/v1/questionnaires/progress`；接口现基于已冻结的题库种子文件输出问卷目录、可渲染题目结构和固定 70 题必做进度，同时叠加当前学生最新一次提交摘要，直接服务后续 7.2 / 7.3 / 7.4。
-当前状态补充：问卷详情接口当前只返回前端渲染所需元数据（题目文案、题型、选项、问卷基础信息），不会向学生端暴露 `score_mapping`、反向计分或硬触发规则等评分内部细节；问卷列表与进度接口按 `APP_FLOW.md` 固定顺序返回 `SCREEN`、`SDS`、`SAS`、`SLEEP`、`UPI`，并正确区分必做 / 可选与 `S05 - S09` 流程阶段。
-当前状态补充：已新增 `tests/backend/test_questionnaire_api.py`，覆盖问卷列表顺序、问卷详情结构、必做进度去重统计、最新提交摘要透出、未知问卷 404 和未登录拒绝访问等场景；复跑全部后端测试后共 58 项后端测试通过。
-当前状态补充：学生端已新增 `miniprogram/services/questionnaires.js`，首页 `pages/home/` 已从固定占位改为真实请求问卷目录与必做进度，并按 `FRONTEND_GUIDELINES.md` 的平静、可信、低压基调重构“问卷中心”和报告进度卡片；当前首页可展示真实的 70 题完成度、待完成问卷列表、各问卷必做 / 可选状态以及最近一次风险结果标签，同时保留树洞 / 报告 / 帮助资源入口。
-当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 18 个 `json` 文件可成功解析；校验过程中 `python3` 因沙箱环境对 `/tmp` 写入受限出现 `xcrun` 相关警告，但不影响 JSON 解析结果。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已结合后端接口测试和前端代码人工检查完成本步最小验证。
-已完成：IMPLEMENTATION_PLAN.md 步骤7.2（问卷提交接口、评分执行、提交记录与答案明细持久化实现）。
-当前状态补充：已在 `backend/src/api/routes/questionnaires.py` 中打通 `POST /api/v1/questionnaires/{code}/submissions`，并在 `backend/src/schemas/questionnaire.py` 中新增问卷提交请求 / 响应结构；接口当前按 `BACKEND_STRUCTURE.md` 合约接收 `answers[{question_code, selected_option}]`，返回 `submission_id`、`questionnaire_code`、`raw_score`、`standardized_score`、`risk_level` 和 `hard_trigger_hit`，可直接供后续 7.3 页面提交后展示结果摘要。
-当前状态补充：已新增 `backend/src/services/questionnaire_submission_service.py`，问卷提交链路现会先根据已冻结题库种子确认问卷编码存在，再校验数据库中的 `questionnaire_templates` / `question_bank` 元数据是否已通过 4.4 导入且与种子保持一致；通过后使用 `QuestionnaireScoringService` 执行漏答校验、非法选项校验、反向计分、标准分换算和硬触发升级，并将结果写入 `questionnaire_submissions` 与 `questionnaire_answers`。
-当前状态补充：`questionnaire_submissions` 当前会在服务端同步写入 `status = scored`、`raw_score`、`standardized_score`、`risk_level`、`hard_trigger_hit` 和完整 `scoring_snapshot_json`；`questionnaire_answers` 会逐题保存 `question_id`、`selected_option`、`raw_value` 与 `normalized_score`，确保后续报告生成、预警闭环和审计链路可直接复用本次提交产物。
-当前状态补充：提交接口已补齐错误分支：漏答时返回 `QUESTIONNAIRE_SUBMISSION_INCOMPLETE` 并带结构化 `errors` 列表，非法或重复作答返回 `QUESTIONNAIRE_ANSWER_INVALID`，未知问卷返回 `QUESTIONNAIRE_NOT_FOUND`，数据库未导入题库或元数据与种子失配时返回 `QUESTIONNAIRE_CATALOG_UNAVAILABLE`；因此前端在 7.3 可同时处理本地漏答拦截和服务端兜底校验。
-当前状态补充：学生端 `miniprogram/services/questionnaires.js` 已补充 `submitQuestionnaire()` 请求封装，为后续 `S05 - S09` 问卷页面直接复用；该改动不提前实现 7.3 页面，但已把提交 API 的调用入口固定下来。
-当前状态补充：已新增 `tests/backend/test_questionnaire_submission_api.py`，覆盖快速筛查持久化、SDS / SAS 标准分返回、睡眠问卷与 UPI 成功提交、UPI 硬触发升级高风险、漏答拒绝、非法选项拒绝、未导入题库时的 503、未登录拒绝访问、未知问卷 404 以及答案明细外键关联等场景；复跑全部后端测试后共 68 项后端测试通过。
-当前状态补充：已额外执行 `ruff check` 校验本次新增与改动的 Python 文件，当前静态检查通过。由于本步只新增后端接口与小程序服务封装，未修改小程序 `json` 配置或页面结构，因此未重复执行微信小程序运行态检查。
-已完成：IMPLEMENTATION_PLAN.md 步骤7.3（快速筛查、SDS、SAS、睡眠问卷、UPI 五个小程序问卷页面实现）。
-当前状态补充：已新增 `miniprogram/pages/questionnaires/` 下的五个页面壳文件，并通过 `miniprogram/utils/questionnaire-page.js` 抽出共享问卷页运行器；当前 `S05 - S09` 会按问卷编码复用同一套加载、作答、提交、结果展示和导航逻辑，同时保留各页面独立路由、独立导航栏标题和分阶段文案，满足 `APP_FLOW.md` 中五条学生端问卷流程。
-当前状态补充：已新增 `miniprogram/constants/questionnaires.js` 和共享模板 `miniprogram/pages/questionnaires/shared.wxml` / `miniprogram/styles/questionnaire-page.wxss`，统一定义每份问卷的标题、说明、分数标签、辅助提示和提交流转文案；页面视觉严格沿用 `hero-card`、`question-card`、`progress-bar`、`result-badge`、`safety-banner`、`primary-button`、`secondary-button`、`danger-button` 等既有组件，整体保持平静、可信、低压基调，并在高风险结果下提升安全提示层级。
-当前状态补充：五个问卷页现已支持从首页真实进入；首页 `pages/home/` 已从“点击后 toast 占位”改为按问卷编码跳转到对应页面。问卷页加载时会请求 `GET /api/v1/questionnaires/{code}` 与 `GET /api/v1/questionnaires/progress`，展示当前问卷元数据、70 题固定进度或 UPI 可选说明，以及“此前已作答，重新提交以最新结果为准”的温和提示。
-当前状态补充：前端现已实现本地漏答拦截：未完成全部题目时会阻止提交、给缺失题目外层加红色提醒包裹、滚动到首个未答题，并保留已填答案不丢失；若后端仍返回 `QUESTIONNAIRE_SUBMISSION_INCOMPLETE`，前端也会根据结构化 `errors` 回显缺失题目。服务端错误透传已通过 `miniprogram/services/request.js` 补齐 `errors` 字段，为 7.3 页面和后续表单页复用提供统一约定。
-当前状态补充：问卷提交成功后，页面会切换到结果态并展示风险标签、分数摘要、免责声明、固定进度刷新结果和下一步动作；`SCREEN -> SDS -> SAS -> SLEEP` 已按流程提供“继续下一份问卷”跳转，`SLEEP` 与 `UPI` 完成后返回首页，`UPI` 明确标注“仅作辅助参考、不影响完整报告解锁”；高风险结果会额外展示 `safety-banner` 与热线电话，并将主按钮切换为危险色，符合前端规范中的高风险表达要求。
-当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 23 个 `json` 文件可成功解析；同时复跑全部后端测试后仍为 68 项通过。当前环境依旧缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过页面结构人工检查、JSON 校验和后端接口回归测试完成本步最小验证。
-已完成：IMPLEMENTATION_PLAN.md 步骤7.4（报告页、完整报告页与报告接口实现）。
-当前状态补充：已新增 `backend/src/api/routes/reports.py`、`backend/src/schemas/report.py` 与 `backend/src/services/student_report_service.py`，打通 `GET /api/v1/reports/summary`、`GET /api/v1/reports/full`、`GET /api/v1/reports/history`；接口当前基于最新 `questionnaire_submissions` 与 5.3 已实现的 `AssessmentReportService` 现算生成报告摘要、完整综合画像和测评历史记录，不依赖额外手工同步步骤。
-当前状态补充：报告摘要接口现会严格输出 `S10` 三种状态：`locked`、`partial`、`unlocked`。当尚未完成 70 道必做题时，会返回已完成量表摘要、缺失问卷、进度条数据和下一步行动按钮；当 70 题完成后，会解锁 `S10A` 完整报告入口。`GET /api/v1/reports/full` 在未解锁时返回业务错误 `FULL_PROFILE_LOCKED`，前端据此回退到报告摘要页，保证锁定 / 解锁逻辑与需求严格一致。
-当前状态补充：学生端已新增 `miniprogram/services/reports.js`、`miniprogram/pages/reports/index.*`、`miniprogram/pages/reports/full/index.*` 与共享样式 `miniprogram/styles/report-page.wxss`；`S10 报告页` 当前会展示完整报告解锁进度、已完成量表结果、最近测评历史、下一步动作和免责声明，`S10A 完整报告详情页` 当前会展示综合结果、各量表摘要、趋势占位区、调节建议和安全提示，整体视觉延续 `FRONTEND_GUIDELINES.md` 要求的平静、可信、低压表达。
-当前状态补充：首页报告模块现已从占位提示切换为真实跳转到 `S10`；报告摘要页中的 CTA 会按 `APP_FLOW.md` 分流到未完成问卷或完整报告详情页。为增强 7.3 与 7.4 的联动，问卷页在完成最终必做问卷并达到解锁条件后，主按钮也会直接切换为“查看完整报告”。
-当前状态补充：报告页会在高风险状态下渲染 `safety-banner` 并注入热线电话，确保高风险表达层级高于普通信息；帮助资源按钮目前仍保留为后续步骤入口提示，不提前虚构 `S15` 页面。测评历史区域现已通过 `GET /api/v1/reports/history` 展示按时间倒序排列的历史记录，满足 PRD 中“测评历史记录”能力的最小闭环。
-当前状态补充：已新增 `tests/backend/test_report_api.py`，覆盖无提交时的 `locked` 摘要、部分完成时的 `partial` 摘要与历史记录、完整报告未解锁时的 409、70 题完成后的 `full_profile` 返回以及未登录拒绝访问等场景；复跑全部后端测试后共 73 项通过，并额外执行 `ruff check` 校验新增后端文件，当前静态检查通过。
-当前状态补充：本地再次完成小程序 `json` 文件结构校验，`miniprogram/` 下共 25 个 `json` 文件可成功解析。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序运行态自动校验，已通过 JSON 校验、页面结构人工检查和后端回归测试完成本步最小验证。
-已完成：IMPLEMENTATION_PLAN.md 步骤8.1（树洞数据接口实现）。
-当前状态补充：已新增 `backend/src/api/routes/treehole.py`、`backend/src/schemas/treehole.py`、`backend/src/services/treehole_service.py` 与 `backend/src/repositories/treehole_repository.py`，打通 `GET /api/v1/treehole/feed`、`POST /api/v1/treehole/posts`、`DELETE /api/v1/treehole/posts/{post_id}` 和 `POST /api/v1/treehole/posts/{post_id}/reactions`；已发布内容现可在广场被读取、互动和删除。
-当前状态补充：广场接口当前只返回公开所需字段（匿名昵称、匿名头像标识、脱敏正文、发布时间、互动汇总以及“我是否已互动”状态），响应结构可直接服务后续 `treehole-post-card` 与 `reaction-chip` 组件渲染；接口严格不返回 `content_raw`，并只暴露 `publish_status = published` 且 `allow_publication = true` 的帖子，确保被拦截 / 已删除内容不会出现在学生端公开广场。
-当前状态补充：发帖接口当前按第 8 阶段 bootstrap 路径实现基础脱敏与占位分析记录：仅 `consent_status = granted` 的学生可发帖，空内容会被拒绝，手机号与邮箱会在公开正文中被替换；服务端会为新帖写入 `ai_analysis_records` 占位记录，并以 `ai_status = mocked`、`risk_level = low`、`publish_status = published` 先打通低风险可发布链路，为 9.1 - 9.4 的正式 AI 集成与风险聚合保留清晰替换点。
-当前状态补充：删除接口已采用软删除语义：学生删除后会把帖子状态写为 `deleted_by_user`、关闭 `allow_publication` 并写入 `deleted_at`，数据库记录保留不丢失；互动接口支持 `hug / light / accompany` 三种预设反应，同一学生对同一帖子同一种 reaction 重复提交会按幂等处理，不会重复计数。
-当前状态补充：已新增 `tests/backend/test_treehole_api.py`，覆盖广场公开过滤、发帖持久化与脱敏、授权拒绝拦截、软删除后广场隐藏、互动幂等和非公开帖子拒绝互动等场景；已执行 `ruff check --no-cache` 校验新增文件，并复跑全部后端测试后共 79 项后端测试通过。
-已完成：IMPLEMENTATION_PLAN.md 步骤8.2（小程序树洞页面实现）。
-当前状态补充：已新增 `miniprogram/pages/treehole/feed/`、`miniprogram/pages/treehole/create/`、`miniprogram/pages/treehole/detail/` 三个页面，并更新 `miniprogram/app.json` 与 `miniprogram/constants/config.js` 路由常量；首页 `pages/home/` 的树洞模块现已从“后续接入”占位切换为真实跳转，可按 `APP_FLOW.md` 进入 `S11 树洞广场页`。
-当前状态补充：已新增 `miniprogram/services/treehole.js` 与 `miniprogram/utils/treehole.js`，封装 `feed / create / delete / reactions` 四个树洞接口请求，以及帖子缓存、发布时间格式化、reaction 合并与详情路由构建逻辑；`S11` 当前会真实加载广场内容并支持预设互动，互动失败时会回滚前端状态，符合流程文档中的错误处理要求。
-当前状态补充：`S12` 树洞发布页现已支持文本输入、前端空内容校验、低风险发布成功状态和高风险拦截态占位；当前因 8.1 后端仍处于 bootstrap 发帖路径，实际联调结果会稳定落入“发布成功”分支，从而打通“广场 -> 发布 -> 发布成功 -> 查看我的帖子”的低风险闭环。发布成功后可直接返回广场或进入帖子详情页。
-当前状态补充：`S16` 我的帖子详情页现已支持展示完整正文、发布时间、支持反馈汇总与删除确认弹窗；删除会调用 `DELETE /api/v1/treehole/posts/{post_id}`，成功后返回广场并触发重新加载，因此该帖子会从学生端列表中消失，为 8.3 的软删除规则前端表现打下基础。
-当前状态补充：已扩展 `miniprogram/components/treehole-post-card/`，补齐匿名头像、相对时间、6 行正文截断与头部插槽能力，并新增共享样式 `miniprogram/styles/treehole-page.wxss`；整体视觉沿用 `FRONTEND_GUIDELINES.md` 的品牌色、留白、卡片圆角与低压表达，不引入第三方组件库。
-当前状态补充：本地已完成小程序 `json` 文件结构校验，`miniprogram/` 下共 28 个 `json` 文件可成功解析，并额外校验了 `app.json` 中所有页面路由都能映射到实际的 `.js/.wxml/.wxss/.json` 文件，以及新增树洞页面中的相对 `require(...)` 路径均存在。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此尚未执行小程序 JS 语法自动检查或运行态验证；已通过路径校验和代码人工检查完成本步最小验证。
-已完成：IMPLEMENTATION_PLAN.md 步骤8.3（树洞软删除规则前端表现补齐）。
-当前状态补充：学生在 `S16` 删除帖子后，详情页会先切换为“已从学生端移除”状态并写入本地 tombstone 缓存，再返回 `S11` 广场；广场页会消费一次性成功提示并重新拉取 `feed`，因此该帖子会从学生端列表与详情入口中消失，同时保留“后台仍保留记录”的明确文案，符合 `APP_FLOW.md` 与 PRD 删除规则。
-当前状态补充：`miniprogram/utils/treehole.js` 已补充 `deleted_at` 标准化、`deleted_by_user` 展示标签、本地软删除快照构建和一次性删除提示存储；若用户再次进入已删除帖子的旧详情路由，页面会显示软删除状态而不再展示正文或删除按钮，避免学生端继续暴露已移除内容，同时不影响后台后续查询软删除记录。
-当前状态补充：已执行 `git diff --check` 验证本次受影响的小程序文件无基础格式问题。当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此未执行小程序 JS 语法自动检查或运行态验证；本步通过代码人工检查与状态流转回读完成最小验证。
-已完成：IMPLEMENTATION_PLAN.md 步骤9.1（DeepSeek 客户端实现）。
-当前状态补充：已新增 `backend/src/services/deepseek_service.py`，使用 `httpx` 直连 `https://api.deepseek.com/chat/completions`，固定模型为 `deepseek-chat`，并通过 `response_format = {"type": "json_object"}` 与系统提示词双重约束模型只返回 JSON；客户端当前会返回标准化的 `request_payload`、原始响应体、首个 choice 的 `content_text` 以及解析后的 `content_json`，为后续 9.2 回退路径和 9.3 风险聚合直接复用。
-当前状态补充：`backend/src/main.py` 现已在应用启动时实例化并挂载 `app.state.deepseek_service`，与既有 `access_token_service`、`wechat_session_service` 保持同一注入模式；当前树洞发布仍维持 8.x 的 bootstrap 占位链路，不提前切换到正式 AI 审核，以避免把 9.2 模拟回退和 9.3 风险聚合职责混入本步。
-当前状态补充：已新增 `tests/backend/test_deepseek_service.py`，覆盖正常 JSON 返回、非 2xx 响应、非 JSON 文本和非对象 JSON 四类场景；并扩展 `tests/backend/test_database.py` 校验 `create_app()` 已暴露 `deepseek_service`。本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，随后复跑全部后端测试，当前共 83 项后端测试通过。
-当前状态补充：本步未修改小程序页面、样式或路由，因此无需新增前端视觉实现；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中 `S12` 中的“AI 调用失败 -> 走模拟回退路径”仍待 9.2 正式接入。
-已完成：IMPLEMENTATION_PLAN.md 步骤9.2（DeepSeek 模拟回退路径实现）。
-当前状态补充：已新增 `backend/mock_response.json` 作为本地 AI 回退结果文件，并扩展 `backend/src/services/deepseek_service.py`：当前除常规 `create_json_completion()` 外，已新增 `create_json_completion_with_fallback()`，会在 DeepSeek 超时、非 2xx 响应或返回非法 JSON 时自动读取本地 `mock_response.json`，返回统一结构的 `content_json`、`response_payload`、`fallback_used` 与 `fallback_reason`，满足 `TECH_STACK.md` 中“优先调用 DeepSeek，失败时回退模拟数据”的要求。
-当前状态补充：树洞发帖链路现已真正接入 AI 回退包装层：`backend/src/api/routes/treehole.py` 会把 `app.state.deepseek_service` 注入 `TreeholeService`，`backend/src/services/treehole_service.py` 在创建帖子时会先保存原始文本与脱敏正文，再调用 DeepSeek 或本地 mock 路径生成结构化分析结果，并将 `request_payload_json`、`response_raw_json`、`parsed_risk_level`、`parsed_risk_score`、`emotion_tags_json`、`trigger_phrases_json`、`reason_text`、`recommended_action` 和 `fallback_used` 持久化到 `ai_analysis_records`；当回退命中时，帖子 `ai_status` 会写为 `mocked`，从而保证 AI 异常时树洞主流程不中断。
-当前状态补充：为避免提前混入 9.3 / 9.4 的风险聚合与发布决策，本步仍保留现阶段树洞的低风险公开主流程：即使远端 DeepSeek 已返回结构化风险结果，`treehole_posts.publish_status` 与学生端 `S12` 返回分支仍维持当前 bootstrap 低风险发布行为；真正的 `watch / high` 决策切换、重点关注与安全拦截仍待后续步骤实现。
-当前状态补充：已新增 / 扩展 `tests/backend/test_deepseek_service.py` 与 `tests/backend/test_treehole_api.py`，覆盖超时回退、非 200 回退、非法 JSON 回退、错误 mock 文件、树洞发帖在 mock 回退下成功落库，以及远端 AI 成功时分析记录持久化等场景；本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，并复跑全部后端测试，当前共 88 项后端测试通过。
-当前状态补充：本步未修改小程序页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中 `S12` 的前端页面结构无需变更即可承接后续 9.3 / 9.4 的正式风险分流结果。
-已完成：IMPLEMENTATION_PLAN.md 步骤9.3（风险聚合器实现）。
-当前状态补充：已新增 `backend/src/services/risk_aggregation_service.py`，实现 `RiskAggregationService` 与 `AggregatedRiskResult`；当前聚合器会统一汇总 AI 文本风险、最新问卷结果、量表硬触发和历史高风险状态，并输出稳定的 `low / watch / high` 结论、`reason_codes`、`history_elevated`、`hard_trigger_hit`、`required_chain_complete` 与 `latest_questionnaire_codes` 等结构化字段，便于后续 9.4 直接接入树洞发布决策。
-当前状态补充：聚合规则已按 PRD 与 `BACKEND_STRUCTURE.md` 固化：任意问卷硬触发、`AI high`、`SDS high` 或 `SAS high` 直接判定为高风险；`AI watch`、`SDS/SAS 阳性` 判定为需关注；睡眠风险仅在 `SCREEN + SDS + SAS + SLEEP` 四份必做问卷齐全时才会把综合结果提升为需关注，以避免不完整数据场景被单一睡眠量表过度放大；若用户存在历史高风险但当前 AI 与最新问卷信号均为中性，则聚合器会把本次结果提升为 `watch` 并标记 `HISTORY_HIGH_REVIEW`。
-当前状态补充：聚合器同时支持数据库上下文加载：`aggregate_treehole_risk(student=..., ai_risk_level=...)` 会自动读取该学生每份问卷的最新提交，并从 `student_users.risk_status`、历史高风险问卷提交以及历史树洞 `ai_analysis_records.parsed_risk_level = high` 中识别“历史高风险状态”；因此即使当前账户 `risk_status` 仍未在前序步骤中主动回写，高风险历史也能在 9.3 阶段被正确识别并用于复查提升。
-当前状态补充：为避免提前把 9.4 的发布决策逻辑混入本步，当前树洞 `POST /api/v1/treehole/posts` 仍保持 9.2 阶段的 bootstrap 返回分支，不在本步直接修改学生端 `S12` 的拦截 / 发布响应；这样可以避免出现“前端已按高风险拦截，但后端仍未切换 `publish_status`”的状态错位。9.4 将基于本步聚合器结果统一接入 `published / focus list / blocked_high_risk` 决策。
-当前状态补充：已新增 `tests/backend/test_risk_aggregation_service.py`，覆盖只有树洞时 `AI watch -> watch`、完整必做链路下睡眠高分映射为 `watch`、不完整链路下睡眠单独不提升、问卷硬触发直接判高、历史高风险 + 当前中性提升为 `watch`，以及数据库上下文下“最新提交选择”与“历史高风险来源查询”两类场景；本地已执行 `ruff check --no-cache` 校验新增 / 改动 Python 文件，并复跑全部后端测试，当前共 95 项后端测试通过。
-当前状态补充：本步未修改小程序页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中树洞发布页 `S12` 的前端状态分流将在 9.4 接入正式发布决策后再切换到真实高风险拦截流。
-已完成：IMPLEMENTATION_PLAN.md 步骤9.4（树洞发布决策逻辑实现）。
-当前状态补充：`backend/src/services/treehole_service.py` 现已从“固定低风险公开”切换为真实发布决策：系统会先完成 AI 分析与 9.3 风险聚合，再按最终聚合等级执行 `low -> published`、`watch -> published + focus_list_entries`、`high -> blocked_high_risk + alert_cases`；因此高风险树洞当前已不会进入公开广场，满足 `APP_FLOW.md` 中 `S12 -> S13 / S14` 分流和 PRD 对树洞拦截规则的要求。
-当前状态补充：本步已新增 `backend/src/repositories/review_workflow_repository.py`，并扩展 `backend/src/repositories/student_user_repository.py` 支持 `risk_status` 更新；树洞发布时若聚合结果为 `watch`，系统会写入 `focus_list_entries` 并保持帖子公开；若为 `high`，系统会创建 `alert_cases`，设置 `case_level = high`、`queue_status = pending_review`、`review_priority = highest`，同时阻止公开发布。学生 `risk_status` 现会在 `watch / high` 场景被同步上调，而不会在本步被自动降级，给后续 10.x 人工复核与处置流程保留状态连续性。
-当前状态补充：树洞创建接口当前会根据最终决策返回真实前端分支：普通和需关注内容仍返回 `message = success`；高风险内容返回 `message = safety_intercepted`、`publish_status = blocked_high_risk` 与热线电话。为匹配这一变化，学生端 `miniprogram/pages/treehole/create/index.js` 已移除“当前阶段仅打通低风险链路”的旧文案，改为真实“公开发布 / 温和提醒 / 安全拦截”说明，并在拦截态优先使用后端返回的热线字段，视觉上继续沿用 `hero-card`、`result-badge`、`safety-banner` 与危险按钮语义色，不引入额外组件或违背前端规范的高风险表达。
-当前状态补充：已调整并扩展 `tests/backend/test_treehole_api.py`，覆盖 `low` 不产生后台复核记录、`watch` 公开发布并写入 `focus_list_entries`、`high` 拦截并创建 `alert_cases`、拦截内容不出现在 `feed`、以及学生 `risk_status` 同步变化等场景；同时复用 9.3 风险聚合测试验证完整链路决策输入。当前本地已执行 `ruff check --no-cache` 校验受影响 Python 文件，并复跑全部后端测试，现共 96 项后端测试通过。
-当前状态补充：本步涉及学生端树洞发布页行为文案调整，但当前环境仍缺少 `node` / `nodejs` 与微信开发者工具，因此未执行小程序运行态自动校验；已通过代码人工检查完成最小前端验证，且未修改小程序 `json` 路由或共享样式结构。
-已完成：IMPLEMENTATION_PLAN.md 步骤10.1（工单创建实现）。
-当前状态补充：已新增 `backend/src/services/alert_case_service.py`，统一封装自动工单创建逻辑、来源级幂等检查与优先级分配规则；树洞高风险工单与量表高风险工单现统一经该服务落库，避免后续 10.2 / 11.x 再分别维护多套创建口径。
-当前状态补充：问卷提交链路现已接入高风险工单创建：`backend/src/services/questionnaire_submission_service.py` 在提交结果达到 `high` 时，会为对应 `questionnaire_submissions` 创建 `source_type = assessment` 的 `alert_cases`，并同步将学生 `risk_status` 上调为 `high`，从而使“高风险量表结果 -> 后台待复核工单”形成闭环。
-当前状态补充：工单优先级当前按风险急迫度分层：高风险树洞保持 `review_priority = highest`；高风险量表中，命中硬触发的结果以及 `SDS / SAS` 的高风险结果写为 `highest`，`SLEEP` 这类无硬触发但达到高风险阈值的结果写为 `urgent`；因此后台后续 `A03 预警队列` 可按 `APP_FLOW.md` 要求先处理最危险案例。
-当前状态补充：已按 `CODEX.md` 规定处理文档冲突：`IMPLEMENTATION_PLAN.md 10.1` 提到“历史高风险复查场景”创建工单，但更高优先级的 `PRD.md` 与 `BACKEND_STRUCTURE.md` 明确要求“历史高风险但本次中性”仅标记为需关注并进入重点关注列表。因此本步保留 `history` 作为数据模型来源枚举，但没有把该场景错误升级成高风险工单；相关回归测试已验证该场景仍只写 `focus_list_entries`，不会制造额外高风险工单噪音。
-当前状态补充：已扩展 `tests/backend/test_questionnaire_submission_api.py` 与 `tests/backend/test_treehole_api.py`，新增覆盖 `UPI` 硬触发创建最高优先级量表工单、`SLEEP` 高风险创建 `urgent` 工单，以及“历史高风险 + 当前中性树洞 -> focus list、不建工单”等场景；同时新增并通过 `ruff check --no-cache` 对受影响 Python 文件的静态检查。
-当前状态补充：本地已先后执行定向 pytest（`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_treehole_api.py`）和完整后端回归（`tests/backend`），当前共 98 项后端测试通过。
-当前状态补充：本步未修改学生端页面、样式或路由；`FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 已继续作为约束参考，其中前端 `S14` / 后台 `A03-A04` 的实际展示与处置界面仍待后续 10.2 / 11.x 实现。
-已完成：IMPLEMENTATION_PLAN.md 步骤10.2（干预记录实现）。
-当前状态补充：已扩展 `backend/src/repositories/review_workflow_repository.py`，新增 `alert_cases` 查询、`intervention_logs` 写入和 `audit_logs` 写入能力，为后续管理员复核动作提供统一持久化入口；同时新增 `backend/src/services/alert_review_service.py`，集中实现 `confirm_high_risk`、`dismiss_false_positive`、`close_case` 和 `add_intervention_note` 四类后台处置动作。
-当前状态补充：高风险工单的人工处置状态机现已按 `PRD.md` 与 `APP_FLOW.md` 固化：`pending_review -> confirmed_pending_intervention / dismissed_false_positive -> closed`。其中确认与驳回只能从 `pending_review` 发起，结案只能从已确认或已驳回状态发起，避免待复核工单被直接跳过复核而进入 `closed`。
-当前状态补充：确认高风险时，服务层现在会同步完成四件事：更新 `alert_cases.queue_status = confirmed_pending_intervention`、写入管理员复核说明、生成 `simulated_notice_log`、并向 `intervention_logs` 追加 `confirm_high_risk` 与 `simulate_contact` 两条时间线记录；因此“确认时写入模拟通知日志”与“处置动作进入干预时间线”已形成同一笔事务内的稳定闭环。
-当前状态补充：驳回误报与结案动作也已分别写入 `intervention_logs`：驳回会追加 `dismiss_false_positive` 日志，结案会追加 `close_case` 日志；另外已补充 `add_note` 作为独立干预记录能力，为后续 `A04 预警详情页` 中“添加干预记录”动作保留直接可复用的后端实现。
-当前状态补充：本步额外按 `BACKEND_STRUCTURE.md` 的审计规则补齐了后台处置审计：管理员确认、驳回、结案、补充干预记录会分别写入 `audit_logs`，确认动作触发的系统模拟通知也会追加 `SYSTEM_CREATE_SIMULATED_NOTICE_LOG` 审计事件；因此 `10.2` 完成后，`intervention_logs` 与 `audit_logs` 两条追踪链路已同时打通。
-当前状态补充：已新增 `tests/backend/test_alert_review_service.py`，覆盖确认高风险写入双干预日志与双审计日志、驳回误报写入单日志、结案写入关闭日志、补充干预记录不改状态，以及待复核工单禁止直接结案等场景；配合既有 `tests/backend/test_review_workflow_models.py`，已验证本步服务层状态机、日志落库和模型关系均符合预期。
-当前状态补充：本地已执行新增相关测试（`tests/backend/test_alert_review_service.py`、`tests/backend/test_review_workflow_models.py`）、两轮完整后端回归（`tests/backend`）以及 `ruff check --no-cache` 静态检查，当前共 103 项后端测试通过。
-当前状态补充：本步未修改学生端小程序或 Streamlit 页面，因此 `FRONTEND_GUIDELINES.md` 的视觉规范与 `APP_FLOW.md` 的页面表现尚未在代码层新增界面实现；本次仅完成后台复核动作的后端服务与日志规则，为后续 `11.3 实现预警队列与详情页` 提供可直接接入的处置能力。
-已完成：IMPLEMENTATION_PLAN.md 步骤10.3（重点关注列表实现）。
-当前状态补充：已新增 `backend/src/services/focus_list_service.py`，统一封装 `focus_list_entries` 的自动写入逻辑与来源级幂等校验；树洞 `watch` 内容现已从 `TreeholeService` 改为复用该服务写入重点关注，避免后续量表 `watch` 与树洞 `watch` 分别维护两套写入口径。
-当前状态补充：问卷提交链路现已接入重点关注写入：`backend/src/services/questionnaire_submission_service.py` 在高风险结果之外，会进一步基于 `RiskAggregationService.aggregate_assessment_risk()` 判断最新量表上下文是否达到后台 `watch` 级别；命中时会为对应 `questionnaire_submissions` 创建 `source_type = assessment` 的 `focus_list_entries`，而不会误创建 `alert_cases`，从而落实“需关注级别不会制造过量高风险工单噪音”的要求。
-当前状态补充：重点关注规则当前按更高优先级文档口径固化为以下行为：`SDS / SAS` 阳性结果写入重点关注；`SLEEP` 仅在 `SCREEN + SDS + SAS + SLEEP` 四份必做问卷链路齐全后，才会以 `SLEEP_CONCERN` 写入重点关注；若学生存在历史高风险而本次量表结果中性，则会以 `HISTORY_HIGH_REVIEW` 写入复查提示。对应地，`SCREEN >= 45` 的单次快速筛查结果仍会在学生端显示 `watch`，但不会单独制造后台重点关注噪音，除非后续聚合上下文或历史风险把它提升为后台复查信号。
-当前状态补充：为支持上述聚合口径，`backend/src/services/risk_aggregation_service.py` 已新增 `aggregate_assessment_risk()`，复用既有“最新提交 + 历史风险”聚合规则判断量表侧 `watch / high`；`review_workflow_repository.py` 也已补充按 `source_type + source_id + reason_code` 查询既有重点关注记录的能力，确保同一来源记录不会被重复写入列表。
-当前状态补充：学生 `risk_status` 现会在量表聚合为 `watch` 且当前仍为 `normal` 时上调为 `watch`，但不会因为单次低风险结果被提前降级；高风险仍沿用 10.1 的工单创建逻辑上调为 `high`。因此重点关注列表、学生风险态和高风险工单三者现在形成了清晰分层：`watch -> focus_list_entries`，`high -> alert_cases`，互不混淆。
-当前状态补充：已扩展 `tests/backend/test_questionnaire_submission_api.py`，新增覆盖 `SDS watch -> focus_list_entries`、完整必做链路下 `SLEEP watch -> focus_list_entries`、`SCREEN watch` 不制造后台关注噪音，以及“历史高风险 + 当前量表中性 -> HISTORY_HIGH_REVIEW`”等场景；同时保持既有 `UPI` / `SLEEP high` 工单回归与树洞 `watch` / `high` 行为测试通过。
-当前状态补充：本地已执行定向后端回归（`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_risk_aggregation_service.py`）、完整后端回归（`tests/backend`）以及 `ruff check --no-cache` 静态检查，当前共 107 项后端测试通过。
-当前状态补充：本步未修改学生端小程序或 Streamlit 页面，因此 `FRONTEND_GUIDELINES.md` 的设计规范与 `APP_FLOW.md` 中“管理员从重点关注列表进入案例详情”的页面表现尚未落到界面代码；本次只完成了重点关注列表的后端写入与降噪规则，为后续 `11.2 / 11.3` 的后台总览与列表页提供真实数据来源。
-已完成：IMPLEMENTATION_PLAN.md 步骤11.1（管理员登录实现）。
-当前状态补充：已新增 `backend/src/repositories/admin_user_repository.py`、`backend/src/services/admin_auth_service.py`、`backend/src/schemas/admin_auth.py` 与路由 `backend/src/api/routes/admin_auth.py`，打通 `POST /api/v1/admin/auth/login` 和 `GET /api/v1/admin/auth/me`；管理员认证现按 `BACKEND_STRUCTURE.md` 约定使用“用户名 + 密码 -> `pwdlib` + Argon2 校验 -> JWT 会话”链路，且仅 `is_active = 1` 的管理员允许登录。
-当前状态补充：`backend/src/core/security.py` 已扩展管理员 JWT 签发能力，`backend/src/core/auth.py` 已新增 `get_current_admin()` 依赖；管理员令牌当前会携带 `admin_id`、`username`、`role_code` 与 `role = admin`，后续 `11.2 - 11.5` 的后台受保护接口可直接复用同一套 Bearer 认证入口，而不需要再单独发明 Streamlit 专用会话协议。
-当前状态补充：管理员登录成功现已按 `BACKEND_STRUCTURE.md` 审计规则写入 `audit_logs`：`AdminAuthService.login()` 会同步刷新 `admin_users.last_login_at` 并追加 `ADMIN_LOGIN_SUCCESS` 审计事件，记录角色编码、用户名和来源 IP；因此 `11.1` 完成后，“管理员登录成功”这一敏感动作已具备可追溯性。
-当前状态补充：管理后台 `admin/app.py` 已从初始化占位页升级为真实 `A01 管理员登录页`：当前会渲染用户名 / 密码表单，调用后端 `admin/auth/login` 获取 JWT，并根据返回结果对“用户名或密码错误”“账户被禁用”“后台暂时不可达”三类失败情况给出行内提示；登录成功后会立即切换到 `A02` 的占位总览壳页。
-当前状态补充：已新增 `admin/services/auth.py`、`admin/state/session.py`、`admin/utils/config.py` 与 `admin/utils/styles.py`，分别承载后台认证 API 调用、`st.session_state` 会话持久化、后台 API Base URL 配置和统一样式注入；当前 Streamlit 会在 session state 中保存 `admin_access_token` 与 `admin_profile`，并在页面重跑时优先使用 `/api/v1/admin/auth/me` 验证现有会话，满足“管理员会话在 Streamlit 中可正常持久化”的标准。
-当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端要求，`A01` 当前采用克制、高信息密度的 Streamlit 登录卡片风格：整体延续品牌青绿色与中性色卡片体系，避免学生端式情绪化表达；`A02` 在 `11.1` 阶段仅作为已登录后的占位壳页，展示当前管理员身份、退出登录入口和四个 KPI 占位卡片，为后续 `11.2 实现总览页` 继续接入真实指标保留结构。
-当前状态补充：后台 API Base URL 当前支持通过 `XINYU_ADMIN_API_BASE_URL` 或 `ADMIN_API_BASE_URL` 覆盖，默认回退到 `http://127.0.0.1:8000/api/v1`；因此本地 `streamlit run admin/app.py` 时可直接联到默认 FastAPI 开发地址，也可在演示或部署环境通过环境变量切换到其他后端地址。
-当前状态补充：已新增 `tests/backend/test_admin_auth_api.py`，覆盖管理员登录成功签发 JWT、`last_login_at` 更新、登录审计写入、错误密码拒绝、禁用账户拒绝、`GET /api/v1/admin/auth/me` 成功与未登录拒绝等场景；同时新增 `tests/admin/test_session_state.py`，验证 Streamlit 管理员 session state 的设置、清理和鉴权状态切换逻辑。
-当前状态补充：本地已执行新增相关测试（`tests/backend/test_admin_auth_api.py`、`tests/admin/test_session_state.py`）、包含后台辅助测试在内的完整回归（`tests/backend tests/admin`）以及 `ruff check --no-cache` 静态检查，当前共 113 项测试通过；同时额外执行了 `backend/.venv/bin/python` 对 `admin/app.py` 和新增 `admin/` 模块的导入检查，当前导入正常。
-当前状态补充：本步尚未实现真实 `A02 总览 KPI` 数据拉取、后台导航、预警队列页或详情页；当前已登录后的总览内容仍是结构化占位壳，不提前混入 `11.2` 及之后步骤的真实业务数据渲染。
-待办：见 IMPLEMENTATION_PLAN.md 步骤11.2。
-已完成：IMPLEMENTATION_PLAN.md 步骤11.2（总览页实现）。
-当前状态补充：已新增 `backend/src/repositories/admin_dashboard_repository.py`、`backend/src/services/admin_dashboard_service.py`、`backend/src/schemas/admin_dashboard.py` 与路由 `backend/src/api/routes/admin_dashboard.py`，打通 `GET /api/v1/admin/dashboard/summary`；接口当前返回 `generated_at`、A02 主 KPI（待复核工单、高风险工单、已确认高风险、重点关注人数、已发布帖子数）以及基础统计（最高优先级待处理、已拦截帖子、高风险学生档案、量表提交总数）。
-当前状态补充：管理后台 `admin/app.py` 已从 11.1 的总览占位壳升级为真实 `A02 总览页`。管理员登录后会调用 summary API 渲染 4 张 KPI 卡片、4 张基础统计卡片和 `A03 / A05 / A06 / A07` 模块入口卡片；页面顶部会展示 UTC 数据快照时间，接口暂时不可达时会显示降级提示，而令牌失效或账户被禁用时会清理会话并回到登录态。
-当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端要求，本步继续采用品牌青绿色与中性色卡片体系、`Inter / PingFang SC` 正文字体和 `DIN Alternate / SF Mono` 数字强调字体；总览页仅使用 Streamlit 原生布局与局部 CSS 注入实现，保持克制、高信息密度且可审计的后台观感。
-当前状态补充：已新增 `tests/backend/test_admin_dashboard_api.py` 与 `tests/admin/test_admin_api_client.py`，覆盖总览聚合口径、Bearer 鉴权要求、Streamlit 客户端 summary 拉取以及 `detail` 型鉴权错误映射；本地已执行定向 pytest、完整后端回归（`tests/backend`）以及 `ruff check --no-cache`，当前 `tests/backend` 共 114 项测试通过，`tests/admin` 共 3 项测试通过，合计已验证 117 项。
-当前状态补充：本步已经为 `A02` 建立通往 `A03 预警队列`、`A05 帖子管理`、`A06 用户目录` 与 `A07 审计日志` 的模块入口卡片，但没有提前实现这些页面的完整交互；后续仍按 `IMPLEMENTATION_PLAN.md` 的 `11.3 / 11.4 / 11.5` 继续补齐队列、内容管理和敏感审计界面。
-待办：见 IMPLEMENTATION_PLAN.md 步骤11.3。
-已完成：IMPLEMENTATION_PLAN.md 步骤11.3（预警队列与详情页实现）。
-当前状态补充：已新增 `backend/src/repositories/admin_alert_repository.py`、`backend/src/services/admin_alert_service.py`、`backend/src/schemas/admin_alert.py` 与路由 `backend/src/api/routes/admin_alerts.py`，打通 `GET /api/v1/admin/alerts`、`GET /api/v1/admin/alerts/{alert_id}`、`POST /api/v1/admin/alerts/{alert_id}/confirm`、`POST /api/v1/admin/alerts/{alert_id}/dismiss`、`POST /api/v1/admin/alerts/{alert_id}/close`，并额外新增 `POST /api/v1/admin/alerts/{alert_id}/notes` 与 `POST /api/v1/admin/alerts/{alert_id}/reveal-content`，从而把 `A03 预警队列` 与 `A04 预警详情` 的读写闭环真正接通。
-当前状态补充：A03 队列接口当前已支持按 `queue_status` 过滤 `pending_review / confirmed_pending_intervention / dismissed_false_positive / closed` 四类状态，并按 `review_priority highest -> urgent -> normal`、同优先级按 `created_at DESC` 排序；接口同时返回四个状态桶计数，供前端在同一页中渲染筛选概览和队列列表。
-当前状态补充：A04 详情接口当前会返回脱敏学生身份、来源上下文、AI 风险等级、AI 触发短语、历史量表摘要、历史高风险标记、干预时间线和当前可执行动作权限。其中树洞来源默认只返回 `content_masked`，完整 `content_raw` 必须通过显式 `reveal-content` 动作二次确认后才会返回，符合 `APP_FLOW.md` 与 `BACKEND_STRUCTURE.md` 对“默认脱敏 + 显式展开敏感原文”的要求。
-当前状态补充：本步已补齐后台敏感查看审计：打开 `GET /api/v1/admin/alerts/{alert_id}` 会写入 `ADMIN_VIEW_ALERT_CASE_DETAIL`；展开完整树洞原文会写入 `ADMIN_REVEAL_ALERT_SOURCE_CONTENT`；确认、驳回、补记干预、结案仍复用 10.2 中已落地的审计与时间线写入。因此 `11.3` 完成后，`AC-05` 与 `AC-06` 对应的后台人工处置与敏感查看审计链路已经在 API 层闭合。
-当前状态补充：管理后台 `admin/app.py` 已从仅有 A02 总览升级为真实 `A02 -> A03/A04` 工作区。当前管理员可从 A02 顶部按钮进入 A03；A03 采用左侧队列、右侧详情的 master-detail 布局，支持状态筛选、显式打开案例、查看历史量表摘要、查看 AI 触发短语、二次确认后展开完整原文，并在右侧直接执行“确认高风险 / 标记误报 / 添加干预记录 / 结案”动作。
-当前状态补充：为避免 Streamlit 每次 rerun 都重复写入敏感查看审计，本步已扩展 `admin/state/session.py`，为当前活动视图、已选案例详情和提示消息建立独立 session state；后台当前只会在管理员显式点击“打开案例”时请求 A04 详情，只会在显式点击“展开完整原文”时请求敏感原文，因此不会因为页面重绘而制造无意义的审计噪音。
-当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端规范，本步继续仅使用 Streamlit 原生组件与局部 CSS 注入，补齐了预警卡片、状态 Chip、详情卡、时间线卡和敏感内容展示块，延续品牌青绿色 + 中性色卡片体系，并用危险色高亮高风险与敏感查看区域，避免把高风险处置做成轻浮或游戏化的视觉表达。
-当前状态补充：已新增 `tests/backend/test_admin_alerts_api.py`，覆盖 A03 列表筛选与状态桶统计、A04 树洞详情默认脱敏、完整原文展开审计、量表来源详情、确认 + 补记干预 + 结案闭环，以及“已确认后再驳回”状态冲突等场景；同时扩展 `tests/admin/test_admin_api_client.py` 与 `tests/admin/test_session_state.py`，覆盖 alerts 客户端 query params、敏感原文展开端点和后台 session 缓存逻辑。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查、定向 pytest（`tests/backend/test_admin_auth_api.py`、`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/admin/test_session_state.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 120 项通过，`tests/admin` 共 5 项通过，合计 125 项测试通过。
-当前状态补充：本步尚未实现 `A05 帖子管理`、`A06 用户目录` 或 `A07 审计日志` 的独立页面；A02 中对应模块入口仍为结构化说明卡片，后续继续按 `IMPLEMENTATION_PLAN.md` 的 `11.4 / 11.5` 逐步补齐。
-待办：见 IMPLEMENTATION_PLAN.md 步骤11.4。
-已完成：IMPLEMENTATION_PLAN.md 步骤11.4（帖子管理页实现）。
-当前状态补充：已新增 `backend/src/repositories/admin_post_repository.py`、`backend/src/services/admin_post_service.py`、`backend/src/schemas/admin_post.py` 与路由 `backend/src/api/routes/admin_posts.py`，打通 `GET /api/v1/admin/posts`、`GET /api/v1/admin/posts/{post_id}`、`PATCH /api/v1/admin/posts/{post_id}/visibility`，并额外新增 `POST /api/v1/admin/posts/{post_id}/reveal-content` 作为显式原文展开入口，从而把 `A05 帖子管理页` 的列表、详情、审计与隐藏动作闭环真正接通。
-当前状态补充：A05 列表接口当前已支持按 `published / hidden_by_admin / blocked_high_risk / deleted_by_user` 四种帖子状态过滤，并返回状态桶计数；排序当前按 `published_at / deleted_at / created_at` 的最新可见活动时间倒序，满足“已发布 / 被拦截 / 已删除 / 管理员隐藏”统一管理的后台口径。
-当前状态补充：A05 详情接口当前默认只返回脱敏内容与结构化上下文，不直接暴露 `content_raw`。管理员必须通过显式 `reveal-content` 动作二次确认后才会获得完整原文；该动作会写入 `ADMIN_REVEAL_POST_CONTENT` 审计事件。详情当前同时返回匿名昵称、发帖人脱敏身份、AI 风险等级、AI 触发短语、互动统计、关联预警工单摘要以及当前可执行的可见性动作权限。
-当前状态补充：帖子可见性动作当前按固定状态机执行，避免后台误把危险内容恢复公开：`published -> hidden_by_admin` 对应“隐藏帖子”，`hidden_by_admin -> published` 对应“恢复发布”，`hidden_by_admin / blocked_high_risk -> 保持隐藏` 对应显式维持非公开状态；其中系统已判定为 `blocked_high_risk` 的帖子当前不可直接恢复发布，只能继续保持隐藏，从而不与 9.4 的高风险拦截规则冲突。
-当前状态补充：本步已补齐帖子管理动作审计：隐藏帖子写入 `ADMIN_HIDE_POST`，保持隐藏写入 `ADMIN_KEEP_POST_HIDDEN`，恢复发布写入 `ADMIN_RESTORE_POST_VISIBILITY`；因此 `PRD.md` 中“隐藏 / 维持隐藏 / 恢复发布”三类内容治理动作现在都具备后台可追溯性。
-当前状态补充：管理后台 `admin/app.py` 已从 `A02/A03/A04` 扩展为真实 `A05 帖子管理` 工作区。当前管理员可从 A02 总览或 A03 队列页进入 A05；A05 采用左侧帖子列表、右侧详情的 master-detail 布局，支持状态筛选、显式打开帖子、查看 AI 分析和支持反应统计、二次确认后展开完整原文，以及执行“隐藏帖子 / 保持隐藏 / 恢复发布”动作。
-当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端规范，本步继续仅使用 Streamlit 原生组件与局部 CSS 注入，复用既有卡片、Chip 与详情块视觉语言，同时用危险色和警示色区分“被拦截”“原文展开”“隐藏动作”等高敏感内容治理区域，保证后台观感克制、高信息密度且可审计。
-当前状态补充：已扩展 `admin/state/session.py` 与 `admin/services/auth.py`，为当前活动帖子详情、帖子状态筛选、帖子原文展开与可见性动作建立独立缓存与 API 调用能力；后台当前只会在管理员显式点击“打开帖子”时请求 A05 详情，只会在显式点击“展开完整原文”时请求敏感原文，因此不会因为页面 rerun 制造无意义的敏感查看审计噪音。
-当前状态补充：已新增 `tests/backend/test_admin_posts_api.py`，覆盖 A05 列表筛选与状态桶统计、默认脱敏详情、完整原文展开审计、隐藏帖子、恢复发布、保持隐藏以及“被拦截帖子不可直接恢复发布”的状态冲突场景；同时扩展 `tests/admin/test_admin_api_client.py` 与 `tests/admin/test_session_state.py`，覆盖 posts 客户端 query params、帖子可见性 patch 端点和后台帖子详情 session 缓存逻辑。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查、定向 pytest（`tests/backend/test_admin_auth_api.py`、`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/backend/test_admin_posts_api.py`、`tests/admin/test_session_state.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 127 项通过，`tests/admin` 共 7 项通过，合计 134 项测试通过。
-当前状态补充：本步尚未实现 `A06 用户目录` 或 `A07 审计日志` 的独立页面；A02 中对应模块入口仍为结构化说明卡片，后续继续按 `IMPLEMENTATION_PLAN.md` 的 `11.5` 补齐用户目录、敏感详情二次确认和审计日志查询界面。
-待办：见 IMPLEMENTATION_PLAN.md 步骤11.5。
-已完成：IMPLEMENTATION_PLAN.md 步骤11.5（用户目录与审计日志页实现）。
-当前状态补充：已新增 `backend/src/repositories/admin_user_directory_repository.py`、`backend/src/services/admin_user_directory_service.py`、`backend/src/schemas/admin_user_directory.py` 与路由 `backend/src/api/routes/admin_users.py`，打通 `GET /api/v1/admin/users`、`GET /api/v1/admin/users/{student_id}` 与 `POST /api/v1/admin/users/{student_id}/reveal-phone`；A06 当前默认返回脱敏学生目录和脱敏详情，完整手机号必须通过显式 `reveal-phone` 动作二次确认后才会返回。
-当前状态补充：A06 用户目录接口当前已支持按 `high / watch / normal` 风险状态过滤，并返回三档风险人数统计；列表默认展示匿名 ID、脱敏手机号、学院 / 班级、当前风险状态、活跃重点关注数和开放工单数。详情当前会返回授权状态、最近登录时间、活跃重点关注摘要、最近工单摘要、最新量表结果和最近树洞状态，从而把“受控查看学生风险档案”的最小闭环补齐。
-当前状态补充：已新增 `backend/src/repositories/admin_audit_log_repository.py`、`backend/src/services/admin_audit_log_service.py`、`backend/src/schemas/admin_audit_log.py` 与路由 `backend/src/api/routes/admin_audit_logs.py`，打通 `GET /api/v1/admin/audit-logs`；接口当前支持按操作者、动作类型、目标对象类型和日期范围筛选，并返回格式化后的 `actor_label`、`target_label`、`summary_text`、原始 `metadata_json` 以及过滤控件需要的 actor / action / target 选项集合，可直接支撑 `A07 审计日志页`。
-当前状态补充：本步已补齐用户目录相关敏感查看审计：打开 `GET /api/v1/admin/users/{student_id}` 会写入 `ADMIN_VIEW_USER_DETAIL`，展开完整手机号会写入 `ADMIN_REVEAL_STUDENT_PHONE`；配合 11.3 / 11.4 中已实现的预警详情、帖子原文和帖子可见性审计，当前所有后台显式敏感展开动作都可以在 A07 中被查询到，满足 `11.5` 完成标准与 `AC-06`。
-当前状态补充：管理后台 `admin/app.py` 已从 `A02/A03/A04/A05` 扩展为真实 `A06 用户目录` 与 `A07 审计日志` 工作区。A06 当前采用左侧脱敏用户列表、右侧详情的 master-detail 布局，支持显式打开用户档案、查看风险档案摘要并二次确认后展开完整手机号；A07 当前支持按操作者、操作类型、目标对象类型和日期范围筛选审计事件，并以高信息密度卡片展示时间、操作者、目标对象和摘要信息。
-当前状态补充：为避免 Streamlit rerun 重复制造敏感审计噪音，本步已继续扩展 `admin/state/session.py` 与 `admin/services/auth.py`，为当前活动用户详情缓存、完整手机号展开和 A07 查询参数建立独立状态与 API 调用能力；后台当前只会在管理员显式点击“查看详情”时请求 A06 详情，只会在显式点击“展开完整手机号”时请求完整手机号，因此不会因为页面重绘而重复写敏感查看日志。
-当前状态补充：为遵守 `FRONTEND_GUIDELINES.md` 的管理端规范，本步继续仅使用 Streamlit 原生组件与局部 CSS 注入，复用既有卡片、Chip、时间线和详情块视觉语言；A06 / A07 整体延续品牌青绿色与中性色卡片体系，并用危险色强调完整手机号展开、风险状态和敏感操作摘要，保持后台观感克制、高信息密度且可审计。
-当前状态补充：已新增 `tests/backend/test_admin_users_api.py` 与 `tests/backend/test_admin_audit_logs_api.py`，覆盖 A06 用户目录风险筛选、脱敏详情、完整手机号展开审计，以及 A07 对新敏感动作的查询与日期过滤；同时扩展 `tests/admin/test_session_state.py` 与 `tests/admin/test_admin_api_client.py`，覆盖用户详情 session 缓存、手机号展开端点和审计日志过滤请求参数。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查、定向 pytest（`tests/backend/test_admin_auth_api.py`、`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/backend/test_admin_posts_api.py`、`tests/backend/test_admin_users_api.py`、`tests/backend/test_admin_audit_logs_api.py`、`tests/admin/test_session_state.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 132 项通过，`tests/admin` 共 10 项通过，合计 142 项测试通过。
-当前状态补充：第十一阶段管理后台当前已完整落地 `A01 管理员登录`、`A02 总览页`、`A03 预警队列`、`A04 预警详情`、`A05 帖子管理`、`A06 用户目录` 与 `A07 审计日志` 的 MVP 版本；后续继续按 `IMPLEMENTATION_PLAN.md` 的 `12.1 / 12.2` 进入统计分析接口与图表页实现。
-待办：见 IMPLEMENTATION_PLAN.md 步骤12.1。
-已完成：IMPLEMENTATION_PLAN.md 步骤12.1（统计接口实现）。
-当前状态补充：已新增 `backend/src/repositories/admin_analytics_repository.py`、`backend/src/services/admin_analytics_service.py`、`backend/src/schemas/admin_analytics.py` 与路由 `backend/src/api/routes/admin_analytics.py`，并在 `backend/src/api/router.py` 中接入 `GET /api/v1/admin/analytics/trends`；同时扩展 `admin/services/auth.py`，为后续 `12.2` 的 Streamlit 图表页提供统一的后台 analytics client 入口。
-当前状态补充：`/api/v1/admin/analytics/trends` 当前在单个响应中同时返回三类真实聚合数据：`risk_distribution` 基于 `student_users.risk_status` 给出 `normal / watch / high` 三档人数分布；`daily_trends` 固定返回最近 7 个自然日的零填充趋势序列，分别统计问卷提交数（`questionnaire_submissions.submitted_at`）、树洞发帖数（`treehole_posts.created_at`）与新建工单数（`alert_cases.created_at`）；`alert_processing` 基于当前 `queue_status` 返回 `pending_review / confirmed_pending_intervention / dismissed_false_positive / closed` 四档工单状态统计，能够直接支撑 `IMPLEMENTATION_PLAN.md` 里要求的分布图、趋势图和工单状态图。
-当前状态补充：为保证 `12.2` 绘图时前端逻辑稳定，本步已在服务层固化风险档位顺序、工单状态顺序和最近 7 天日期顺序；即使某一天或某一状态没有数据，也会返回 `0`，避免 Streamlit 图表因为缺桶而出现跳轴或图例抖动。这一口径与 `BACKEND_STRUCTURE.md` 中 `/api/v1/admin/analytics/trends` 的管理端统计契约保持一致。
-当前状态补充：已新增 `tests/backend/test_admin_analytics_api.py`，覆盖风险分布聚合、最近 7 天趋势窗口、窗口外数据排除、工单状态统计和未授权访问；同时扩展 `tests/admin/test_admin_api_client.py`，覆盖 Streamlit client 对 `/admin/analytics/trends` 的 Bearer 调用与响应解析。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（analytics 新增 / 受影响文件）、定向 pytest（`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_analytics_api.py`、`tests/admin/test_admin_api_client.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 134 项通过，`tests/admin` 共 11 项通过，合计 145 项测试通过。
-待办：见 IMPLEMENTATION_PLAN.md 步骤12.2。
-已完成：IMPLEMENTATION_PLAN.md 步骤12.2（Streamlit 图表页实现）。
-当前状态补充：管理后台 `admin/app.py` 已新增独立的 `A08 统计分析` 工作区，并在 A02 顶部导航中补充“进入 A08”入口；A02 的模块入口卡片也已扩展为 `A03 / A05 / A06 / A07 / A08` 五块，使总览页继续负责概览和分流，而不把趋势图、分布图直接堆进 A02，保持后台信息密度高但不混乱。
-当前状态补充：A08 当前直接复用 `12.1` 中已落地的 `GET /api/v1/admin/analytics/trends`，并使用 Streamlit 原生图表能力渲染三块核心内容：学生风险分布图、最近 7 天活跃趋势图、当前工单处理状态统计图。图表数据没有重新计算，前端只做标签本地化、顺序保持和图表规格转换，确保页面数值与数据库聚合结果一致。
-当前状态补充：为符合 `FRONTEND_GUIDELINES.md` 的管理端规范，本步继续只使用 Streamlit 原生组件与局部 CSS 注入，没有引入任何第三方前端组件库。A08 视觉上延续品牌青绿色 + 中性色卡片体系，并按语义色区分正常 / 需关注 / 高风险与不同工单状态；7 天趋势图则固定使用品牌绿、暖色和危险色区分“问卷提交 / 树洞发帖 / 新建工单”，维持克制、可信、可审计的后台观感。
-当前状态补充：A08 现已补齐“图表 + 原始统计表”双视图。每个图表区块下都提供可展开的原始统计表，用于直接核对风险分布人数、工单状态数量和 7 天每日明细；趋势区块还会展示 7 天汇总指标和活跃峰值日，帮助管理员在演示或日常值班时快速解释图表背后的确切数值来源。
-当前状态补充：已新增 `tests/admin/test_analytics_view_helpers.py`，覆盖 A08 风险分布、本地化标签、工单状态 tone 映射、7 天趋势行数据、原始表格数据、汇总卡片与峰值日计算；同时保留 `tests/backend/test_admin_analytics_api.py` 与 `tests/admin/test_admin_api_client.py`，从后端聚合、HTTP client 到前端映射三层共同验证 `12.2` 依赖的数据链路。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（`admin/app.py`、`admin/utils/styles.py`、新增 admin tests 等受影响文件）、定向 pytest（`tests/admin/test_analytics_view_helpers.py`、`tests/admin/test_admin_api_client.py`、`tests/admin/test_session_state.py`、`tests/backend/test_admin_analytics_api.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 134 项通过，`tests/admin` 共 14 项通过，合计 148 项测试通过。
-当前状态补充：第十二阶段当前已完整落地 `12.1 统计接口` 与 `12.2 Streamlit 图表页`；管理后台现在除 A01-A07 外，已额外具备可直接演示的 A08 统计分析视图，为后续第十三阶段测试和答辩演示加固提供真实可视化入口。
-待办：见 IMPLEMENTATION_PLAN.md 步骤13.1。
-已完成：IMPLEMENTATION_PLAN.md 步骤13.1（后端单元测试增强完成）。
-当前状态补充：本步没有改动后端业务逻辑或前端页面，而是针对 `13.1` 的完成标准补齐服务层关键规则分支测试，重点覆盖 `QuestionnaireScoringService`、`AssessmentReportService` 与 `RiskAggregationService` 三类核心规则引擎，确保“SDS 评分 / SAS 评分 / 睡眠评分 / 硬触发逻辑 / 报告解锁逻辑 / 风险聚合逻辑”六项要求都由明确的后端单测保护，而不是只依赖更高层 API 回归间接覆盖。
-当前状态补充：`tests/backend/test_questionnaire_scoring_service.py` 现继续承担量表评分与硬触发核心覆盖，已覆盖 SDS `53 / 63` 边界、SAS `50 / 60` 边界、睡眠问卷 `7 / 8 / 14 / 15` 边界，以及 `SCREEN_15`、`SDS_15`、`SAS_13`、`UPI_01`、`UPI_02` 五条冻结硬触发规则和 Zung 反向计分行为，因此 `13.1` 中“评分 + 硬触发”部分当前已具备稳定单测护栏。
-当前状态补充：本步补强了 `tests/backend/test_assessment_report_service.py` 的报告解锁单测，新增覆盖“零提交时报告首页保持 locked 状态”“仅完成四份必做问卷且未做 UPI 时仍可正常解锁完整报告入口”两类关键分支；配合既有“部分完成保持 partial”“缺失必做问卷时报 `FullProfileLockedError`”“完整链路下使用最新提交覆盖旧提交”“可选 UPI 不阻塞解锁但可抬升综合风险”等场景，`S10 / S10A` 的解锁状态机现在已由纯服务层单测完整约束。
-当前状态补充：本步补强了 `tests/backend/test_risk_aggregation_service.py` 的风险聚合单测，新增覆盖 `AI high -> high`、`SAS watch -> watch`、`SDS high -> high`、`SAS high -> high` 等直接判定路径；结合既有“AI watch -> watch”“完整必做链路下 sleep concern -> watch”“不完整链路下 sleep 单独不提升”“问卷硬触发直接 high”“历史高风险在当前中性时提升为 watch”“数据库上下文下历史高风险提交与历史高风险树洞 AI 记录查询”等场景，`9.3` 聚合器的主要优先级和降噪规则已经全部由后端单测显式覆盖。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（新增 / 受影响测试文件）、定向 pytest（`tests/backend/test_questionnaire_scoring_service.py`、`tests/backend/test_assessment_report_service.py`、`tests/backend/test_risk_aggregation_service.py`）以及完整回归（`tests/backend tests/admin`）；当前 `tests/backend` 共 140 项通过，`tests/admin` 共 14 项通过，合计 154 项测试通过。
-当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试` 的核心规则覆盖补强；后续继续按 `IMPLEMENTATION_PLAN.md` 的 `13.2` 进入 API 集成测试收口。
-待办：见 IMPLEMENTATION_PLAN.md 步骤13.2。
-已完成：IMPLEMENTATION_PLAN.md 步骤13.2（API 集成测试实现）。
-当前状态补充：已新增 `tests/integration/test_api_integration_flows.py`，正式把 `tests/integration/` 从空目录补成真实的跨接口链路测试层。本步没有修改后端业务实现或前端页面，只新增面向测试数据库的端到端 API 集成测试，用来验证 `APP_FLOW.md` 中关键学生端与后台闭环在同一套运行时配置下能够真实串起来。
-当前状态补充：第一条集成测试当前覆盖“学生登录 -> 危机授权同意 -> 四份必做问卷提交 -> 报告解锁 -> 低风险树洞发布 -> 广场可见”整条正向链路：测试通过 `POST /api/v1/auth/student/wechat-login` 创建学生会话，通过 `POST /api/v1/consents` 切换到 `granted`，再顺序调用 `POST /api/v1/questionnaires/{code}/submissions` 完成 `SCREEN / SDS / SAS / SLEEP`，随后验证 `GET /api/v1/reports/summary` 已进入 `unlocked`、`GET /api/v1/reports/full` 可返回完整画像，最后验证 `POST /api/v1/treehole/posts` 的低风险内容被公开发布且 `GET /api/v1/treehole/feed` 可读。
-当前状态补充：第二条集成测试当前覆盖“高风险树洞拦截 -> 后台待复核工单 -> 管理员确认高风险”闭环：学生经公开登录与授权接口进入会话后，提交高风险树洞内容，验证 `POST /api/v1/treehole/posts` 返回 `safety_intercepted` 与 `blocked_high_risk`，随后管理员通过 `POST /api/v1/admin/auth/login` 登录、调用 `GET /api/v1/admin/alerts` 获取待复核工单，并对该工单执行 `POST /api/v1/admin/alerts/{alert_id}/confirm`；测试最后验证该工单已进入 `confirmed_pending_intervention`，从而满足 `13.2` 中“高风险树洞拦截 + 管理员确认工单”的要求。
-当前状态补充：为让 `13.2` 保持真正的“集成测试”而不是服务层伪装，本步在测试内复用了真实 `create_app()`、真实数据库会话工厂、真实题库导入链路和真实 JWT 鉴权；仅对两类外部依赖做了受控 stub：微信 `login_code -> openid` 交换使用测试态 `wechat_session_service.exchange_login_code`，树洞 AI 分析使用与既有 `test_treehole_api.py` 一致的 `FakeDeepSeekService`。因此接口仍然走真实路由、依赖注入、Pydantic 校验、ORM 持久化和状态机，而不会绕开业务层。
-当前状态补充：本地已执行 `ruff check --no-cache` 静态检查（新增集成测试文件）、定向 pytest（`tests/integration/test_api_integration_flows.py` 以及与本步直接相关的 `tests/backend/test_student_auth_api.py`、`tests/backend/test_questionnaire_submission_api.py`、`tests/backend/test_report_api.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_admin_alerts_api.py`）以及完整回归（`tests/backend tests/admin tests/integration`）；当前 `tests/backend` 共 140 项通过，`tests/admin` 共 14 项通过，`tests/integration` 共 2 项通过，合计 156 项测试通过。
-当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试` 与 `13.2 API 集成测试`；项目现在同时具备规则层单测、接口层集成测试和后台 / 学生端关键闭环测试，为后续 `13.3` 的人工端到端演练脚本提供可复核的自动化基础。
-待办：见 IMPLEMENTATION_PLAN.md 步骤13.3。
-已完成：IMPLEMENTATION_PLAN.md 步骤13.3（人工端到端演练脚本准备完成）。
-当前状态补充：已新增 `tests/integration/manual_e2e_rehearsal.md`，作为当前 MVP 的统一人工演练手册。文档现已把“环境准备 -> 账号准备 -> 开场自检 -> 四条演练脚本 -> 演练记录模板 -> 当前边界”整理成单一入口，避免答辩前仍靠口头记忆或临时翻代码找页面名、按钮文案和启动命令。
-当前状态补充：手册当前明确覆盖四条人工链路：`S01 -> S10A` 的完整测评与报告解锁、`S11 -> S13` 的低风险树洞发布、`S11 -> S14` 的高风险树洞拦截，以及 `A01 -> A03/A04` 的管理员复核与模拟干预。每条脚本都包含固定测试账号、建议输入文案、页面级操作步骤、预期结果和“失败即停条件”，对应 `APP_FLOW.md` 中的学生端 / 后台状态机，目标是让现场演练节奏稳定且无需 improvisation。
-当前状态补充：为减少现场准备成本，手册已补齐最小运行前置，包括：`.env` 的关键字段、题库导入命令、`uvicorn` 启动命令、`streamlit run admin/app.py` 启动命令、微信开发者工具打开 `miniprogram/` 的要求，以及管理员账号 `platform.admin / Admin#2026` 的一次性创建命令。这样即使数据库是新库，也能按文档独立完成一轮演练准备。
-当前状态补充：本步同时把当前实现边界写进了脚本，而没有用模糊表述掩盖风险：由于项目尚未完成 `14.2` 的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，且 `backend/mock_response.json` 当前默认是低风险回退结果，所以“高风险树洞拦截”人工演练目前仍依赖可用的 DeepSeek 外网调用；文档已把这一前提作为硬性检查项写明，避免现场到高风险脚本时才临时排查。
-当前状态补充：本步没有新增业务代码、前端页面或自动化测试；主要验证工作是对现有启动路径、环境变量名、页面路由、后台入口按钮和已落地的接口地址进行文档级核对，确保手册引用的命令、页面编号和按钮文案与仓库当前实现一致。由于本步产物是“人工演练脚本”，尚未由真实人工按文档完整跑一遍界面链路，这一实际走查动作将由后续演练执行。
-当前状态补充：第十三阶段当前已完成 `13.1 后端单元测试`、`13.2 API 集成测试` 与 `13.3 人工端到端演练脚本` 三项内容；后续继续按 `IMPLEMENTATION_PLAN.md` 的 `14.1` 进入演示种子数据准备，以进一步降低人工造数成本和外部依赖风险。
-待办：见 IMPLEMENTATION_PLAN.md 步骤14.1。
-已完成：IMPLEMENTATION_PLAN.md 步骤14.1（演示种子数据准备）。
-当前状态补充：已新增 `backend/src/services/demo_seed_service.py` 与 `backend/src/utils/seed_demo_dataset.py`，形成可重复执行的 `14.1` 演示数据造数链路。当前可通过 `cd backend && .venv/bin/python -m src.utils.seed_demo_dataset` 一次性导入五份问卷模板与题库，并预置 3 个演示学生（低风险 / 需关注 / 高风险）及其对应的授权记录、量表提交、树洞帖子、AI 分析、预警工单、重点关注、干预时间线和审计示例。
-当前状态补充：新 seed 数据当前专门围绕后台展示面构造，保证 `A02 总览页`、`A03/A04 预警队列与详情`、`A05 帖子管理`、`A06 用户目录`、`A07 审计日志` 与 `A08 统计分析` 打开后立即有可解释的数据：学生风险分布当前固定为 `normal / watch / high = 1 / 1 / 1`，帖子状态当前固定覆盖 `published / hidden_by_admin / blocked_high_risk` 三档，工单状态当前固定覆盖 `pending_review` 与 `confirmed_pending_intervention` 两档，并同时补齐重点关注、干预记录和审计日志，从而不再依赖现场手动造数。
-当前状态补充：该 seed 服务当前具备幂等刷新能力。重复执行时会先清理既有 demo 学生及其关联的帖子、工单、反应、关注项、干预记录和同批审计样例，再按固定时序重建数据，不会重复累加演示样本；同时若数据库中尚不存在 `platform.admin`，会自动创建默认管理员 `platform.admin / Admin#2026`，从而把“管理员账号准备”和“后台演示数据准备”合并成单条稳定命令。
-当前状态补充：已同步更新 `tests/integration/manual_e2e_rehearsal.md`，将原先的“一次性手写管理员创建脚本”替换为统一的 `seed_demo_dataset` 命令，并修正文档末尾“当前还没有 14.1 演示种子数据”的陈旧说明，避免演练手册与仓库真实能力冲突。
-当前状态补充：已新增 `tests/backend/test_demo_seed_service.py`，覆盖三类关键验证：`14.1` 统一 seed 后后台服务层可直接消费预置数据、重复执行保持幂等不重复造数、CLI 入口可对指定数据库正常执行并输出摘要；同时本地已执行 `ruff check --no-cache`（`backend/src/services/demo_seed_service.py`、`backend/src/utils/seed_demo_dataset.py`、`tests/backend/test_demo_seed_service.py`）以及定向 pytest（`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/backend/test_admin_posts_api.py`、`tests/backend/test_admin_users_api.py`、`tests/backend/test_admin_audit_logs_api.py`、`tests/backend/test_admin_analytics_api.py`、`tests/backend/test_demo_seed_service.py`），当前共 25 项测试通过。
-当前状态补充：第十四阶段当前已完成 `14.1 演示种子数据准备`；项目现已具备“从空数据库迁移完成后，单命令得到后台可展示样例”的能力。后续继续按 `IMPLEMENTATION_PLAN.md` 的 `14.2` 补齐 `ENABLE_MOCK_AI`、`SHOW_SEEDED_CASES` 等演示容错开关，以进一步降低外网依赖和现场抖动风险。
-待办：见 IMPLEMENTATION_PLAN.md 步骤14.2。
-已完成：IMPLEMENTATION_PLAN.md 步骤14.2（演示容错开关准备）。
-当前状态补充：已在 `backend/src/core/settings.py` 中新增并接通 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES` 两个环境开关，并同步更新 `backend/.env.example`。当前后端运行时配置已完整覆盖 `14.2` 需要的三类演示能力开关：`ENABLE_DEMO_LOGIN`、`ENABLE_MOCK_AI`、`SHOW_SEEDED_CASES`。
-当前状态补充：已新增公开运行时特性接口 `GET /api/v1/runtime/features`，对应实现位于 `backend/src/api/routes/runtime_features.py` 与 `backend/src/schemas/runtime_features.py`。该接口当前会返回 `enable_demo_login`、`enable_mock_ai`、`show_seeded_cases` 与聚合后的 `demo_mode_enabled`，用于让学生端页面读取真实后端开关，而不再仅凭微信环境版本猜测演示模式。
-当前状态补充：`ENABLE_MOCK_AI` 当前不是简单地“固定读取低风险 mock 文件”，而是把树洞 AI 分析链路切换为本地 mock 分析模式：`backend/src/services/deepseek_service.py` 现在会在开启该开关时直接跳过 DeepSeek 外网请求，并在 `mock_response.json` 的基础结构上叠加本地关键词分级，把树洞文本稳定分类到 `low / watch / high`。因此即使现场外网抖动或完全断网，高风险树洞内容仍可被本地稳定拦截并进入 `S14 安全拦截` 与 `A03/A04` 复核链路，不再受“静态低风险 mock 响应”限制。
-当前状态补充：`SHOW_SEEDED_CASES` 当前已真实接入后台与学生端读取路径，而不只是停留在配置层。相关过滤逻辑已下沉到多个 repository / service / route：当该开关为 `false` 时，`A02 总览`、`A03/A04 预警队列与详情`、`A05 帖子管理`、`A06 用户目录`、`A07 审计日志`、`A08 统计分析` 以及学生端树洞广场读取都会自动隐藏 `14.1` 预置的 demo 学生、帖子、工单与审计样例；当该开关为 `true` 时，后台与广场才会展示这些预置样本，从而让“是否暴露演示数据”成为明确可控的部署行为。
-当前状态补充：学生端已按 `APP_FLOW.md` 与 `FRONTEND_GUIDELINES.md` 调整演示入口口径。已新增 `miniprogram/services/runtime.js`，并扩展 `miniprogram/app.js`、`miniprogram/pages/startup/index.js` 与 `miniprogram/pages/login/index.js`：`S01` 当前会在启动时同步运行时特性，`S02` 登录页当前只会在后端显式开启 `ENABLE_DEMO_LOGIN` 时显示演示入口；若同时开启 `ENABLE_MOCK_AI` 或 `SHOW_SEEDED_CASES`，登录页会以暖色提示块明确标注“本地模拟 AI 分析 / 后台预置案例”容错状态。整个学生端改动继续保持原生组件、克制配色、低压提示文案和清晰操作层级，没有引入任何第三方 UI 依赖。
-当前状态补充：已同步更新 `tests/integration/manual_e2e_rehearsal.md`。手册当前已把 `.env` 示例扩展为 `ENABLE_DEMO_LOGIN=true`、`ENABLE_MOCK_AI=true`、`SHOW_SEEDED_CASES=true` 的推荐答辩配置，并把“14.2 尚未完成”的旧说明替换为新的容错演练口径：当 `ENABLE_MOCK_AI=true` 时，树洞高风险拦截可以在无外网下稳定演练；当 `SHOW_SEEDED_CASES=true` 时，后台 `A02-A08` 可以直接使用预置案例兜底演示。
-当前状态补充：已新增 `tests/backend/test_runtime_features_api.py`，并扩展 `tests/backend/test_settings.py`、`tests/backend/test_deepseek_service.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_demo_seed_service.py`，覆盖运行时特性接口、环境变量加载、强制 mock AI 跳过外网请求并触发高风险拦截、以及 `SHOW_SEEDED_CASES=false` 时后台与树洞读取接口隐藏 demo 数据等关键场景。本地已执行 `ruff check --no-cache backend/src tests/backend` 与定向 pytest（`tests/backend/test_settings.py`、`tests/backend/test_runtime_features_api.py`、`tests/backend/test_deepseek_service.py`、`tests/backend/test_treehole_api.py`、`tests/backend/test_admin_dashboard_api.py`、`tests/backend/test_admin_alerts_api.py`、`tests/backend/test_admin_posts_api.py`、`tests/backend/test_admin_users_api.py`、`tests/backend/test_admin_audit_logs_api.py`、`tests/backend/test_admin_analytics_api.py`、`tests/backend/test_demo_seed_service.py`），当前共 47 项测试通过。
-当前状态补充：第十四阶段当前已完成 `14.1 演示种子数据准备` 与 `14.2 演示容错开关准备`。项目现在既能通过统一 seed 命令预置后台样例，又能通过真实运行时开关在“演示登录 / 本地 mock AI / 是否展示预置案例”三方面切换容错模式，为下一步 `14.3` 的最终答辩顺序固化提供稳定基础。当前尚未补充小程序侧自动化测试，学生端相关验证主要依赖现有后端测试与页面代码核对。
-待办：见 IMPLEMENTATION_PLAN.md 步骤14.3。
-已完成：IMPLEMENTATION_PLAN.md 步骤14.3（最终答辩演示顺序准备）。
-当前状态补充：已新增 `tests/integration/final_defense_demo_runbook.md`，作为 `14.3` 的最终现场答辩 runbook。该文档当前把展示链路收敛成一条 6-8 分钟的主线：`学生登录 -> 快速筛查局部展示 -> 高风险树洞提交 -> 后台队列复核 -> 模拟通知日志展示`，与 `IMPLEMENTATION_PLAN.md` 给出的推荐顺序保持一致，不再沿用 `13.3` 那种“完整跑四条独立脚本”的全量演练节奏。
-当前状态补充：新的最终 runbook 当前明确了三类现场稳定性策略：第一，推荐答辩环境固定为 `ENABLE_DEMO_LOGIN=true`、`ENABLE_MOCK_AI=true`、`SHOW_SEEDED_CASES=true`，优先保证稳定而不是赌真实外网；第二，主链路中只局部展示 `S05 快速筛查`，不在现场完整跑 70 题；第三，为每个高风险节点补齐了兜底动作，例如登录失败时切换演示账号、新案例未生成时直接使用 `SHOW_SEEDED_CASES=true` 下的预置高风险案例、后台筛选过多时固定先按 `pending_review` 收口。
-当前状态补充：为避免 `13.3` 的全量人工走查手册与 `14.3` 的现场答辩顺序互相混淆，已同步更新 `tests/integration/manual_e2e_rehearsal.md`：文档开头、推荐演练顺序段落和边界说明当前都已明确区分“全量回归演练”和“最终现场 runbook”两类用途，并直接链接到 `final_defense_demo_runbook.md`。当前仓库中，`13.3` 负责全量人工走查，`14.3` 负责现场执行顺序与兜底策略，分工已经清晰。
-当前状态补充：本步没有新增后端业务代码、小程序页面或后台页面，也没有新增自动化测试；主要工作是把现有 `14.1 / 14.2` 的能力重新编排成一条现场可讲、可切、可兜底的答辩顺序，并做文档一致性检查，确认 runbook 中引用的页面编号、按钮名称、环境变量和 fallback 口径与仓库当前实现一致。由于本步产物是文档型交付，本轮未额外执行 pytest 或其他代码级验证。
-当前状态补充：第十四阶段当前已完成 `14.1 演示种子数据准备`、`14.2 演示容错开关准备` 与 `14.3 最终答辩演示顺序准备` 三项内容。项目现在同时具备预置演示样例、离线可用的 mock AI 风险分流，以及面向现场的单链路答辩脚本，答辩流程已可在一条主线内稳定展示。
-当前状态补充：在答辩加固阶段完成后，又根据联调结果补充了一次树洞发布规则修正：当前树洞内容是否公开，不再由“树洞 AI + 历史问卷 / 历史高风险”共同决定，而改为只由“本次树洞文本的 AI 风险等级”决定；问卷高风险、历史高风险与历史硬触发当前只会转化为后台 follow-up 标记，而不会再把一条当前内容本身低风险的树洞直接拦截为 `blocked_high_risk`。
-当前状态补充：这次修正的直接原因是：使用当前 demo 学生账号发布“今天天气真好，路上遇到了一只可爱的小猫，我真开心。”这类明显低风险内容时，AI 本身已返回 `low / publish`，但由于该账号最新 `UPI` 结果为 `high` 且命中 `hard_trigger_hit=True`，旧聚合逻辑仍会把帖子整体抬成 `high` 并拦截，造成学生端观感与产品预期不一致。当前已经按“问卷高风险不直接封树洞，只在后台额外加关注/复核标记”的口径完成修正。
-当前状态补充：相关实现已落在 `backend/src/services/treehole_service.py`，调整点主要包括：发布状态机当前仅依据 `analysis_snapshot.parsed_risk_level` 决定 `published / blocked_high_risk`；若当前树洞文本本身为 `high`，仍会进入 `alert_case` 高优先级复核链路；若当前文本为 `low / watch`，但学生存在问卷硬触发、高风险量表或历史高风险记录，则当前只会为该帖子补写 `focus_list` 跟进记录，不再拦截公开发布。
-当前状态补充：已同步扩展 `tests/backend/test_treehole_api.py`，新增覆盖“当前文本低风险 + 问卷高风险 / 硬触发历史 -> 允许发布但写 follow-up 标记”的场景，并调整“历史高风险 + 中性树洞内容”测试的预期口径；同时复跑 `tests/backend/test_treehole_api.py` 与 `tests/backend/test_risk_aggregation_service.py`，当前共 22 项测试通过，确认真正的高风险树洞拦截链路仍然有效，而 benign 文本不再被问卷结果误封。
-当前状态补充：在继续联调学生端树洞详情页时，又补充了一次“演示账号文案与正式账号文案分流”修正。当前 `miniprogram/pages/treehole/detail/index.js`、`miniprogram/pages/treehole/detail/index.wxml` 与 `miniprogram/utils/treehole.js` 已按 `student.is_demo` 分两套删除文案：演示账号继续保留“后台仍会保留记录 / 审计与复核”这类解释，方便答辩现场向评委说明软删除实现；正式账号则只展示“帖子已从学生端移除 / 当前无法恢复”等用户视角文案，不再暴露后台保留语义。
-当前状态补充：这次修正覆盖了学生端删除相关的四个入口，而不是只改单一提示块：1）详情页常驻“删除说明”卡片；2）删除确认弹窗；3）删除成功后的状态提示；4）返回广场后的最近删除 notice。当前正式账号在这四个位置都不会再看到“后台仍会保留记录”“审计与复核”等实现细节，软删除对正式用户的体验已经恢复为“我删除后，学生端就看不到了”。
-当前状态补充：本步没有改动后端接口、数据库状态机或管理后台，只调整了学生端 UI 文案分流逻辑；因此本轮未额外执行 pytest。后续若继续改动树洞详情页或删除交互，可再统一做一次小程序侧人工联调核对。
-已完成：学生端新版前端第一轮频道化重构（按 `New_FRONTEND_GUIDELINES.md` 执行，并参考 `FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 约束）。
-当前状态补充：本轮没有改动后端接口契约，重点是学生端信息架构与 UI / UX 重构。已新增 `miniprogram/constants/navigation.js`，把学生端一级频道固定为 `树洞 / 测评 / 报告 / 我的` 四个入口，并在 `app.json` 中补充 `pages/profile/index` 与 `pages/help/index` 路由。
-当前状态补充：已新增新版公共前端层组件 `floating-tab-bar`、`channel-header`、`content-section-card`、`quick-action-row`，并同步升级 `app-shell`、`page.wxss`、`button.wxss` 及多个业务组件样式，使学生端从原先“模块入口页 + 说明卡堆叠”切换到“频道首页 + 悬浮胶囊导航 + 内容流卡片”的新版结构；当前实现继续保持微信小程序原生组件体系，没有引入第三方 UI 依赖。
-当前状态补充：`pages/home/index` 已从旧首页重构为 `测评` 频道一级页。当前页面会以任务主线形式展示四份必做问卷与可选 UPI，突出 70 题固定链路、剩余问卷、快速动作和完整报告解锁状态，不再把树洞 / 报告 / 帮助等入口和测评目录混在同一张传统首页中。
-当前状态补充：`pages/treehole/feed/index` 已重构为 `树洞` 频道一级页，保留公开帖子读取、预设互动、删除后 notice 与授权禁用逻辑，但改为内容流频道结构；顶部新增频道摘要与指标区，底部新增常驻悬浮导航，发帖入口改成更明确的主操作。`pages/treehole/create/index` 已改成更聚焦输入主任务的创作页，`pages/treehole/detail/index` 已同步收紧详情结构，同时继续保留 `is_demo` 文案分流与删除逻辑。
-当前状态补充：`pages/reports/index` 已重构为 `报告` 频道一级页，强化 `锁定 / 部分完成 / 已解锁` 三种状态表达，并把摘要卡、历史记录、下一步动作和免责声明重新分层。`pages/reports/full/index` 也已按新版方向收紧结构，降低长文感，改为更偏结构化摘要、量表卡与建议区的完整报告详情页。报告页中原先 `S15` 帮助动作的“未接入”占位也已修正为真实跳转至帮助页。
-当前状态补充：已新增 `pages/profile/index` 作为 `我的` 频道一级页，集中承载学生身份摘要、授权状态、帮助资源入口、运行时演示提示和退出登录；已新增 `pages/help/index` 作为 `S15 帮助页` 的学生端落地页，提供热线、校内资源和冷静处理建议，并遵守“高风险帮助信息层级高于普通自助建议”的规范。
-当前状态补充：本轮已对新增与修改后的 `miniprogram/**/*.json` 完成结构校验，当前共 36 个 JSON 文件可成功解析；同时核对了 `app.json` 中 16 个页面路由对应的 `js/json/wxml/wxss` 文件均已存在。当前环境仍缺少微信开发者工具和小程序运行态自动化校验能力，因此尚未执行真实界面级渲染或交互回归，验证方式仍以静态结构检查、路由闭环核对和代码人工审查为主。
-当前状态补充：在新版学生端第一轮频道化重构后，又按最新联调反馈补充了一次前端细节修正。`pages/home/index` 中测评频道的快捷区标题已从“现在可以直接去做”收紧为“快捷入口”，使该区域从口语化提示调整为更稳定的导航语义，更符合当前页面的信息层级和整体语气。
-当前状态补充：树洞频道中的“产品不存在能力”表述已做清理。`pages/treehole/feed/index` 右上角的“无评论 · 无私信”标签已删除；同时 `pages/treehole/feed/index.wxml`、`pages/treehole/create/index.wxml`、`pages/treehole/detail/index.js` 与 `pages/treehole/detail/index.wxml` 中原先多处“当前不开放评论 / 私信”的否定性说明已改为更中性的功能描述，避免把“未实现的能力”误写成“存在但被关闭的能力”。
-当前状态补充：树洞支持反馈当前已从“单次表达、重复点击幂等”改为真正的可取消 toggle。前端方面，`miniprogram/pages/treehole/feed/index.js` 与 `miniprogram/pages/treehole/detail/index.js` 现在都支持对 `抱抱 / 点亮 / 陪伴` 再次点击取消；`miniprogram/utils/treehole.js` 中的 optimistic 更新逻辑也已同步改成双向加减与 `reactedByMe` 翻转，不再把已点状态直接锁死。学生端提示当前也已从“你已经表达过支持了”改成“已表达支持 / 已取消支持”两种明确反馈。
-当前状态补充：为支撑上述 toggle 交互，树洞反应接口的后端契约也已同步调整。`backend/src/services/treehole_service.py` 与 `backend/src/repositories/treehole_repository.py` 当前不再把相同 reaction 视为纯幂等重复提交，而是按“存在则删除，不存在则新增”的规则切换数据库中的 `post_reactions` 记录，并同步维护 `hug_count` 聚合计数。因此这次变更不是纯前端 UI 修正，而是一次学生端与 API 语义的对齐。
-当前状态补充：已同步更新 `tests/backend/test_treehole_api.py` 中对应的反应接口测试，将原先“重复点击同一 reaction 不增加计数”的断言改为“第一次新增、第二次移除、第三次不同类型再次新增”的 toggle 断言，确保树洞支持反馈的接口行为与学生端交互口径保持一致。本轮仍未执行微信开发者工具中的真实运行态验证；当前确认方式主要为代码级检查、文案排查、JSON 结构校验与受影响测试用例的断言同步。
-待办：所有IMLEMENTATION_PLAN.md均已完成；若继续推进，下一步应转向整体验收收口、最终答辩前彩排记录，以及你接下来要继续提出的界面与交互细节修正，而不是继续补基础实现项。
+项目进度记录（结构化重整）
+
+## 0. 会话起点
+
+- 项目开始时，已完成规范文档阅读：`PRD.md`、`APP_FLOW.md`、`TECH_STACK.md`、`FRONTEND_GUIDELINES.md`、`BACKEND_STRUCTURE.md`、`IMPLEMENTATION_PLAN.md`、`CODEX.md`。
+- 当前阶段定位：`IMPLEMENTATION_PLAN.md` 中的既定开发项已完成，工作重点已转入验收收口、界面细节修正、演示稳定性与答辩准备。
+
+## 1. 基础设施与数据库阶段
+
+### 已完成
+
+- 项目初始化与依赖安装。
+- `IMPLEMENTATION_PLAN.md` 步骤 `2.1`：FastAPI 应用骨架、路由聚合、`/health` 健康检查接口。
+- `IMPLEMENTATION_PLAN.md` 步骤 `2.2`：环境变量配置系统、`Settings` 加载、`.env.example`、应用启动依赖环境变量。
+- `IMPLEMENTATION_PLAN.md` 步骤 `2.3`：SQLAlchemy `engine`、`sessionmaker`、数据库会话依赖、模型 `Base`、非测试环境启动连通性检查。
+- `IMPLEMENTATION_PLAN.md` 步骤 `2.4`：Alembic 初始化、模型元数据接入、首个空迁移生成与执行验证。
+
+### 当前状态补充
+
+- 后端已具备最小可运行入口，`GET /health` 已通过本地 pytest 验证并返回 `200`。
+- `Settings` 已接入 `app.state`，测试环境下可通过环境变量成功启动应用。
+- FastAPI `app.state` 已挂载数据库引擎与会话工厂，后续模型与 Alembic 共用同一套元数据和连接配置。
+- 已新增 `backend/alembic.ini`、`backend/alembic/env.py`、迁移模板与首个 revision `ad77297002e7_initialize_alembic.py`。
+- 已实际执行 Alembic `revision --autogenerate` 与 `upgrade head`，使用临时 SQLite 数据库验证迁移链路可生成、可升级。
+
+### 验证状态
+
+- 基础设施相关测试已覆盖 engine 创建、会话依赖、启动检查、健康接口、Alembic upgrade/downgrade。
+
+## 2. 核心数据模型与迁移阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `3.1`：`student_users`、`consent_records`、`admin_users` 模型与迁移创建。
+- `IMPLEMENTATION_PLAN.md` 步骤 `3.2`：`questionnaire_templates`、`question_bank`、`questionnaire_submissions`、`questionnaire_answers`、`assessment_reports` 模型与迁移创建。
+- `IMPLEMENTATION_PLAN.md` 步骤 `3.3`：`treehole_posts`、`ai_analysis_records`、`post_reactions` 模型与迁移创建。
+- `IMPLEMENTATION_PLAN.md` 步骤 `3.4`：`alert_cases`、`intervention_logs`、`focus_list_entries`、`audit_logs` 模型与迁移创建。
+
+### 当前状态补充
+
+- 核心账户、问卷、树洞、预警与审计四大数据域均已落地。
+- 各表均按 MySQL 规范落实字段类型、唯一约束、外键关系、JSON 字段与 `utf8mb4` 配置。
+- 树洞表已表达：
+  - AI 处理状态
+  - 发布状态机
+  - 软删除语义
+  - 公开发布控制
+- 工单与审计表已表达：
+  - 来源类型
+  - 优先级与队列状态
+  - 干预时间线
+  - 重点关注生命周期
+  - 敏感操作审计
+
+### 验证状态
+
+- 各阶段迁移均已实际执行 `alembic upgrade head` 验证。
+- ORM 关系、DDL 编译、默认值、外键与约束已由后端测试覆盖。
+
+## 3. 题库、评分与报告阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `4.1`：统一题库种子 JSON 结构定义与校验脚本创建。
+- `IMPLEMENTATION_PLAN.md` 步骤 `4.2`：`screen_questions.json`、`sleep_questions.json`、`upi_questions.json` 创建。
+- `IMPLEMENTATION_PLAN.md` 步骤 `4.3`：`sds_questions.json`、`sas_questions.json` 创建。
+- `IMPLEMENTATION_PLAN.md` 步骤 `4.4`：统一题库导入脚本创建，可插入或刷新模板与题库。
+- `IMPLEMENTATION_PLAN.md` 步骤 `5.1`：快速筛查、SDS、SAS、睡眠问卷、UPI 评分服务实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `5.2`：硬触发判断逻辑实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `5.3`：单量表结果、报告摘要状态与完整综合画像报告生成逻辑实现。
+
+### 当前状态补充
+
+- 五份问卷题库种子已完整落地：
+  - 快速筛查 15 题
+  - 睡眠问卷 15 题
+  - UPI 4 题
+  - SDS 20 题
+  - SAS 20 题
+- 已落实 SDS/SAS 反向计分、统一评分映射与硬触发规则。
+- 已实现统一题库校验与导入链路，可按 `template.code` 与 `question_id` 刷新数据库。
+- 已实现五类问卷评分器、风险分级、硬触发升级与评分快照输出。
+- 报告服务已实现：
+  - 单量表结果页数据
+  - `S10` 报告摘要状态
+  - `S10A` 完整综合画像报告
+- 完整报告解锁规则已固定：
+  - 必须完成 `SCREEN + SDS + SAS + SLEEP`
+  - UPI 不阻塞解锁，但可抬升综合风险
+
+### 验证状态
+
+- 题库结构、真实种子文件、评分阈值、反向计分、硬触发与报告聚合均已由 pytest 覆盖。
+- 已实际执行导入脚本，验证数据库中可成功导入 5 个模板与 74 条题目记录。
+
+## 4. 学生认证与授权阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `6.1`：学生微信登录 API 与演示登录 API 实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `6.2`：授权提交接口、授权记录持久化与学生授权状态同步实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `6.3`：学生端启动页、登录页、授权页与首页主流程实现。
+
+### 当前状态补充
+
+- 后端已实现学生 JWT 签发与校验，登录支持：
+  - 微信登录
+  - 演示登录
+- 授权提交支持：
+  - `privacy_policy`
+  - `crisis_intervention_authorization`
+- 授权记录采用追加写入，当前态同步到 `student_users.consent_status`。
+- 小程序已实现：
+  - 启动分流
+  - 登录
+  - 授权页同意/拒绝
+  - 会话刷新
+  - 基于授权状态的首页分流
+- 开发联调阶段采用 `wx.login + 受控手机号表单` 作为桥接方案。
+
+### 验证状态
+
+- 学生登录、演示登录、授权同意/拒绝、JWT claims 与未登录拒绝访问均已有测试覆盖。
+
+## 5. 问卷 API 与学生端测评/报告页面阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `7.1`：问卷列表接口、问卷详情接口、必做进度接口与学生端首页元数据接入。
+- `IMPLEMENTATION_PLAN.md` 步骤 `7.2`：问卷提交接口、评分执行、提交记录与答案明细持久化实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `7.3`：快速筛查、SDS、SAS、睡眠问卷、UPI 五个小程序问卷页面实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `7.4`：报告页、完整报告页与报告接口实现。
+
+### 当前状态补充
+
+- 问卷列表与详情接口已按固定顺序返回五份问卷元数据。
+- 问卷提交已支持：
+  - 本地漏答拦截
+  - 服务端结构化错误透传
+  - 结果页状态渲染
+  - 固定进度刷新
+- 小程序已具备真实测评链路与报告查看能力。
+- 报告页已支持：
+  - 锁定状态
+  - 部分完成状态
+  - 完整解锁状态
+  - 历史记录与安全提示
+
+### 验证状态
+
+- 问卷接口、提交校验、报告摘要与完整报告接口均已有后端测试覆盖。
+
+## 6. 树洞、AI 风险与复核闭环阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `8.1`：树洞数据接口实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `8.2`：小程序树洞页面实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `8.3`：树洞软删除规则前端表现补齐。
+- `IMPLEMENTATION_PLAN.md` 步骤 `9.1`：DeepSeek 客户端实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `9.2`：DeepSeek 模拟回退路径实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `9.3`：风险聚合器实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `9.4`：树洞发布决策逻辑实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `10.1`：工单创建实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `10.2`：干预记录实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `10.3`：重点关注列表实现。
+
+### 当前状态补充
+
+- 树洞已支持：
+  - 发帖
+  - 广场读取
+  - 详情
+  - 软删除
+  - 预设互动
+- AI 风险链路已支持：
+  - 外部 DeepSeek
+  - 本地 mock fallback
+- 风险聚合器已实现问卷、树洞与历史风险的综合判断。
+- 后台复核闭环已具备：
+  - `alert_cases`
+  - `intervention_logs`
+  - `focus_list_entries`
+  - `audit_logs`
+- 发布规则已在联调后修正为：
+  - 当前是否公开只由本次树洞文本 AI 风险决定
+  - 问卷高风险/历史高风险只转为后台 follow-up
+- 树洞软删除文案已按 `is_demo` 分流，正式账号不再暴露后台保留语义。
+- 树洞支持反馈已从“幂等单次表达”升级为“可取消 toggle”：
+  - 第一次点击新增
+  - 第二次点击取消
+  - 广场页与详情页均已对齐
+
+### 验证状态
+
+- 树洞 API、AI fallback、高风险拦截、follow-up 写入、删除规则与 reaction toggle 已有测试覆盖。
+
+## 7. 管理后台阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `11.1`：管理员登录实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `11.2`：总览页实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `11.3`：预警队列与详情页实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `11.4`：帖子管理页实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `11.5`：用户目录与审计日志页实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `12.1`：统计接口实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `12.2`：Streamlit 图表页实现。
+
+### 当前状态补充
+
+- 后台当前已具备 MVP 工作区：
+  - `A01` 管理员登录
+  - `A02` 总览页
+  - `A03` 预警队列
+  - `A04` 预警详情
+  - `A05` 帖子管理
+  - `A06` 用户目录
+  - `A07` 审计日志
+  - `A08` 统计分析
+- 后台受保护接口、敏感内容展开、审计写入与 Streamlit 会话缓存均已打通。
+- 统计接口当前已返回：
+  - 风险分布
+  - 最近 7 天趋势
+  - 工单状态统计
+- 后台整体仅使用 Streamlit 原生组件与局部 CSS 注入，保持高信息密度、克制、可审计的管理端风格。
+
+### 验证状态
+
+- 管理员登录、总览、预警、帖子管理、用户目录、审计日志、统计分析相关接口与辅助客户端逻辑均已有测试覆盖。
+
+## 8. 测试与集成验证阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `13.1`：后端单元测试增强完成。
+- `IMPLEMENTATION_PLAN.md` 步骤 `13.2`：API 集成测试实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `13.3`：人工端到端演练脚本准备完成。
+
+### 当前状态补充
+
+- 已补强核心规则引擎单测：
+  - 评分服务
+  - 硬触发逻辑
+  - 报告解锁逻辑
+  - 风险聚合逻辑
+- 已新增跨接口集成测试，覆盖：
+  - 学生登录 -> 授权 -> 四份必做问卷 -> 报告解锁 -> 低风险树洞发布
+  - 高风险树洞提交 -> 后台待复核工单 -> 管理员确认高风险
+- 已新增人工演练手册 `manual_e2e_rehearsal.md`，形成环境准备、演练脚本与记录模板的一体化文档。
+
+### 验证状态
+
+- 项目当前同时具备：
+  - 规则层单测
+  - 接口层集成测试
+  - 人工端到端演练脚本
+
+## 9. 演示与答辩支撑阶段
+
+### 已完成
+
+- `IMPLEMENTATION_PLAN.md` 步骤 `14.1`：演示种子数据准备。
+- `IMPLEMENTATION_PLAN.md` 步骤 `14.2`：演示容错开关准备。
+- `IMPLEMENTATION_PLAN.md` 步骤 `14.3`：最终答辩演示顺序准备。
+
+### 当前状态补充
+
+- 已新增 demo seed 服务与 CLI，可一键导入：
+  - 演示学生
+  - 问卷提交
+  - 树洞帖子
+  - AI 分析
+  - 预警工单
+  - 重点关注
+  - 干预记录
+  - 审计样例
+- seed 逻辑已具备幂等刷新能力，可反复重建演示数据。
+- 已接通运行时开关：
+  - `ENABLE_DEMO_LOGIN`
+  - `ENABLE_MOCK_AI`
+  - `SHOW_SEEDED_CASES`
+- 已新增运行时特性接口 `/api/v1/runtime/features`。
+- `ENABLE_MOCK_AI` 已支持本地关键词分级，不再只是静态低风险 mock。
+- 已新增最终答辩 runbook，主链路收敛为：
+  - 学生登录
+  - 快速筛查局部展示
+  - 高风险树洞提交
+  - 后台预警复核
+  - 模拟通知日志展示
+
+### 验证状态
+
+- 演示数据、运行时开关、mock AI、后台样例过滤逻辑均已有测试覆盖。
+
+## 10. 学生端新版前端重构与细节修正
+
+### 已完成
+
+- 学生端新版前端第一轮频道化重构（按 `New_FRONTEND_GUIDELINES.md` 执行，并参考 `FRONTEND_GUIDELINES.md` 与 `APP_FLOW.md` 约束）。
+
+### 当前状态补充
+
+- 已新增新版公共前端层组件：
+  - `floating-tab-bar`
+  - `channel-header`
+  - `content-section-card`
+  - `quick-action-row`
+- 已完成学生端一级频道重构：
+  - `测评`
+  - `报告`
+  - `树洞`
+  - `我的`
+- 已新增：
+  - `pages/profile/index`
+  - `pages/help/index`
+- 导航栏已调整为：
+  - 白色基准明亮胶囊
+  - 完整文案标签
+  - 一级频道顺序 `测评 / 报告 / 树洞 / 我的`
+- `pages/home/index` 已重构为测评频道首页。
+- `pages/treehole/feed/index` 已重构为树洞频道首页。
+- `pages/reports/index` 已重构为报告频道首页。
+- `pages/reports/full/index` 已重构为更结构化的完整报告页。
+- 细节修正已包括：
+  - 测评频道快捷区标题改为“快捷入口”
+  - 删除树洞频道“无评论 · 无私信”及类似否定性文案
+  - 树洞支持反馈前后端语义对齐为可取消 toggle
+
+### 验证状态
+
+- 已对 `miniprogram/**/*.json` 完成结构校验，当前共 `36` 个 JSON 文件可成功解析。
+- 已核对 `app.json` 中 `16` 个页面路由对应的 `js/json/wxml/wxss` 文件均存在。
+- 当前环境仍缺少微信开发者工具与真实运行态自动验证，因此学生端仍主要依赖：
+  - 静态结构检查
+  - 路由闭环核对
+  - 文案排查
+  - 代码人工审查
+
+## 11. 当前总体能力结论
+
+- 项目已完成：
+  - 学生端主流程
+  - 问卷评分与报告
+  - 树洞与 AI 风险分流
+  - 后台复核与治理
+  - 统计分析
+  - 演示与答辩支撑
+- 当前重点已不是继续补基础实现项，而是：
+  - 验收收口
+  - 运行态联调
+  - 视觉与交互细节修正
+  - 答辩前彩排与稳定性确认
+
+## 12. 当前待办
+
+- 所有 `IMPLEMENTATION_PLAN.md` 功能项均已完成。
+- 若继续推进，下一步应转向：
+  - 微信开发者工具中的真实运行态回归
+  - 学生端视觉与交互细节继续打磨
+  - 最终答辩彩排记录与截图/录屏确认
+  - 文档归档与交付整理
