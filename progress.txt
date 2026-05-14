@@ -315,4 +315,9 @@
 当前状态补充：`pages/reports/index` 已重构为 `报告` 频道一级页，强化 `锁定 / 部分完成 / 已解锁` 三种状态表达，并把摘要卡、历史记录、下一步动作和免责声明重新分层。`pages/reports/full/index` 也已按新版方向收紧结构，降低长文感，改为更偏结构化摘要、量表卡与建议区的完整报告详情页。报告页中原先 `S15` 帮助动作的“未接入”占位也已修正为真实跳转至帮助页。
 当前状态补充：已新增 `pages/profile/index` 作为 `我的` 频道一级页，集中承载学生身份摘要、授权状态、帮助资源入口、运行时演示提示和退出登录；已新增 `pages/help/index` 作为 `S15 帮助页` 的学生端落地页，提供热线、校内资源和冷静处理建议，并遵守“高风险帮助信息层级高于普通自助建议”的规范。
 当前状态补充：本轮已对新增与修改后的 `miniprogram/**/*.json` 完成结构校验，当前共 36 个 JSON 文件可成功解析；同时核对了 `app.json` 中 16 个页面路由对应的 `js/json/wxml/wxss` 文件均已存在。当前环境仍缺少微信开发者工具和小程序运行态自动化校验能力，因此尚未执行真实界面级渲染或交互回归，验证方式仍以静态结构检查、路由闭环核对和代码人工审查为主。
+当前状态补充：在新版学生端第一轮频道化重构后，又按最新联调反馈补充了一次前端细节修正。`pages/home/index` 中测评频道的快捷区标题已从“现在可以直接去做”收紧为“快捷入口”，使该区域从口语化提示调整为更稳定的导航语义，更符合当前页面的信息层级和整体语气。
+当前状态补充：树洞频道中的“产品不存在能力”表述已做清理。`pages/treehole/feed/index` 右上角的“无评论 · 无私信”标签已删除；同时 `pages/treehole/feed/index.wxml`、`pages/treehole/create/index.wxml`、`pages/treehole/detail/index.js` 与 `pages/treehole/detail/index.wxml` 中原先多处“当前不开放评论 / 私信”的否定性说明已改为更中性的功能描述，避免把“未实现的能力”误写成“存在但被关闭的能力”。
+当前状态补充：树洞支持反馈当前已从“单次表达、重复点击幂等”改为真正的可取消 toggle。前端方面，`miniprogram/pages/treehole/feed/index.js` 与 `miniprogram/pages/treehole/detail/index.js` 现在都支持对 `抱抱 / 点亮 / 陪伴` 再次点击取消；`miniprogram/utils/treehole.js` 中的 optimistic 更新逻辑也已同步改成双向加减与 `reactedByMe` 翻转，不再把已点状态直接锁死。学生端提示当前也已从“你已经表达过支持了”改成“已表达支持 / 已取消支持”两种明确反馈。
+当前状态补充：为支撑上述 toggle 交互，树洞反应接口的后端契约也已同步调整。`backend/src/services/treehole_service.py` 与 `backend/src/repositories/treehole_repository.py` 当前不再把相同 reaction 视为纯幂等重复提交，而是按“存在则删除，不存在则新增”的规则切换数据库中的 `post_reactions` 记录，并同步维护 `hug_count` 聚合计数。因此这次变更不是纯前端 UI 修正，而是一次学生端与 API 语义的对齐。
+当前状态补充：已同步更新 `tests/backend/test_treehole_api.py` 中对应的反应接口测试，将原先“重复点击同一 reaction 不增加计数”的断言改为“第一次新增、第二次移除、第三次不同类型再次新增”的 toggle 断言，确保树洞支持反馈的接口行为与学生端交互口径保持一致。本轮仍未执行微信开发者工具中的真实运行态验证；当前确认方式主要为代码级检查、文案排查、JSON 结构校验与受影响测试用例的断言同步。
 待办：所有IMLEMENTATION_PLAN.md均已完成；若继续推进，下一步应转向整体验收收口、最终答辩前彩排记录，以及你接下来要继续提出的界面与交互细节修正，而不是继续补基础实现项。
