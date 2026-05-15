@@ -4,6 +4,7 @@
 
 - 项目开始时，已完成规范文档阅读：`PRD.md`、`APP_FLOW.md`、`TECH_STACK.md`、`FRONTEND_GUIDELINES.md`、`BACKEND_STRUCTURE.md`、`IMPLEMENTATION_PLAN.md`、`CODEX.md`。
 - 当前阶段定位：`IMPLEMENTATION_PLAN.md` 中的既定开发项已完成，工作重点已转入验收收口、界面细节修正、演示稳定性与答辩准备。
+- 维护约定：`progress.txt` 为正式阶段记录；`progress_summary.txt` 为同步维护的汇报摘要版。以后每次编写或更新 `progress.txt` 时，都应同步更新 `progress_summary.txt`，保证两份文件口径一致。
 
 ## 1. 基础设施与数据库阶段
 
