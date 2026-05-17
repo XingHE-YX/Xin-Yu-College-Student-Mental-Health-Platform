@@ -13,6 +13,10 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("./session");
+const {
+  relaunchOrSwitchTab,
+  switchToPrimaryTab,
+} = require("./navigation");
 
 const RISK_LABELS = {
   low: "低风险",
@@ -533,7 +537,7 @@ function createQuestionnairePage(questionnaireCode) {
     handlePrimaryAction() {
       const resultView = this.data.resultView;
       if (!resultView || !resultView.primaryAction) {
-        wx.reLaunch({ url: PAGE_ROUTES.HOME });
+        switchToPrimaryTab(PAGE_ROUTES.HOME);
         return;
       }
 
@@ -543,11 +547,11 @@ function createQuestionnairePage(questionnaireCode) {
         return;
       }
 
-      wx.reLaunch({ url: action.route || PAGE_ROUTES.HOME });
+      relaunchOrSwitchTab(action.route || PAGE_ROUTES.HOME);
     },
 
     handleBackHome() {
-      wx.reLaunch({ url: PAGE_ROUTES.HOME });
+      switchToPrimaryTab(PAGE_ROUTES.HOME);
     },
   };
 }

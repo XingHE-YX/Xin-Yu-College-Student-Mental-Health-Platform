@@ -18,6 +18,9 @@ const {
   mergeTreeholeReactionResult,
   normalizeTreeholePost,
 } = require("../../../utils/treehole");
+const {
+  switchToPrimaryTab,
+} = require("../../../utils/navigation");
 
 function buildFeedMetrics(posts = []) {
   return {
@@ -73,6 +76,15 @@ Page({
   },
 
   onShow() {
+    this.syncPrimaryTabBar();
+    if (this.skipNextOnShowRefresh) {
+      this.skipNextOnShowRefresh = false;
+      return;
+    }
+    if (this.hasBootstrapped) {
+      this.bootstrap({ preserveContent: true });
+      return;
+    }
     this.bootstrap();
   },
 
@@ -80,7 +92,12 @@ Page({
     this.bootstrap();
   },
 
-  bootstrap() {
+  onLoad() {
+    this.skipNextOnShowRefresh = true;
+  },
+
+  bootstrap(options = {}) {
+    const preserveContent = Boolean(options.preserveContent);
     const session = ensureAuthenticatedSession(this);
     if (!session) {
       wx.stopPullDownRefresh();
@@ -100,14 +117,23 @@ Page({
           "你当前还没有开放危机干预授权，因此树洞频道会保持禁用状态。",
       });
       wx.stopPullDownRefresh();
+      this.hasBootstrapped = true;
       return;
     }
 
-    this.setData({
-      loading: true,
-      loadError: "",
-      deleteNotice,
-    });
+    this.setData(
+      preserveContent
+        ? {
+            loadError: "",
+            deleteNotice,
+          }
+        : {
+            loading: true,
+            loadError: "",
+            deleteNotice,
+          }
+    );
+    this.hasBootstrapped = true;
     this.loadFeed(session);
   },
 
@@ -248,7 +274,7 @@ Page({
   },
 
   handleBackHome() {
-    wx.reLaunch({ url: PAGE_ROUTES.HOME });
+    switchToPrimaryTab(PAGE_ROUTES.HOME);
   },
 
   handleChannelChange(event) {
@@ -257,6 +283,16 @@ Page({
     if (!route || route === PAGE_ROUTES.TREEHOLE_FEED) {
       return;
     }
-    wx.reLaunch({ url: route });
+    switchToPrimaryTab(route);
+  },
+
+  syncPrimaryTabBar() {
+    if (typeof this.getTabBar !== "function") {
+      return;
+    }
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.setActiveByRoute === "function") {
+      tabBar.setActiveByRoute(PAGE_ROUTES.TREEHOLE_FEED);
+    }
   },
 });

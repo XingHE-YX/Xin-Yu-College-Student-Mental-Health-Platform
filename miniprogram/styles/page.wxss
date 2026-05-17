@@ -16,7 +16,7 @@
 .channel-screen {
   position: relative;
   min-height: 100vh;
-  padding: 36rpx 32rpx calc(env(safe-area-inset-bottom) + 196rpx);
+  padding: 36rpx 32rpx 40rpx;
   box-sizing: border-box;
 }
 

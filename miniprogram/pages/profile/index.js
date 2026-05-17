@@ -5,6 +5,9 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("../../utils/session");
+const {
+  switchToPrimaryTab,
+} = require("../../utils/navigation");
 
 function buildRuntimeHints(features) {
   const hints = [];
@@ -29,8 +32,20 @@ Page({
     runtimeHints: [],
   },
 
-  onShow() {
+  onLoad() {
+    this.skipNextOnShowRefresh = true;
     this.bootstrap();
+  },
+
+  onShow() {
+    this.syncPrimaryTabBar();
+    if (this.skipNextOnShowRefresh) {
+      this.skipNextOnShowRefresh = false;
+      return;
+    }
+    if (this.hasBootstrapped) {
+      this.bootstrap();
+    }
   },
 
   bootstrap() {
@@ -53,6 +68,7 @@ Page({
       student: session.student,
       runtimeHints: buildRuntimeHints(runtimeFeatures),
     });
+    this.hasBootstrapped = true;
   },
 
   handleOpenHelp() {
@@ -60,7 +76,7 @@ Page({
   },
 
   handleOpenReport() {
-    wx.reLaunch({ url: PAGE_ROUTES.REPORT_SUMMARY });
+    switchToPrimaryTab(PAGE_ROUTES.REPORT_SUMMARY);
   },
 
   handleChannelChange(event) {
@@ -69,12 +85,22 @@ Page({
     if (!route || route === PAGE_ROUTES.PROFILE) {
       return;
     }
-    wx.reLaunch({ url: route });
+    switchToPrimaryTab(route);
   },
 
   handleLogout() {
     clearStudentSession();
     getApp().globalData.studentSession = null;
     wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+  },
+
+  syncPrimaryTabBar() {
+    if (typeof this.getTabBar !== "function") {
+      return;
+    }
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.setActiveByRoute === "function") {
+      tabBar.setActiveByRoute(PAGE_ROUTES.PROFILE);
+    }
   },
 });

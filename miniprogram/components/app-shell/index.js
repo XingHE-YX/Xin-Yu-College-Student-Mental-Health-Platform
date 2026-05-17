@@ -8,5 +8,9 @@ Component({
       type: Boolean,
       value: true,
     },
+    withTabBarSpacing: {
+      type: Boolean,
+      value: false,
+    },
   },
 });

@@ -10,6 +10,9 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("../../utils/session");
+const {
+  switchToPrimaryTab,
+} = require("../../utils/navigation");
 
 function buildFallbackSummary() {
   return {
@@ -169,12 +172,18 @@ Page({
   },
 
   onLoad() {
+    this.skipNextOnShowRefresh = true;
     this.bootstrap();
   },
 
   onShow() {
-    if (!this.data.loading) {
-      this.bootstrap();
+    this.syncPrimaryTabBar();
+    if (this.skipNextOnShowRefresh) {
+      this.skipNextOnShowRefresh = false;
+      return;
+    }
+    if (this.hasBootstrapped) {
+      this.bootstrap({ preserveContent: true });
     }
   },
 
@@ -182,17 +191,25 @@ Page({
     this.bootstrap();
   },
 
-  bootstrap() {
+  bootstrap(options = {}) {
+    const preserveContent = Boolean(options.preserveContent);
     const session = ensureAuthenticatedSession(this);
     if (!session) {
       wx.stopPullDownRefresh();
       return;
     }
 
-    this.setData({
-      loading: true,
-      loadError: "",
-    });
+    this.setData(
+      preserveContent
+        ? {
+            loadError: "",
+          }
+        : {
+            loading: true,
+            loadError: "",
+          }
+    );
+    this.hasBootstrapped = true;
 
     Promise.all([
       fetchReportSummary({ accessToken: session.accessToken }),
@@ -268,7 +285,7 @@ Page({
   },
 
   handleBackHome() {
-    wx.reLaunch({ url: PAGE_ROUTES.HOME });
+    switchToPrimaryTab(PAGE_ROUTES.HOME);
   },
 
   handleChannelChange(event) {
@@ -277,6 +294,16 @@ Page({
     if (!route || route === PAGE_ROUTES.REPORT_SUMMARY) {
       return;
     }
-    wx.reLaunch({ url: route });
+    switchToPrimaryTab(route);
+  },
+
+  syncPrimaryTabBar() {
+    if (typeof this.getTabBar !== "function") {
+      return;
+    }
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.setActiveByRoute === "function") {
+      tabBar.setActiveByRoute(PAGE_ROUTES.REPORT_SUMMARY);
+    }
   },
 });

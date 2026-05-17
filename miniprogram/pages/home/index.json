@@ -4,7 +4,6 @@
     "app-shell": "/components/app-shell/index",
     "channel-header": "/components/channel-header/index",
     "content-section-card": "/components/content-section-card/index",
-    "floating-tab-bar": "/components/floating-tab-bar/index",
     "progress-bar": "/components/progress-bar/index",
     "quick-action-row": "/components/quick-action-row/index",
     "secondary-button": "/components/secondary-button/index"

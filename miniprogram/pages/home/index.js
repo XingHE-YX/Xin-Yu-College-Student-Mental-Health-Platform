@@ -12,6 +12,9 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("../../utils/session");
+const {
+  switchToPrimaryTab,
+} = require("../../utils/navigation");
 
 const QUESTIONNAIRE_COPY = {
   SCREEN: {
@@ -209,11 +212,24 @@ Page({
     dashboardError: "",
   },
 
-  onShow() {
+  onLoad() {
+    this.skipNextOnShowRefresh = true;
     this.bootstrap();
   },
 
-  bootstrap() {
+  onShow() {
+    this.syncPrimaryTabBar();
+    if (this.skipNextOnShowRefresh) {
+      this.skipNextOnShowRefresh = false;
+      return;
+    }
+    if (this.hasBootstrapped) {
+      this.bootstrap({ preserveContent: true });
+    }
+  },
+
+  bootstrap(options = {}) {
+    const preserveContent = Boolean(options.preserveContent);
     try {
       const session = loadStudentSession();
       if (!hasValidStudentSession(session)) {
@@ -228,20 +244,30 @@ Page({
         return;
       }
 
-      const fallbackProgress = buildFallbackProgress();
-      this.setData({
+      const nextState = {
         student: session.student,
         consentDeclined: session.student.consent_status === "declined",
-        requiredProgress: fallbackProgress,
-        progressHeadline: buildProgressHeadline(fallbackProgress),
-        progressSummary: buildProgressSummary(fallbackProgress),
-        missingRequiredNames: [],
-        requiredCards: [],
-        optionalCards: [],
-        quickActions: buildQuickActions(fallbackProgress, []),
-        loadingDashboard: true,
+        loadingDashboard: preserveContent
+          ? this.data.loadingDashboard
+          : true,
         dashboardError: "",
-      });
+      };
+
+      if (!preserveContent) {
+        const fallbackProgress = buildFallbackProgress();
+        Object.assign(nextState, {
+          requiredProgress: fallbackProgress,
+          progressHeadline: buildProgressHeadline(fallbackProgress),
+          progressSummary: buildProgressSummary(fallbackProgress),
+          missingRequiredNames: [],
+          requiredCards: [],
+          optionalCards: [],
+          quickActions: buildQuickActions(fallbackProgress, []),
+        });
+      }
+
+      this.setData(nextState);
+      this.hasBootstrapped = true;
       this.loadDashboardData(session);
     } catch (error) {
       clearStudentSession();
@@ -350,12 +376,12 @@ Page({
     }
 
     if (key === "report") {
-      wx.reLaunch({ url: PAGE_ROUTES.REPORT_SUMMARY });
+      switchToPrimaryTab(PAGE_ROUTES.REPORT_SUMMARY);
       return;
     }
 
     if (key === "treehole") {
-      wx.reLaunch({ url: PAGE_ROUTES.TREEHOLE_FEED });
+      switchToPrimaryTab(PAGE_ROUTES.TREEHOLE_FEED);
       return;
     }
 
@@ -370,6 +396,16 @@ Page({
     if (!route || route === PAGE_ROUTES.HOME) {
       return;
     }
-    wx.reLaunch({ url: route });
+    switchToPrimaryTab(route);
+  },
+
+  syncPrimaryTabBar() {
+    if (typeof this.getTabBar !== "function") {
+      return;
+    }
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.setActiveByRoute === "function") {
+      tabBar.setActiveByRoute(PAGE_ROUTES.HOME);
+    }
   },
 });

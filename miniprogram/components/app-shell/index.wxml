@@ -1,4 +1,4 @@
-<view class="app-shell {{padded ? 'app-shell--padded' : ''}}">
+<view class="app-shell {{padded ? 'app-shell--padded' : ''}} {{withTabBarSpacing ? 'app-shell--tabbar' : ''}}">
   <view class="app-shell__mist app-shell__mist--brand"></view>
   <view class="app-shell__mist app-shell__mist--warm"></view>
   <view class="app-shell__mist app-shell__mist--deep"></view>

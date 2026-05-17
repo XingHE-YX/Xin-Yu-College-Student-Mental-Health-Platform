@@ -5,6 +5,10 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("../../../utils/session");
+const {
+  redirectOrSwitchTab,
+  switchToPrimaryTab,
+} = require("../../../utils/navigation");
 
 function ensureAuthenticatedSession(pageInstance) {
   const session = loadStudentSession();
@@ -115,7 +119,7 @@ Page({
             title: "完整报告尚未解锁",
             icon: "none",
           });
-          wx.redirectTo({ url: PAGE_ROUTES.REPORT_SUMMARY });
+          redirectOrSwitchTab(PAGE_ROUTES.REPORT_SUMMARY);
           return;
         }
 
@@ -137,12 +141,12 @@ Page({
   handleBackSummary() {
     wx.navigateBack({
       fail() {
-        wx.reLaunch({ url: PAGE_ROUTES.REPORT_SUMMARY });
+        switchToPrimaryTab(PAGE_ROUTES.REPORT_SUMMARY);
       },
     });
   },
 
   handleBackHome() {
-    wx.reLaunch({ url: PAGE_ROUTES.HOME });
+    switchToPrimaryTab(PAGE_ROUTES.HOME);
   },
 });

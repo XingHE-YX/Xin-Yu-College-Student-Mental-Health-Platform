@@ -4,6 +4,7 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("../../utils/session");
+const { relaunchOrSwitchTab } = require("../../utils/navigation");
 
 Page({
   data: {
@@ -48,6 +49,6 @@ Page({
 
   redirectTo(url) {
     this.redirecting = true;
-    wx.reLaunch({ url });
+    relaunchOrSwitchTab(url);
   },
 });

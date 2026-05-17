@@ -1,4 +1,4 @@
-<app-shell>
+<app-shell withTabBarSpacing="{{true}}">
   <view class="channel-screen">
     <view class="channel-screen__stack">
       <channel-header
@@ -144,5 +144,4 @@
     </view>
   </view>
 
-  <floating-tab-bar activeKey="treehole" bind:change="handleChannelChange" />
 </app-shell>

@@ -10,6 +10,7 @@ const {
   loadStudentSession,
   saveStudentSession,
 } = require("../../utils/session");
+const { relaunchOrSwitchTab } = require("../../utils/navigation");
 
 function normalizePhoneInput(rawValue) {
   return String(rawValue || "").replace(/[^\d+]/g, "");
@@ -62,7 +63,7 @@ Page({
           session.student.consent_status === "missing"
             ? PAGE_ROUTES.CONSENT
             : PAGE_ROUTES.HOME;
-        wx.reLaunch({ url: nextRoute });
+        relaunchOrSwitchTab(nextRoute);
       }
     } catch (error) {
       clearStudentSession();
@@ -164,12 +165,11 @@ Page({
       const savedSession = saveStudentSession(sessionData);
       getApp().globalData.studentSession = savedSession;
 
-      wx.reLaunch({
-        url:
-          savedSession.student.consent_status === "missing"
-            ? PAGE_ROUTES.CONSENT
-            : PAGE_ROUTES.HOME,
-      });
+      relaunchOrSwitchTab(
+        savedSession.student.consent_status === "missing"
+          ? PAGE_ROUTES.CONSENT
+          : PAGE_ROUTES.HOME
+      );
     } catch (error) {
       this.setData({
         loginLoading: false,
@@ -195,12 +195,11 @@ Page({
       const sessionData = await loginWithDemo();
       const savedSession = saveStudentSession(sessionData);
       getApp().globalData.studentSession = savedSession;
-      wx.reLaunch({
-        url:
-          savedSession.student.consent_status === "missing"
-            ? PAGE_ROUTES.CONSENT
-            : PAGE_ROUTES.HOME,
-      });
+      relaunchOrSwitchTab(
+        savedSession.student.consent_status === "missing"
+          ? PAGE_ROUTES.CONSENT
+          : PAGE_ROUTES.HOME
+      );
     } catch (error) {
       this.setData({
         demoLoading: false,

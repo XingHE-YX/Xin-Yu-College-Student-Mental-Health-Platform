@@ -19,6 +19,7 @@ const {
   normalizeTreeholePost,
   setRecentTreeholeDeleteNotice,
 } = require("../../../utils/treehole");
+const { switchToPrimaryTab } = require("../../../utils/navigation");
 
 function ensureAuthenticatedSession(pageInstance) {
   const session = loadStudentSession();
@@ -335,6 +336,6 @@ Page({
       return;
     }
 
-    wx.reLaunch({ url: PAGE_ROUTES.TREEHOLE_FEED });
+    switchToPrimaryTab(PAGE_ROUTES.TREEHOLE_FEED);
   },
 });

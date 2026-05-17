@@ -4,6 +4,7 @@ const {
   hasValidStudentSession,
   loadStudentSession,
 } = require("../../utils/session");
+const { switchToPrimaryTab } = require("../../utils/navigation");
 
 Page({
   data: {
@@ -34,7 +35,7 @@ Page({
   handleBackProfile() {
     wx.navigateBack({
       fail() {
-        wx.reLaunch({ url: PAGE_ROUTES.PROFILE });
+        switchToPrimaryTab(PAGE_ROUTES.PROFILE);
       },
     });
   },

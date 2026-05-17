@@ -24,6 +24,39 @@
     "backgroundColor": "#EDF4F2",
     "backgroundTextStyle": "light"
   },
+  "tabBar": {
+    "custom": true,
+    "color": "#6F7F82",
+    "selectedColor": "#3A86C8",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "测评",
+        "iconPath": "assets/tabbar/blank.png",
+        "selectedIconPath": "assets/tabbar/blank.png"
+      },
+      {
+        "pagePath": "pages/reports/index",
+        "text": "报告",
+        "iconPath": "assets/tabbar/blank.png",
+        "selectedIconPath": "assets/tabbar/blank.png"
+      },
+      {
+        "pagePath": "pages/treehole/feed/index",
+        "text": "树洞",
+        "iconPath": "assets/tabbar/blank.png",
+        "selectedIconPath": "assets/tabbar/blank.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/tabbar/blank.png",
+        "selectedIconPath": "assets/tabbar/blank.png"
+      }
+    ]
+  },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

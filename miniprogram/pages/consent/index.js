@@ -6,6 +6,7 @@ const {
   loadStudentSession,
   saveStudentSession,
 } = require("../../utils/session");
+const { relaunchOrSwitchTab } = require("../../utils/navigation");
 
 Page({
   data: {
@@ -32,7 +33,7 @@ Page({
 
       getApp().globalData.studentSession = session;
       if (session.student.consent_status !== "missing") {
-        wx.reLaunch({ url: PAGE_ROUTES.HOME });
+        relaunchOrSwitchTab(PAGE_ROUTES.HOME);
         return;
       }
 
@@ -106,7 +107,7 @@ Page({
       savedSession = saveStudentSession(nextSessionPayload);
       getApp().globalData.studentSession = savedSession;
 
-      wx.reLaunch({ url: PAGE_ROUTES.HOME });
+      relaunchOrSwitchTab(PAGE_ROUTES.HOME);
     } catch (error) {
       this.setData({
         submitting: false,

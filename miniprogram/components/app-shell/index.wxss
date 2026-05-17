@@ -13,6 +13,10 @@
   padding-bottom: calc(env(safe-area-inset-bottom) + 36rpx);
 }
 
+.app-shell--tabbar {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 160rpx);
+}
+
 .app-shell__safe {
   position: relative;
   z-index: 2;
