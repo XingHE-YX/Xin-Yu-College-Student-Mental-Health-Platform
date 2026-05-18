@@ -118,6 +118,45 @@ def test_admin_session_state_helpers_round_trip() -> None:
     assert get_selected_user_id(state) is None
     assert get_selected_user_detail(state) is None
 
+
+def test_set_admin_session_can_preserve_workspace_when_refreshing_existing_login() -> None:
+    """Session refresh should keep the current workspace and detail selections intact."""
+    state: dict[str, object] = {}
+
+    bootstrap_admin_session_state(state)
+    set_admin_active_view(state, "alerts")
+    set_selected_alert_detail(
+        state,
+        alert_id=9,
+        alert_detail={"alert_id": 9, "queue_status": "pending_review"},
+    )
+    set_admin_alert_feedback(state, {"level": "info", "message": "保留当前工作区"})
+
+    set_admin_session(
+        state,
+        access_token="refreshed-token",
+        admin_profile={"id": 1, "username": "platform.admin", "display_name": "平台管理员"},
+        reset_workspace=False,
+    )
+
+    assert is_admin_authenticated(state) is True
+    assert get_admin_access_token(state) == "refreshed-token"
+    assert get_admin_profile(state) == {
+        "id": 1,
+        "username": "platform.admin",
+        "display_name": "平台管理员",
+    }
+    assert get_admin_active_view(state) == "alerts"
+    assert get_selected_alert_id(state) == 9
+    assert get_selected_alert_detail(state) == {
+        "alert_id": 9,
+        "queue_status": "pending_review",
+    }
+    assert pop_admin_alert_feedback(state) == {
+        "level": "info",
+        "message": "保留当前工作区",
+    }
+
     set_selected_alert_detail(
         state,
         alert_id=24,

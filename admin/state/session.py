@@ -38,11 +38,14 @@ def set_admin_session(
     *,
     access_token: str,
     admin_profile: dict[str, Any],
+    reset_workspace: bool = True,
 ) -> None:
     """Persist a successful admin session inside Streamlit session state."""
     state[SESSION_KEY_ACCESS_TOKEN] = access_token
     state[SESSION_KEY_PROFILE] = admin_profile
     state[SESSION_KEY_AUTH_ERROR] = None
+    if not reset_workspace:
+        return
     state[SESSION_KEY_ACTIVE_VIEW] = "dashboard"
     state[SESSION_KEY_SELECTED_ALERT_ID] = None
     state[SESSION_KEY_SELECTED_ALERT_DETAIL] = None

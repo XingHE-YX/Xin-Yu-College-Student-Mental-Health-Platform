@@ -169,6 +169,7 @@ def validate_existing_session(api_client: AdminApiClient) -> None:
             st.session_state,
             access_token=access_token,
             admin_profile=admin_profile,
+            reset_workspace=False,
         )
 
 
@@ -3286,7 +3287,7 @@ def build_post_queue_card_html(
         '<div class="xinyu-chip-row">'
         f'{build_chip_html(POST_STATUS_LABELS.get(publish_status, publish_status), tone=resolve_post_status_tone(publish_status))}'
         f'{build_chip_html(render_risk_label(risk_level), tone=RISK_TONES.get(risk_level, "neutral"))}'
-        f'{build_chip_html(f"互动 {int(post_item.get("total_reaction_count", 0))}", tone="brand")}'
+        f'{build_chip_html("互动 " + str(int(post_item.get("total_reaction_count", 0))), tone="brand")}'
         "</div>"
         f'<div class="xinyu-alert-card-copy">{escape_html(str(post_item.get("source_preview") or "--"))}</div>'
         f'<div class="xinyu-alert-card-foot">手机号：{escape_html(str(post_item.get("masked_phone") or "--"))} · {escape_html(str(post_item.get("college_name") or "--"))} / {escape_html(str(post_item.get("class_name") or "--"))}</div>'
@@ -3310,8 +3311,8 @@ def build_user_directory_card_html(
         "</div>"
         '<div class="xinyu-chip-row">'
         f'{build_chip_html(render_risk_label(risk_status), tone=RISK_TONES.get(risk_status, "neutral"))}'
-        f'{build_chip_html(f"关注 {int(user_item.get("active_focus_count", 0))}", tone="warning")}'
-        f'{build_chip_html(f"工单 {int(user_item.get("open_alert_count", 0))}", tone="danger" if int(user_item.get("open_alert_count", 0)) else "brand")}'
+        f'{build_chip_html("关注 " + str(int(user_item.get("active_focus_count", 0))), tone="warning")}'
+        f'{build_chip_html("工单 " + str(int(user_item.get("open_alert_count", 0))), tone="danger" if int(user_item.get("open_alert_count", 0)) else "brand")}'
         f'{build_chip_html(consent_status, tone="neutral")}'
         "</div>"
         f'<div class="xinyu-alert-card-copy">{escape_html(str(user_item.get("masked_phone") or "--"))} · {escape_html(str(user_item.get("college_name") or "--"))} / {escape_html(str(user_item.get("class_name") or "--"))}</div>'
@@ -3366,7 +3367,7 @@ def build_user_detail_header_html(user_detail: dict[str, Any]) -> str:
         f'<div class="xinyu-detail-title">{escape_html(str(user_detail.get("student_label") or "--"))}</div>'
         '<div class="xinyu-chip-row">'
         f'{build_chip_html(render_risk_label(risk_status), tone=RISK_TONES.get(risk_status, "neutral"))}'
-        f'{build_chip_html(f"授权 {consent_status}", tone="brand")}'
+        f'{build_chip_html("授权 " + consent_status, tone="brand")}'
         f'{build_chip_html("演示账号" if user_detail.get("is_demo") else "正式账号", tone="neutral")}'
         "</div>"
         f'<div class="xinyu-detail-foot">创建时间：{escape_html(format_dashboard_timestamp(user_detail.get("created_at")))}'
