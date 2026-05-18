@@ -303,10 +303,11 @@ class TreeholeService:
                 raise TreeholePostNotFoundError("treehole post does not exist")
 
         reactions = self._build_reaction_snapshots(post, student_id=student_id)
+        total_reaction_count = self._sync_total_reaction_count(post, reactions)
         return TreeholeReactionResult(
             post_id=post.id,
             reaction_type=reaction_type,
-            total_reaction_count=post.hug_count,
+            total_reaction_count=total_reaction_count,
             reactions=reactions,
         )
 
@@ -322,6 +323,9 @@ class TreeholeService:
                 "treehole feed only supports posts with masked public content"
             )
 
+        reactions = self._build_reaction_snapshots(post, student_id=student_id)
+        total_reaction_count = self._calculate_total_reaction_count(reactions)
+
         return TreeholeFeedPostSnapshot(
             post_id=post.id,
             anonymous_name=post.anonymous_name,
@@ -329,8 +333,8 @@ class TreeholeService:
             content=post.content_masked,
             published_at=post.published_at,
             is_mine=post.student_id == student_id,
-            total_reaction_count=post.hug_count,
-            reactions=self._build_reaction_snapshots(post, student_id=student_id),
+            total_reaction_count=total_reaction_count,
+            reactions=reactions,
         )
 
     def _build_reaction_snapshots(
@@ -357,6 +361,25 @@ class TreeholeService:
             )
             for reaction_type in REACTION_DISPLAY_ORDER
         ]
+
+    def _calculate_total_reaction_count(
+        self,
+        reactions: list[TreeholeReactionSnapshot],
+    ) -> int:
+        """Return the display total from the authoritative reaction rows."""
+        return sum(max(0, reaction.count) for reaction in reactions)
+
+    def _sync_total_reaction_count(
+        self,
+        post: TreeholePost,
+        reactions: list[TreeholeReactionSnapshot],
+    ) -> int:
+        """Keep the cached post summary aligned with stored reaction rows."""
+        total_reaction_count = self._calculate_total_reaction_count(reactions)
+        if post.hug_count != total_reaction_count:
+            post.hug_count = total_reaction_count
+            self.session.commit()
+        return total_reaction_count
 
     def _build_ai_analysis_record(
         self,

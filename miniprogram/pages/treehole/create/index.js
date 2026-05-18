@@ -11,6 +11,7 @@ const {
   cacheTreeholePost,
 } = require("../../../utils/treehole");
 const { switchToPrimaryTab } = require("../../../utils/navigation");
+const { markChannelDirty } = require("../../../utils/channel-sync");
 
 function ensureAuthenticatedSession(pageInstance) {
   const session = loadStudentSession();
@@ -130,6 +131,7 @@ Page({
       });
       const createdPost = buildCreatedTreeholePost(result);
       cacheTreeholePost(createdPost);
+      markChannelDirty("treehole");
 
       if (
         result.publish_status === "blocked_high_risk" ||

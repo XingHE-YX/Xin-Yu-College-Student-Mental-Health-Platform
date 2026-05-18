@@ -13,6 +13,11 @@ const {
 const {
   switchToPrimaryTab,
 } = require("../../utils/navigation");
+const {
+  readChannelCache,
+  shouldRefreshChannel,
+  writeChannelCache,
+} = require("../../utils/channel-sync");
 
 function buildFallbackSummary() {
   return {
@@ -148,6 +153,30 @@ function buildSummaryText(summaryState) {
   return "当前还没有完整的量表结果，先从快速筛查开始即可。";
 }
 
+function buildReportStateFromPayload(payload) {
+  const summary = payload.summary || buildFallbackSummary();
+  const progress = summary.progress || buildFallbackSummary().progress;
+
+  return {
+    loading: false,
+    loadError: "",
+    hero: summary.hero_card || buildFallbackSummary().hero_card,
+    overviewBadge: summary.overview_badge || null,
+    progress,
+    scaleResults: (summary.scale_results || []).map(mapScaleResultCard),
+    nextActions: (summary.next_actions || []).map(mapAction),
+    historyRecords: (payload.historyRecords || []).map(mapHistoryRecord),
+    disclaimer: summary.disclaimer || buildFallbackSummary().disclaimer,
+    safetyBanner: summary.safety_banner || null,
+    summaryState: summary.state || "locked",
+    summaryHeadline: buildSummaryHeadline(summary.state || "locked", progress),
+    summaryBody: buildSummaryText(summary.state || "locked"),
+    missingRequiredNames: (progress.missing_required_questionnaires || []).map(
+      (item) => item.name
+    ),
+  };
+}
+
 Page({
   data: {
     student: null,
@@ -187,6 +216,10 @@ Page({
     }
   },
 
+  onUnload() {
+    this.latestReportRequestId = (this.latestReportRequestId || 0) + 1;
+  },
+
   onPullDownRefresh() {
     this.bootstrap();
   },
@@ -199,17 +232,36 @@ Page({
       return;
     }
 
-    this.setData(
-      preserveContent
-        ? {
-            loadError: "",
-          }
-        : {
-            loading: true,
-            loadError: "",
-          }
-    );
+    const shouldRefresh = shouldRefreshChannel("report", {
+      force: options.forceRefresh === true || !preserveContent,
+    });
+    const cachedPayload = preserveContent ? readChannelCache("report") : null;
+
+    if (cachedPayload) {
+      this.setData({
+        ...buildReportStateFromPayload(cachedPayload),
+        student: session.student,
+      });
+    } else {
+      this.setData(
+        preserveContent
+          ? {
+              loadError: "",
+            }
+          : {
+              loading: true,
+              loadError: "",
+            }
+      );
+    }
     this.hasBootstrapped = true;
+    if (!shouldRefresh) {
+      wx.stopPullDownRefresh();
+      return;
+    }
+
+    const requestId = (this.latestReportRequestId || 0) + 1;
+    this.latestReportRequestId = requestId;
 
     Promise.all([
       fetchReportSummary({ accessToken: session.accessToken }),
@@ -218,28 +270,20 @@ Page({
       })),
     ])
       .then(([summaryResponse, historyResponse]) => {
-        const summary = summaryResponse.summary || buildFallbackSummary();
-        const progress = summary.progress || buildFallbackSummary().progress;
-        this.setData({
-          loading: false,
-          loadError: "",
-          hero: summary.hero_card || buildFallbackSummary().hero_card,
-          overviewBadge: summary.overview_badge || null,
-          progress,
-          scaleResults: (summary.scale_results || []).map(mapScaleResultCard),
-          nextActions: (summary.next_actions || []).map(mapAction),
-          historyRecords: (historyResponse.records || []).map(mapHistoryRecord),
-          disclaimer: summary.disclaimer || buildFallbackSummary().disclaimer,
-          safetyBanner: summary.safety_banner || null,
-          summaryState: summary.state || "locked",
-          summaryHeadline: buildSummaryHeadline(summary.state || "locked", progress),
-          summaryBody: buildSummaryText(summary.state || "locked"),
-          missingRequiredNames: (progress.missing_required_questionnaires || []).map(
-            (item) => item.name
-          ),
-        });
+        if (requestId !== this.latestReportRequestId) {
+          return;
+        }
+        const payload = {
+          summary: summaryResponse.summary || buildFallbackSummary(),
+          historyRecords: historyResponse.records || [],
+        };
+        writeChannelCache("report", payload);
+        this.setData(buildReportStateFromPayload(payload));
       })
       .catch((error) => {
+        if (requestId !== this.latestReportRequestId) {
+          return;
+        }
         if (error && error.statusCode === 401) {
           clearStudentSession();
           wx.reLaunch({ url: PAGE_ROUTES.LOGIN });

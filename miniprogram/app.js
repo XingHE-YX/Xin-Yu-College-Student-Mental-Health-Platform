@@ -16,6 +16,11 @@ App({
     enableDemoEntry: false,
     runtimeFeatures: buildDefaultRuntimeFeatures(),
     studentSession: null,
+    channelSync: {
+      cache: {},
+      dirty: {},
+      lastFetchedAt: {},
+    },
   },
 
   onLaunch() {

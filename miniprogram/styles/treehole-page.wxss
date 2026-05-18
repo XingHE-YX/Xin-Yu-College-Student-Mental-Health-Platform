@@ -80,8 +80,10 @@
 
 .treehole-page__post-foot {
   display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding-top: 4rpx;
 }
 
 .treehole-page__reaction-row {
@@ -91,9 +93,16 @@
 }
 
 .treehole-page__detail-link {
+  flex-shrink: 0;
+  min-height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid rgba(47, 143, 131, 0.2);
+  background: #f1f8f6;
   font-size: 26rpx;
-  line-height: 1.5;
+  line-height: 52rpx;
   color: #2f8f83;
+  font-weight: 600;
 }
 
 .treehole-page__detail-link--disabled {

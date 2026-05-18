@@ -20,6 +20,13 @@ const {
   setRecentTreeholeDeleteNotice,
 } = require("../../../utils/treehole");
 const { switchToPrimaryTab } = require("../../../utils/navigation");
+const { markChannelDirty } = require("../../../utils/channel-sync");
+
+const REACTION_TOAST_LABELS = {
+  hug: "抱抱",
+  light: "点亮",
+  accompany: "陪伴",
+};
 
 function ensureAuthenticatedSession(pageInstance) {
   const session = loadStudentSession();
@@ -108,6 +115,8 @@ Page({
     loadError: "",
     statusMessage: "",
     deleting: false,
+    reactionSubmitting: false,
+    reactionBusyType: "",
     showDeleteConfirm: false,
     heroTitle: "帖子详情",
     heroSummary: "这里会展示帖子的完整内容、发布时间与当前支持反馈。",
@@ -222,7 +231,13 @@ Page({
   async handleReactionTap(event) {
     const { post } = this.data;
     const reactionType = event.currentTarget.dataset.reactionType;
-    if (!post || !reactionType || this.data.deleting) {
+    if (
+      !post ||
+      !reactionType ||
+      this.data.deleting ||
+      this.data.reactionSubmitting ||
+      this.reactionRequestInFlight
+    ) {
       return;
     }
 
@@ -231,10 +246,14 @@ Page({
       return;
     }
 
+    this.reactionRequestInFlight = true;
     const wasReacted = hasReactedToTreehole(post, reactionType);
+    const reactionLabel = REACTION_TOAST_LABELS[reactionType] || "支持";
     const optimisticPost = applyOptimisticTreeholeReaction(post, reactionType);
     this.setData({
       post: optimisticPost,
+      reactionSubmitting: true,
+      reactionBusyType: reactionType,
     });
 
     try {
@@ -245,14 +264,19 @@ Page({
       });
       const mergedPost = mergeTreeholeReactionResult(post, reactionData);
       cacheTreeholePost(mergedPost);
+      markChannelDirty("treehole");
       this.setData({
         post: mergedPost,
+        reactionSubmitting: false,
+        reactionBusyType: "",
       });
+      this.reactionRequestInFlight = false;
       wx.showToast({
-        title: wasReacted ? "已取消支持" : "已表达支持",
+        title: wasReacted ? `已取消${reactionLabel}` : `已${reactionLabel}`,
         icon: "none",
       });
     } catch (error) {
+      this.reactionRequestInFlight = false;
       if (error && error.statusCode === 401) {
         clearStudentSession();
         wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
@@ -265,6 +289,8 @@ Page({
           publishStatus: post.publishStatus,
           riskLevel: post.riskLevel,
         }),
+        reactionSubmitting: false,
+        reactionBusyType: "",
       });
       wx.showToast({
         title: error.message || "互动提交失败，请稍后重试。",
@@ -298,6 +324,7 @@ Page({
       setRecentTreeholeDeleteNotice(deletedPost, {
         isDemo: currentSession.student.is_demo === true,
       });
+      markChannelDirty("treehole");
       this.setData({
         post: deletedPost,
         deleting: false,

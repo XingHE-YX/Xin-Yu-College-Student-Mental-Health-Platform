@@ -1,7 +1,9 @@
 <view
-  class="reaction-chip {{active ? 'reaction-chip--active' : ''}} {{disabled ? 'reaction-chip--disabled' : ''}}"
+  class="reaction-chip {{active ? 'reaction-chip--active' : ''}} {{busy ? 'reaction-chip--busy' : ''}} {{disabled ? 'reaction-chip--disabled' : ''}}"
+  hover-class="reaction-chip--pressed"
+  hover-stay-time="80"
   bindtap="handleTap"
 >
-  <view>{{label}}</view>
+  <view>{{active ? '已' + label : label}}</view>
   <view class="reaction-chip__count">{{count}}</view>
 </view>

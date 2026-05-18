@@ -17,6 +17,9 @@ const {
   relaunchOrSwitchTab,
   switchToPrimaryTab,
 } = require("./navigation");
+const {
+  markChannelsDirty,
+} = require("./channel-sync");
 
 const RISK_LABELS = {
   low: "低风险",
@@ -474,6 +477,7 @@ function createQuestionnairePage(questionnaireCode) {
             submissionResult,
             progress
           );
+          markChannelsDirty(["assessment", "report"]);
           this.setData({
             submitting: false,
             submitError: "",

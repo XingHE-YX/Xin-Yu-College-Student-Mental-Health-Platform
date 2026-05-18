@@ -21,6 +21,17 @@ const {
 const {
   switchToPrimaryTab,
 } = require("../../../utils/navigation");
+const {
+  readChannelCache,
+  shouldRefreshChannel,
+  writeChannelCache,
+} = require("../../../utils/channel-sync");
+
+const REACTION_TOAST_LABELS = {
+  hug: "抱抱",
+  light: "点亮",
+  accompany: "陪伴",
+};
 
 function buildFeedMetrics(posts = []) {
   return {
@@ -38,6 +49,15 @@ function buildFeedSummary(metrics) {
     return "广场还没有公开帖子。你可以先写下第一条匿名心情。";
   }
   return `当前有 ${metrics.publicCount} 条公开帖子，其中 ${metrics.myCount} 条来自你自己，累计 ${metrics.supportCount} 次支持反馈。`;
+}
+
+function buildTreeholeFeedState(posts = []) {
+  const metrics = buildFeedMetrics(posts);
+  return {
+    posts,
+    metrics,
+    feedSummary: buildFeedSummary(metrics),
+  };
 }
 
 function ensureAuthenticatedSession(pageInstance) {
@@ -73,6 +93,8 @@ Page({
     posts: [],
     metrics: buildFeedMetrics(),
     feedSummary: buildFeedSummary(buildFeedMetrics()),
+    reactionSubmitting: false,
+    reactionBusyKey: "",
   },
 
   onShow() {
@@ -86,6 +108,10 @@ Page({
       return;
     }
     this.bootstrap();
+  },
+
+  onUnload() {
+    this.latestFeedRequestId = (this.latestFeedRequestId || 0) + 1;
   },
 
   onPullDownRefresh() {
@@ -121,41 +147,80 @@ Page({
       return;
     }
 
-    this.setData(
-      preserveContent
-        ? {
-            loadError: "",
-            deleteNotice,
-          }
-        : {
-            loading: true,
-            loadError: "",
-            deleteNotice,
-          }
-    );
+    const shouldRefresh = shouldRefreshChannel("treehole", {
+      force: options.forceRefresh === true || !preserveContent,
+    });
+    const cachedPayload = preserveContent ? readChannelCache("treehole") : null;
+
+    if (cachedPayload) {
+      this.setData({
+        ...buildTreeholeFeedState(cachedPayload.posts || []),
+        student: session.student,
+        feedDisabled: false,
+        loading: false,
+        loadError: "",
+        deleteNotice,
+      });
+    } else {
+      this.setData(
+        preserveContent
+          ? {
+              loadError: "",
+              deleteNotice,
+            }
+          : {
+              loading: true,
+              loadError: "",
+              deleteNotice,
+            }
+      );
+    }
     this.hasBootstrapped = true;
+    if (!shouldRefresh) {
+      wx.stopPullDownRefresh();
+      return;
+    }
     this.loadFeed(session);
   },
 
   async loadFeed(session) {
+    const requestId = (this.latestFeedRequestId || 0) + 1;
+    this.latestFeedRequestId = requestId;
+
     try {
       const response = await fetchTreeholeFeed({
         accessToken: session.accessToken,
         limit: 30,
       });
+      if (requestId !== this.latestFeedRequestId) {
+        return;
+      }
       const posts = (response.posts || []).map((post) => normalizeTreeholePost(post));
       posts.forEach((post) => cacheTreeholePost(post));
+      writeChannelCache("treehole", {
+        posts,
+      });
       this.setData({
         loading: false,
         loadError: "",
-        posts,
-        metrics: buildFeedMetrics(posts),
-        feedSummary: buildFeedSummary(buildFeedMetrics(posts)),
+        ...buildTreeholeFeedState(posts),
       });
     } catch (error) {
+      if (requestId !== this.latestFeedRequestId) {
+        return;
+      }
       if (error && error.statusCode === 401) {
         clearStudentSession();
         wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+        return;
+      }
+
+      const hasCachedPosts = Array.isArray(this.data.posts) && this.data.posts.length > 0;
+      if (hasCachedPosts) {
+        this.setData({
+          loading: false,
+          loadError: error.message || "树洞广场加载失败，请稍后重试。",
+        });
         return;
       }
 
@@ -198,18 +263,26 @@ Page({
     const postId = Number(event.currentTarget.dataset.postId);
     const reactionType = event.currentTarget.dataset.reactionType;
     const postIndex = this.data.posts.findIndex((post) => post.postId === postId);
-    if (postIndex < 0) {
+    if (
+      postIndex < 0 ||
+      !reactionType ||
+      this.data.reactionSubmitting ||
+      this.feedReactionRequestInFlight
+    ) {
       return;
     }
 
     const originalPost = this.data.posts[postIndex];
     const wasReacted = hasReactedToTreehole(originalPost, reactionType);
+    const reactionLabel = REACTION_TOAST_LABELS[reactionType] || "支持";
 
     const currentSession = ensureAuthenticatedSession();
     if (!currentSession) {
       return;
     }
 
+    this.feedReactionRequestInFlight = true;
+    const reactionBusyKey = `${postId}:${reactionType}`;
     const optimisticPost = applyOptimisticTreeholeReaction(
       originalPost,
       reactionType
@@ -220,6 +293,11 @@ Page({
       posts: optimisticPosts,
       metrics: buildFeedMetrics(optimisticPosts),
       feedSummary: buildFeedSummary(buildFeedMetrics(optimisticPosts)),
+      reactionSubmitting: true,
+      reactionBusyKey,
+    });
+    writeChannelCache("treehole", {
+      posts: optimisticPosts,
     });
 
     try {
@@ -240,9 +318,21 @@ Page({
           posts: nextPosts,
           metrics: buildFeedMetrics(nextPosts),
           feedSummary: buildFeedSummary(buildFeedMetrics(nextPosts)),
+          reactionSubmitting: false,
+          reactionBusyKey: "",
+        });
+        writeChannelCache("treehole", {
+          posts: nextPosts,
+        });
+      } else {
+        this.setData({
+          reactionSubmitting: false,
+          reactionBusyKey: "",
         });
       }
+      this.feedReactionRequestInFlight = false;
     } catch (error) {
+      this.feedReactionRequestInFlight = false;
       if (error && error.statusCode === 401) {
         clearStudentSession();
         wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
@@ -259,6 +349,11 @@ Page({
         posts: rollbackPosts,
         metrics: buildFeedMetrics(rollbackPosts),
         feedSummary: buildFeedSummary(buildFeedMetrics(rollbackPosts)),
+        reactionSubmitting: false,
+        reactionBusyKey: "",
+      });
+      writeChannelCache("treehole", {
+        posts: rollbackPosts,
       });
       wx.showToast({
         title: error.message || "互动提交失败，请稍后重试。",
@@ -268,7 +363,7 @@ Page({
     }
 
     wx.showToast({
-      title: wasReacted ? "已取消支持" : "已表达支持",
+      title: wasReacted ? `已取消${reactionLabel}` : `已${reactionLabel}`,
       icon: "none",
     });
   },

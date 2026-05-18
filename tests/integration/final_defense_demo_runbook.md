@@ -37,7 +37,7 @@ SHOW_SEEDED_CASES=true
 推荐在正式开始前执行：
 
 ```bash
-cd /Users/xingheluqi/心语大学生心理健康平台/backend
+cd /Users/xingheluqi/Xin-Yu-College-Student-Mental-Health-Platform/backend
 .venv/bin/python -m src.utils.seed_demo_dataset
 ```
 

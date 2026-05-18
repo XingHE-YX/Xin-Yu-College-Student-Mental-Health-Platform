@@ -1,5 +1,23 @@
 const { API_BASE_URL } = require("../constants/config");
 
+const IN_FLIGHT_GET_REQUESTS = new Map();
+
+function buildRequestKey(options) {
+  const {
+    url,
+    method = "GET",
+    data,
+    token,
+  } = options;
+
+  return JSON.stringify({
+    url,
+    method: String(method || "GET").toUpperCase(),
+    token: token || "",
+    data: data || null,
+  });
+}
+
 function request(options) {
   const {
     url,
@@ -8,11 +26,18 @@ function request(options) {
     token,
     header = {},
   } = options;
+  const normalizedMethod = String(method || "GET").toUpperCase();
+  const shouldDeduplicate = normalizedMethod === "GET";
+  const requestKey = shouldDeduplicate ? buildRequestKey(options) : "";
 
-  return new Promise((resolve, reject) => {
+  if (shouldDeduplicate && IN_FLIGHT_GET_REQUESTS.has(requestKey)) {
+    return IN_FLIGHT_GET_REQUESTS.get(requestKey);
+  }
+
+  const requestPromise = new Promise((resolve, reject) => {
     wx.request({
       url: `${API_BASE_URL}${url}`,
-      method,
+      method: normalizedMethod,
       data,
       timeout: 10000,
       header: {
@@ -57,6 +82,17 @@ function request(options) {
       },
     });
   });
+
+  if (shouldDeduplicate) {
+    IN_FLIGHT_GET_REQUESTS.set(requestKey, requestPromise);
+    requestPromise.finally(() => {
+      if (IN_FLIGHT_GET_REQUESTS.get(requestKey) === requestPromise) {
+        IN_FLIGHT_GET_REQUESTS.delete(requestKey);
+      }
+    });
+  }
+
+  return requestPromise;
 }
 
 module.exports = {

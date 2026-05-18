@@ -99,7 +99,8 @@
                 label="{{reaction.label}}"
                 count="{{reaction.count}}"
                 active="{{reaction.reactedByMe}}"
-                disabled="{{reaction.busy}}"
+                busy="{{reactionBusyKey === item.postId + ':' + reaction.reactionType}}"
+                disabled="{{reactionSubmitting && reactionBusyKey !== item.postId + ':' + reaction.reactionType}}"
                 data-post-id="{{item.postId}}"
                 data-reaction-type="{{reaction.reactionType}}"
                 bind:tap="handleReactionTap"
@@ -108,7 +109,7 @@
 
             <view class="treehole-page__post-foot">
               <view class="helper-text">
-                {{item.isMine ? '这条帖子来自你自己。可进入详情查看完整内容并执行删除。' : '当前支持通过预设反馈表达关心。'}}
+                {{item.isMine ? '这条帖子来自你自己。详情页可查看完整内容并执行删除。' : '可以直接在广场表达或取消支持。'}}
               </view>
               <view
                 class="treehole-page__detail-link"

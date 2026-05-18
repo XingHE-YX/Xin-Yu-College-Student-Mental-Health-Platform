@@ -3,7 +3,7 @@
   align-items: center;
   gap: 10rpx;
   min-height: 56rpx;
-  padding: 0 18rpx;
+  padding: 0 20rpx;
   border-radius: 999rpx;
   border: 2rpx solid rgba(217, 228, 227, 0.92);
   background: #ffffff;
@@ -11,11 +11,29 @@
   font-size: 24rpx;
   line-height: 1.4;
   box-sizing: border-box;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease,
+    transform 140ms ease, box-shadow 140ms ease;
 }
 
 .reaction-chip--active {
-  background: #edf4f2;
-  border-color: #8ebed0;
+  background: #185b62;
+  border-color: #185b62;
+  color: #ffffff;
+  box-shadow: 0 10rpx 22rpx rgba(24, 91, 98, 0.2);
+}
+
+.reaction-chip--pressed {
+  transform: scale(0.96);
+  background: #dcefeb;
+  border-color: #6aa99e;
+}
+
+.reaction-chip--busy {
+  transform: scale(0.97);
+}
+
+.reaction-chip--active.reaction-chip--busy {
+  opacity: 0.86;
 }
 
 .reaction-chip--disabled {

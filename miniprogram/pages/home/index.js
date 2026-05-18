@@ -15,6 +15,11 @@ const {
 const {
   switchToPrimaryTab,
 } = require("../../utils/navigation");
+const {
+  readChannelCache,
+  shouldRefreshChannel,
+  writeChannelCache,
+} = require("../../utils/channel-sync");
 
 const QUESTIONNAIRE_COPY = {
   SCREEN: {
@@ -197,6 +202,23 @@ function splitQuestionnaireGroups(questionnaires) {
   };
 }
 
+function buildHomeStateFromPayload(payload) {
+  const progress = payload.progress || buildFallbackProgress();
+  const questionnaires = buildQuestionnaireCards(payload.questionnaires || []);
+  const { requiredCards, optionalCards } =
+    splitQuestionnaireGroups(questionnaires);
+
+  return {
+    requiredProgress: progress,
+    progressHeadline: buildProgressHeadline(progress),
+    progressSummary: buildProgressSummary(progress),
+    missingRequiredNames: buildMissingRequiredNames(progress),
+    requiredCards,
+    optionalCards,
+    quickActions: buildQuickActions(progress, questionnaires),
+  };
+}
+
 Page({
   data: {
     student: null,
@@ -228,6 +250,10 @@ Page({
     }
   },
 
+  onUnload() {
+    this.latestDashboardRequestId = (this.latestDashboardRequestId || 0) + 1;
+  },
+
   bootstrap(options = {}) {
     const preserveContent = Boolean(options.preserveContent);
     try {
@@ -244,16 +270,27 @@ Page({
         return;
       }
 
+      const shouldRefresh = shouldRefreshChannel("assessment", {
+        force: options.forceRefresh === true || !preserveContent,
+      });
+      const cachedPayload = preserveContent
+        ? readChannelCache("assessment")
+        : null;
+
       const nextState = {
         student: session.student,
         consentDeclined: session.student.consent_status === "declined",
-        loadingDashboard: preserveContent
-          ? this.data.loadingDashboard
-          : true,
+        loadingDashboard: cachedPayload
+          ? false
+          : !preserveContent || shouldRefresh
+          ? true
+          : this.data.loadingDashboard,
         dashboardError: "",
       };
 
-      if (!preserveContent) {
+      if (cachedPayload) {
+        Object.assign(nextState, buildHomeStateFromPayload(cachedPayload));
+      } else if (!preserveContent) {
         const fallbackProgress = buildFallbackProgress();
         Object.assign(nextState, {
           requiredProgress: fallbackProgress,
@@ -268,6 +305,9 @@ Page({
 
       this.setData(nextState);
       this.hasBootstrapped = true;
+      if (!shouldRefresh) {
+        return;
+      }
       this.loadDashboardData(session);
     } catch (error) {
       clearStudentSession();
@@ -276,33 +316,49 @@ Page({
   },
 
   loadDashboardData(session) {
+    const requestId = (this.latestDashboardRequestId || 0) + 1;
+    this.latestDashboardRequestId = requestId;
+
     Promise.all([
       fetchQuestionnaireList({ accessToken: session.accessToken }),
       fetchRequiredProgress({ accessToken: session.accessToken }),
     ])
       .then(([questionnaireData, progressData]) => {
-        const progress = progressData.progress || buildFallbackProgress();
-        const questionnaires = buildQuestionnaireCards(
-          questionnaireData.questionnaires || []
-        );
-        const { requiredCards, optionalCards } =
-          splitQuestionnaireGroups(questionnaires);
+        if (requestId !== this.latestDashboardRequestId) {
+          return;
+        }
+        const payload = {
+          progress: progressData.progress || buildFallbackProgress(),
+          questionnaires: questionnaireData.questionnaires || [],
+        };
+        writeChannelCache("assessment", payload);
         this.setData({
-          requiredProgress: progress,
-          progressHeadline: buildProgressHeadline(progress),
-          progressSummary: buildProgressSummary(progress),
-          missingRequiredNames: buildMissingRequiredNames(progress),
-          requiredCards,
-          optionalCards,
-          quickActions: buildQuickActions(progress, questionnaires),
+          ...buildHomeStateFromPayload(payload),
           loadingDashboard: false,
           dashboardError: "",
         });
       })
       .catch((error) => {
+        if (requestId !== this.latestDashboardRequestId) {
+          return;
+        }
         if (error && error.statusCode === 401) {
           clearStudentSession();
           wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+          return;
+        }
+
+        const hasCachedContent =
+          (this.data.requiredCards && this.data.requiredCards.length > 0) ||
+          (this.data.optionalCards && this.data.optionalCards.length > 0) ||
+          (this.data.quickActions && this.data.quickActions.length > 0);
+
+        if (hasCachedContent) {
+          this.setData({
+            loadingDashboard: false,
+            dashboardError:
+              (error && error.message) || "问卷目录加载失败，请稍后重试。",
+          });
           return;
         }
 

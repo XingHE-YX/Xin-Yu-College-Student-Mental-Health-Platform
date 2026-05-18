@@ -92,7 +92,8 @@
               label="{{item.label}}"
               count="{{item.count}}"
               active="{{item.reactedByMe}}"
-              disabled="{{deleting}}"
+              busy="{{reactionBusyType === item.reactionType}}"
+              disabled="{{deleting || (reactionSubmitting && reactionBusyType !== item.reactionType)}}"
               data-reaction-type="{{item.reactionType}}"
               bind:tap="handleReactionTap"
             />

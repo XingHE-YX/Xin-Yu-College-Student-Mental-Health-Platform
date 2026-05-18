@@ -12,6 +12,10 @@ Component({
       type: Boolean,
       value: false,
     },
+    busy: {
+      type: Boolean,
+      value: false,
+    },
     disabled: {
       type: Boolean,
       value: false,
