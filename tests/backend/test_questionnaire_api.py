@@ -296,6 +296,51 @@ def test_progress_counts_latest_required_submissions_without_double_counting(
     assert older_submission.id != latest_screen_submission.id
 
 
+def test_progress_ignores_student_deleted_submissions(tmp_path) -> None:
+    """Student-deleted report submissions should not count toward visible progress."""
+    app = create_questionnaire_api_test_app(tmp_path / "questionnaire-progress-deleted.db")
+    student, token = create_student_with_token(app)
+    deleted_submission = create_submission(
+        app,
+        student_id=student.id,
+        questionnaire_code="SCREEN",
+        submitted_at=datetime(2026, 4, 20, 9, 0, 0),
+        raw_score=41,
+        standardized_score=None,
+        risk_level=QuestionnaireRiskLevel.LOW,
+    )
+    create_submission(
+        app,
+        student_id=student.id,
+        questionnaire_code="SDS",
+        submitted_at=datetime(2026, 4, 21, 8, 30, 0),
+        raw_score=42,
+        standardized_score=52,
+        risk_level=QuestionnaireRiskLevel.LOW,
+    )
+    with app.state.db_session_factory() as session:
+        submission = session.get(QuestionnaireSubmission, deleted_submission.id)
+        assert submission is not None
+        submission.deleted_at = datetime(2026, 4, 22, 8, 0, 0)
+        session.commit()
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/v1/questionnaires/progress",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    progress = response.json()["data"]["progress"]
+    assert progress["completed_required_questionnaires"] == 1
+    assert progress["completed_required_questions"] == 20
+    required_by_code = {
+        entry["code"]: entry for entry in progress["required_questionnaires"]
+    }
+    assert required_by_code["SCREEN"]["completed"] is False
+    assert required_by_code["SDS"]["completed"] is True
+
+
 def test_list_questionnaires_includes_latest_submission_summary(tmp_path) -> None:
     """Questionnaire list should surface the latest student result when it exists."""
     app = create_questionnaire_api_test_app(tmp_path / "questionnaire-list-result.db")

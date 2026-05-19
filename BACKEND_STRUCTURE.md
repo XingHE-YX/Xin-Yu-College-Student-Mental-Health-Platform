@@ -160,6 +160,7 @@
 | `risk_level` | `ENUM('low','watch','high')` | 否 | 问卷结果风险等级 |
 | `hard_trigger_hit` | `TINYINT(1)` | 否 | 是否命中硬触发 |
 | `scoring_snapshot_json` | `JSON` | 否 | 评分说明快照 |
+| `deleted_at` | `DATETIME(3)` | 是 | 学生端软删除时间 |
 | `created_at` | `DATETIME(3)` | 否 | 创建时间 |
 
 ### 4.7 `questionnaire_answers`
@@ -224,7 +225,7 @@
 | `target_type` | `ENUM('treehole_post')` | 否 | 分析目标类型 |
 | `target_id` | `BIGINT UNSIGNED` | 否 | 分析目标 ID |
 | `provider` | `ENUM('deepseek')` | 否 | 服务提供方 |
-| `model_name` | `VARCHAR(64)` | 否 | 固定为 `deepseek-chat` |
+| `model_name` | `VARCHAR(64)` | 否 | 默认 `deepseek-v4-flash`，可通过配置覆盖 |
 | `request_payload_json` | `JSON` | 否 | 请求快照 |
 | `response_raw_json` | `JSON` | 是 | 原始返回 |
 | `parsed_risk_level` | `ENUM('low','watch','high')` | 否 | 解析后的风险等级 |
@@ -460,6 +461,7 @@
 | `GET` | `/api/v1/reports/summary` | Student | 获取报告解锁状态与摘要 |
 | `GET` | `/api/v1/reports/full` | Student | 获取完整报告 |
 | `GET` | `/api/v1/reports/history` | Student | 获取历史测评记录 |
+| `DELETE` | `/api/v1/reports/history/{submission_id}` | Student | 删除学生端报告历史记录 |
 
 ### 7.5 树洞接口
 

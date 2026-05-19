@@ -65,6 +65,11 @@ class DeepSeekJsonCompletionResult:
     fallback_used: bool
     fallback_reason: str | None
 
+    @property
+    def effective_model_name(self) -> str:
+        """Return the model name suitable for persistence and auditing."""
+        return self.model_name or str(self.request_payload.get("model") or DEEPSEEK_MODEL_NAME)
+
 
 class DeepSeekService:
     """Call the DeepSeek chat completion API and require JSON output."""
@@ -145,7 +150,7 @@ class DeepSeekService:
             raise ValueError("response_example must not be empty")
 
         return {
-            "model": DEEPSEEK_MODEL_NAME,
+            "model": self.settings.deepseek_model_name,
             "messages": [
                 {
                     "role": "system",
@@ -160,6 +165,7 @@ class DeepSeekService:
                 },
             ],
             "response_format": {"type": "json_object"},
+            "thinking": {"type": "disabled"},
             "temperature": temperature,
             "max_tokens": max_tokens,
         }

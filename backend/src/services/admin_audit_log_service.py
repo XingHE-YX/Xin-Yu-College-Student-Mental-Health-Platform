@@ -250,6 +250,8 @@ class AdminAuditLogService:
             return f"STU-{(target_id or 0):06d}"
         if audit_log.target_type == "admin_user":
             return f"管理员 #{target_id or 0}"
+        if audit_log.target_type == "questionnaire_submission":
+            return f"测评记录 #{target_id or 0}"
         return f"{audit_log.target_type} #{target_id or 0}"
 
     def _build_summary_text(self, audit_log: AuditLog) -> str:
@@ -284,6 +286,8 @@ class AdminAuditLogService:
             return "打开学生风险档案详情。"
         if action_code == "ADMIN_REVEAL_STUDENT_PHONE":
             return "展开学生完整手机号。"
+        if action_code == "STUDENT_DELETE_REPORT_HISTORY_ITEM":
+            return "学生删除测评报告历史记录。"
         return action_code
 
     def _build_status_transition_summary(

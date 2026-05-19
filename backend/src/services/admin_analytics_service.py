@@ -92,13 +92,20 @@ class AdminAnalyticsSnapshot:
 class AdminAnalyticsService:
     """Build the fixed analytics snapshot required by IMPLEMENTATION_PLAN 12.1."""
 
-    def __init__(self, session: Session, *, show_seeded_cases: bool = True) -> None:
+    def __init__(
+        self,
+        session: Session,
+        *,
+        show_seeded_cases: bool = True,
+        now: datetime | None = None,
+    ) -> None:
         self.repository = AdminAnalyticsRepository(session)
         self.show_seeded_cases = show_seeded_cases
+        self.now = now
 
     def build_trends_snapshot(self) -> AdminAnalyticsSnapshot:
         """Return one chart-ready analytics snapshot for the admin backend."""
-        generated_at = utc_now()
+        generated_at = self.now or utc_now()
         end_date = generated_at.date()
         start_date = end_date - timedelta(days=DEFAULT_TREND_WINDOW_DAYS - 1)
         start_at = datetime.combine(start_date, time.min)

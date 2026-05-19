@@ -429,6 +429,10 @@ def test_create_treehole_post_persists_masked_public_post_and_mock_fallback_anal
     )
 
     assert response.status_code == 200
+    system_prompt = app.state.deepseek_service.calls[0]["system_prompt"]
+    assert "extremely professional clinical-psychology expert" in system_prompt
+    assert "warm" in system_prompt
+    assert "non-judgmental" in system_prompt
     payload = response.json()
     assert payload["code"] == "OK"
     assert payload["data"]["risk_level"] == "low"

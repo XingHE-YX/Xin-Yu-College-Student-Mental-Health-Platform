@@ -114,11 +114,20 @@
           <view wx:if="{{historyRecords.length}}" class="report-page__history-list">
             <view wx:for="{{historyRecords}}" wx:key="index" class="report-page__history-item">
               <view class="report-page__result-head">
-                <view>
+                <view class="report-page__history-main">
                   <view class="report-page__card-title">{{item.resultTitle}}</view>
                   <view class="helper-text">{{item.submittedAtLabel}}</view>
                 </view>
-                <result-badge label="{{item.riskLabel}}" tone="{{item.riskTone}}" />
+                <view class="report-page__history-actions">
+                  <result-badge label="{{item.riskLabel}}" tone="{{item.riskTone}}" />
+                  <button
+                    class="report-page__delete-button"
+                    data-index="{{index}}"
+                    bindtap="handleDeleteHistoryRecord"
+                  >
+                    删除
+                  </button>
+                </view>
               </view>
               <view class="caption-text">{{item.scoreSummaryText}}</view>
               <view class="helper-text">{{item.summaryText}}</view>

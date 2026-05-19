@@ -53,6 +53,35 @@
           </view>
         </view>
 
+        <view wx:if="{{aiIntegratedAnalysis}}" class="channel-page-card channel-page-card--default">
+          <view class="report-page__section-head">
+            <view>
+              <view class="eyebrow">DeepSeek 分析</view>
+              <view class="section-subtitle">AI 多维综合判断</view>
+            </view>
+            <view class="chip chip--neutral">{{aiIntegratedAnalysis.modelName}}</view>
+          </view>
+          <view class="body-text report-page__summary-text">{{aiIntegratedAnalysis.summary}}</view>
+          <view class="report-page__card-list">
+            <view wx:for="{{aiIntegratedAnalysis.dimensions}}" wx:key="name" class="report-page__analysis-card">
+              <view class="report-page__result-head">
+                <view class="report-page__card-title">{{item.name}}</view>
+                <result-badge label="{{item.level}}" tone="{{item.level}}" />
+              </view>
+              <view class="body-text">{{item.evidence}}</view>
+            </view>
+          </view>
+          <view wx:if="{{aiIntegratedAnalysis.riskFactors.length}}" class="report-page__chip-wrap">
+            <view class="caption-text">风险因素</view>
+            <view wx:for="{{aiIntegratedAnalysis.riskFactors}}" wx:key="*this" class="inline-list__item">{{item}}</view>
+          </view>
+          <view wx:if="{{aiIntegratedAnalysis.protectiveFactors.length}}" class="report-page__chip-wrap">
+            <view class="caption-text">保护因素</view>
+            <view wx:for="{{aiIntegratedAnalysis.protectiveFactors}}" wx:key="*this" class="inline-list__item">{{item}}</view>
+          </view>
+          <view wx:if="{{aiIntegratedAnalysis.manualReviewHint}}" class="body-text report-page__summary-text">{{aiIntegratedAnalysis.manualReviewHint}}</view>
+        </view>
+
         <view class="channel-page-card channel-page-card--default">
           <view class="eyebrow">量表摘要</view>
           <view class="section-subtitle">各量表结果</view>

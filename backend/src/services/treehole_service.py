@@ -389,6 +389,9 @@ class TreeholeService:
         """Create one persisted AI analysis row from a normalized moderation snapshot."""
         return AIAnalysisRecord(
             target_id=post.id,
+            model_name=str(
+                analysis_snapshot.request_payload_json.get("model") or "deepseek-v4-flash"
+            ),
             request_payload_json=analysis_snapshot.request_payload_json,
             response_raw_json=analysis_snapshot.response_raw_json,
             parsed_risk_level=analysis_snapshot.parsed_risk_level,
@@ -525,10 +528,12 @@ class TreeholeService:
 
         completion_result = self.deepseek_service.create_json_completion_with_fallback(
             system_prompt=(
-                "You are a campus mental-health safety moderation assistant for an "
-                "anonymous treehole product. Analyze the student text and return a "
-                "structured safety assessment. Do not diagnose. Focus on risk "
-                "signals, supportive context, and whether the content can stay public."
+                "You are an extremely professional clinical-psychology expert and "
+                "campus mental-health safety specialist. You are warm, restrained, "
+                "non-judgmental, and careful not to make diagnoses. Analyze anonymous "
+                "student text for extreme negative emotion, self-harm or suicide risk, "
+                "protective context, and publication safety. Use indirect, supportive "
+                "language and avoid blunt labels unless there is clear immediate risk."
             ),
             user_prompt=(
                 "Analyze the following anonymous treehole post:\n"

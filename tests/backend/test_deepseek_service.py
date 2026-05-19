@@ -31,6 +31,23 @@ def build_settings(*, enable_mock_ai: bool = False) -> Settings:
     )
 
 
+def build_settings_with_model(model_name: str) -> Settings:
+    """Create runtime settings with an explicit DeepSeek model override."""
+    return Settings(
+        APP_NAME="心语 DeepSeek 测试后端",
+        APP_ENV="testing",
+        API_V1_PREFIX="/api/v1",
+        DATABASE_URL="sqlite+pysqlite:///:memory:",
+        JWT_SECRET_KEY="jwt-test-secret",
+        DEEPSEEK_API_KEY="deepseek-test-key",
+        DEEPSEEK_MODEL_NAME=model_name,
+        WECHAT_APP_ID="test-wechat-app-id",
+        WECHAT_APP_SECRET="test-wechat-app-secret",
+        ENABLE_DEMO_LOGIN=False,
+        ENABLE_MOCK_AI=False,
+    )
+
+
 def test_create_json_completion_posts_to_deepseek_and_parses_json(monkeypatch) -> None:
     """The client should enforce JSON mode and decode the model content."""
     captured: dict[str, object] = {}
@@ -89,6 +106,7 @@ def test_create_json_completion_posts_to_deepseek_and_parses_json(monkeypatch) -
     assert isinstance(request_payload, dict)
     assert request_payload["model"] == DEEPSEEK_MODEL_NAME
     assert request_payload["response_format"] == {"type": "json_object"}
+    assert request_payload["thinking"] == {"type": "disabled"}
     assert "JSON" in request_payload["messages"][0]["content"]
     assert '"risk_level": "low"' in request_payload["messages"][0]["content"]
     assert request_payload["messages"][1]["content"] == "I feel tired but safe."
@@ -429,3 +447,18 @@ def test_enable_mock_ai_skips_remote_call_and_escalates_high_risk_keywords(
     assert result.content_json["risk_level"] == "high"
     assert result.content_json["recommended_action"] == "manual_review_high"
     assert "不想活了" in result.content_json["trigger_phrases"]
+
+
+def test_deepseek_model_name_can_be_overridden_by_runtime_settings() -> None:
+    """Deployments should be able to swap DeepSeek model IDs without code changes."""
+    service = DeepSeekService(build_settings_with_model("deepseek-reasoner"))
+
+    request_payload = service._build_request_payload(
+        system_prompt="Analyze one payload.",
+        user_prompt="payload",
+        response_example={"risk_level": "low"},
+        temperature=0.2,
+        max_tokens=100,
+    )
+
+    assert request_payload["model"] == "deepseek-reasoner"

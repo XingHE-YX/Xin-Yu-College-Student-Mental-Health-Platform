@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,8 @@ from src.core.database import get_db_session
 from src.models.student_user import StudentUser
 from src.schemas.report import (
     FullReportResponse,
+    ReportDeleteData,
+    ReportDeleteSuccessResponse,
     ReportFullData,
     ReportFullSuccessResponse,
     ReportHistoryData,
@@ -26,7 +28,10 @@ from src.services.assessment_report_service import (
     AssessmentReportConfigurationError,
     FullProfileLockedError,
 )
-from src.services.student_report_service import StudentReportService
+from src.services.student_report_service import (
+    ReportSubmissionNotFoundError,
+    StudentReportService,
+)
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -84,14 +89,16 @@ def get_report_summary(
     status_code=status.HTTP_200_OK,
 )
 def get_full_profile_report(
+    request: Request,
     student: Annotated[StudentUser, Depends(get_current_student)],
     session: Annotated[Session, Depends(get_db_session)],
 ) -> ReportFullSuccessResponse | JSONResponse:
     """Return the unlocked full-profile report for the current student."""
     try:
-        report = StudentReportService(session).build_full_profile_report(
-            student_id=student.id
-        )
+        report = StudentReportService(
+            session,
+            deepseek_service=request.app.state.deepseek_service,
+        ).build_full_profile_report(student_id=student.id)
     except FullProfileLockedError as exc:
         return build_error_response(
             http_status=status.HTTP_409_CONFLICT,
@@ -145,6 +152,7 @@ def get_report_history(
             records=[
                 ReportHistoryItemResponse(
                     report_type=item.report_type,
+                    submission_id=item.submission_id,
                     questionnaire_code=item.questionnaire_code,
                     questionnaire_name=item.questionnaire_name,
                     submitted_at=item.submitted_at,
@@ -157,5 +165,38 @@ def get_report_history(
                 )
                 for item in history
             ]
+        ),
+    )
+
+
+@router.delete(
+    "/history/{submission_id}",
+    response_model=ReportDeleteSuccessResponse,
+    status_code=status.HTTP_200_OK,
+)
+def delete_report_history_item(
+    submission_id: int,
+    student: Annotated[StudentUser, Depends(get_current_student)],
+    session: Annotated[Session, Depends(get_db_session)],
+) -> ReportDeleteSuccessResponse | JSONResponse:
+    """Soft-delete one student-visible report history item."""
+    try:
+        submission = StudentReportService(session).delete_report_history_item(
+            student_id=student.id,
+            submission_id=submission_id,
+        )
+    except ReportSubmissionNotFoundError as exc:
+        return build_error_response(
+            http_status=status.HTTP_404_NOT_FOUND,
+            code="REPORT_HISTORY_ITEM_NOT_FOUND",
+            message=str(exc),
+        )
+
+    assert submission.deleted_at is not None
+    return ReportDeleteSuccessResponse(
+        request_id=build_request_id(),
+        data=ReportDeleteData(
+            submission_id=submission.id,
+            deleted_at=submission.deleted_at,
         ),
     )

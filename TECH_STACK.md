@@ -82,8 +82,8 @@
 | 服务提供方 | DeepSeek API |
 | Base URL | `https://api.deepseek.com` |
 | 接口路径 | `POST /chat/completions` |
-| 模型 ID | `deepseek-chat` |
-| 模型系列 | DeepSeek-V3.2 非思维链模式 |
+| 模型 ID | `deepseek-v4-flash` |
+| 模型模式 | 非思维链模式，`thinking.type = disabled` |
 | 返回模式 | 必须输出 JSON |
 | 回退策略 | 外部调用失败时读取本地 `mock_response.json` |
 

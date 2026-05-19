@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     database_url: str = Field(validation_alias="DATABASE_URL")
     jwt_secret_key: SecretStr = Field(validation_alias="JWT_SECRET_KEY")
     deepseek_api_key: SecretStr = Field(validation_alias="DEEPSEEK_API_KEY")
+    deepseek_model_name: str = Field(
+        default="deepseek-v4-flash",
+        validation_alias="DEEPSEEK_MODEL_NAME",
+    )
     wechat_app_id: str = Field(validation_alias="WECHAT_APP_ID")
     wechat_app_secret: SecretStr = Field(validation_alias="WECHAT_APP_SECRET")
     enable_demo_login: bool = Field(default=False, validation_alias="ENABLE_DEMO_LOGIN")

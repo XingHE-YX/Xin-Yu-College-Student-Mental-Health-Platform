@@ -293,7 +293,10 @@ class QuestionnaireQueryService:
         statement = (
             select(QuestionnaireSubmission)
             .options(selectinload(QuestionnaireSubmission.template))
-            .where(QuestionnaireSubmission.student_id == student_id)
+            .where(
+                QuestionnaireSubmission.student_id == student_id,
+                QuestionnaireSubmission.deleted_at.is_(None),
+            )
         )
         submissions = self.session.scalars(statement).all()
 

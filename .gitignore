@@ -9,6 +9,7 @@ __pycache__/
 
 backend/.venv/
 backend/.env
+中期答辩报告指南.md
 # 忽略 Office 临时文件
 ~$*.docx
 ~$*.xlsx

@@ -396,7 +396,7 @@ def test_aggregate_treehole_risk_detects_historical_high_ai_records() -> None:
                 target_type=AIAnalysisTargetType.TREEHOLE_POST,
                 target_id=post.id,
                 provider=AIAnalysisProvider.DEEPSEEK,
-                model_name="deepseek-chat",
+                model_name="deepseek-v4-flash",
                 request_payload_json={"content": post.content_raw},
                 response_raw_json={"risk_level": "high"},
                 parsed_risk_level=QuestionnaireRiskLevel.HIGH,

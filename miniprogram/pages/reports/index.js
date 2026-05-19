@@ -2,6 +2,7 @@ const { HOTLINE_PHONE, PAGE_ROUTES } = require("../../constants/config");
 const { getPrimaryChannelRoute } = require("../../constants/navigation");
 const { getQuestionnaireRouteByCode } = require("../../constants/questionnaires");
 const {
+  deleteReportHistoryItem,
   fetchReportHistory,
   fetchReportSummary,
 } = require("../../services/reports");
@@ -121,6 +122,7 @@ function mapScaleResultCard(item) {
 
 function mapHistoryRecord(item) {
   return {
+    submissionId: item.submission_id,
     code: item.questionnaire_code,
     name: item.questionnaire_name,
     submittedAtLabel: formatSubmittedAt(item.submitted_at),
@@ -330,6 +332,55 @@ Page({
 
   handleBackHome() {
     switchToPrimaryTab(PAGE_ROUTES.HOME);
+  },
+
+  handleDeleteHistoryRecord(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const record = this.data.historyRecords[index];
+    if (!record || !record.submissionId) {
+      return;
+    }
+
+    const session = loadStudentSession();
+    if (!hasValidStudentSession(session)) {
+      clearStudentSession();
+      wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+      return;
+    }
+
+    wx.showModal({
+      title: "删除这份报告？",
+      content: "删除后，该测评记录将不再出现在你的报告页。后台安全复核记录不会被清除。",
+      confirmText: "删除",
+      confirmColor: "#b42318",
+      success: (modalResult) => {
+        if (!modalResult.confirm) {
+          return;
+        }
+        deleteReportHistoryItem({
+          accessToken: session.accessToken,
+          submissionId: record.submissionId,
+        })
+          .then(() => {
+            wx.showToast({
+              title: "已删除",
+              icon: "success",
+            });
+            this.bootstrap({ forceRefresh: true });
+          })
+          .catch((error) => {
+            if (error && error.statusCode === 401) {
+              clearStudentSession();
+              wx.reLaunch({ url: PAGE_ROUTES.LOGIN });
+              return;
+            }
+            wx.showToast({
+              title: (error && error.message) || "删除失败，请稍后重试。",
+              icon: "none",
+            });
+          });
+      },
+    });
   },
 
   handleChannelChange(event) {

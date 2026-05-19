@@ -42,6 +42,34 @@ function joinScoreSummary(scoreSummary) {
     .join(" · ");
 }
 
+function normalizeStringList(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.filter((item) => typeof item === "string" && item.trim());
+}
+
+function normalizeAIIntegratedAnalysis(analysis) {
+  if (!analysis || typeof analysis !== "object") {
+    return null;
+  }
+
+  return {
+    modelName: analysis.model_name || "",
+    fallbackUsed: Boolean(analysis.fallback_used),
+    assessedRiskLevel: analysis.model_assessed_risk_level || "",
+    summary: analysis.analysis_summary || "",
+    dimensions: Array.isArray(analysis.dimensions) ? analysis.dimensions : [],
+    riskFactors: normalizeStringList(analysis.risk_factors),
+    protectiveFactors: normalizeStringList(analysis.protective_factors),
+    recommendations: Array.isArray(analysis.recommendations)
+      ? analysis.recommendations
+      : [],
+    manualReviewHint: analysis.manual_review_hint || "",
+  };
+}
+
 Page({
   data: {
     student: null,
@@ -52,6 +80,7 @@ Page({
     resultBadge: null,
     unlockStatus: null,
     integratedSummary: "",
+    aiIntegratedAnalysis: null,
     questionnaireSummaries: [],
     trendPlaceholder: null,
     recommendations: [],
@@ -90,6 +119,9 @@ Page({
           resultBadge: content.result_badge || null,
           unlockStatus: content.unlock_status || null,
           integratedSummary: content.integrated_summary || "",
+          aiIntegratedAnalysis: normalizeAIIntegratedAnalysis(
+            content.ai_integrated_analysis
+          ),
           questionnaireSummaries: (content.questionnaire_summaries || []).map(
             (item) => ({
               name: item.questionnaire.name,

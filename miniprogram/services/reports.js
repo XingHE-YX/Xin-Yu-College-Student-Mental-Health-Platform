@@ -21,7 +21,16 @@ function fetchReportHistory(options) {
   });
 }
 
+function deleteReportHistoryItem(options) {
+  return request({
+    url: `/reports/history/${encodeURIComponent(options.submissionId)}`,
+    method: "DELETE",
+    token: options.accessToken,
+  });
+}
+
 module.exports = {
+  deleteReportHistoryItem,
   fetchFullReport,
   fetchReportHistory,
   fetchReportSummary,

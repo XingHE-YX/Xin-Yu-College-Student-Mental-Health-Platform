@@ -171,7 +171,7 @@ def test_demo_seed_service_populates_admin_ready_dataset(tmp_path: Path) -> None
             "ADMIN_ADD_INTERVENTION_NOTE",
         }
 
-        analytics = AdminAnalyticsService(session).build_trends_snapshot()
+        analytics = AdminAnalyticsService(session, now=FIXED_NOW).build_trends_snapshot()
         assert analytics.risk_distribution.total_students == 3
         assert [item.student_count for item in analytics.risk_distribution.items] == [1, 1, 1]
         assert analytics.alert_processing.total_alert_case_count == 2

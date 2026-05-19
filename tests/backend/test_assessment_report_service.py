@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
 from src.constants.questionnaire_enums import (
     AssessmentReportType,
     QuestionnaireRiskLevel,
@@ -15,6 +16,7 @@ from src.services.assessment_report_service import (
     AssessmentReportService,
     FullProfileLockedError,
 )
+from src.services.deepseek_service import DEEPSEEK_MODEL_NAME, DeepSeekJsonCompletionResult
 
 
 def build_submission(
@@ -57,6 +59,68 @@ def build_submission(
             "hard_trigger_matches": hard_trigger_matches,
         },
         created_at=submitted_at,
+    )
+
+
+class FakeDeepSeekService:
+    """Deterministic DeepSeek stub used by report-generation tests."""
+
+    def __init__(self, *, result: DeepSeekJsonCompletionResult) -> None:
+        self.result = result
+        self.calls: list[dict[str, object]] = []
+
+    def create_json_completion_with_fallback(self, **kwargs) -> DeepSeekJsonCompletionResult:
+        self.calls.append(kwargs)
+        return self.result
+
+
+def build_mock_report_ai_result(
+    *,
+    fallback_used: bool = False,
+    risk_level: str = "watch",
+    analysis_summary: str = "AI 综合分析提示近期压力和睡眠状态需要继续留意。",
+) -> DeepSeekJsonCompletionResult:
+    """Build one normalized fake AI result for full-profile report tests."""
+    content_json = {
+        "analysis_summary": analysis_summary,
+        "model_assessed_risk_level": risk_level,
+        "dimensions": [
+            {
+                "name": "情绪状态",
+                "level": risk_level,
+                "evidence": "SDS 结果提示情绪状态需要结合近期生活事件观察。",
+            }
+        ],
+        "risk_factors": ["近期压力累积。"],
+        "protective_factors": ["已完成完整测评链路。"],
+        "recommendations": [
+            {
+                "title": "稳定作息",
+                "summary": "先保证睡眠、饮食和日常活动节律。",
+            }
+        ],
+        "manual_review_hint": "建议继续观察，必要时进入重点关注。",
+    }
+    return DeepSeekJsonCompletionResult(
+        request_payload={
+            "model": DEEPSEEK_MODEL_NAME,
+            "messages": [
+                {"role": "system", "content": "Analyze report."},
+                {"role": "user", "content": "fake report prompt"},
+            ],
+            "response_format": {"type": "json_object"},
+        },
+        response_payload={
+            "source": "mock_report_response.json" if fallback_used else "deepseek_api",
+            "content": content_json,
+        },
+        completion_id=None if fallback_used else "chatcmpl-report-test-001",
+        model_name=DEEPSEEK_MODEL_NAME,
+        finish_reason="mock_fallback" if fallback_used else "stop",
+        content_text="{}",
+        content_json=content_json,
+        fallback_used=fallback_used,
+        fallback_reason="DeepSeek chat completion timed out" if fallback_used else None,
     )
 
 
@@ -254,7 +318,8 @@ def test_full_profile_requires_all_required_questionnaires() -> None:
 
 def test_full_profile_uses_latest_submissions_and_sleep_high_maps_to_watch() -> None:
     """Latest submissions should win, and sleep-only high should not force overall high."""
-    service = AssessmentReportService()
+    fake_deepseek_service = FakeDeepSeekService(result=build_mock_report_ai_result())
+    service = AssessmentReportService(deepseek_service=fake_deepseek_service)
     now = datetime.now(UTC).replace(tzinfo=None)
     older_screen = build_submission(
         submission_id=401,
@@ -305,6 +370,18 @@ def test_full_profile_uses_latest_submissions_and_sleep_high_maps_to_watch() -> 
     assert report.content["unlock_status"]["full_profile_unlocked"] is True
     assert report.content["result_badge"]["risk_level"] == "watch"
     assert report.content["trend_placeholder"]["title"] == "趋势观察占位"
+    assert fake_deepseek_service.calls
+    system_prompt = fake_deepseek_service.calls[0]["system_prompt"]
+    assert "extremely professional clinical-psychology expert" in system_prompt
+    assert "warm" in system_prompt
+    assert "comforting" in system_prompt
+    ai_analysis = report.content["ai_integrated_analysis"]
+    assert ai_analysis["provider"] == "deepseek"
+    assert ai_analysis["model_name"] == DEEPSEEK_MODEL_NAME
+    assert ai_analysis["model_assessed_risk_level"] == "watch"
+    assert ai_analysis["fallback_used"] is False
+    assert "AI 综合分析" in ai_analysis["analysis_summary"]
+    assert ai_analysis["dimensions"][0]["name"] == "情绪状态"
 
 
 def test_optional_upi_does_not_block_unlock_but_can_raise_full_profile_risk() -> None:
@@ -359,3 +436,50 @@ def test_optional_upi_does_not_block_unlock_but_can_raise_full_profile_risk() ->
     assert report.content["unlock_status"]["full_profile_unlocked"] is True
     assert report.content["safety_banner"]["component"] == "safety-banner"
     assert report.content["questionnaire_summaries"][-1]["questionnaire"]["code"] == "UPI"
+
+
+def test_full_profile_uses_rule_based_ai_block_when_deepseek_is_not_configured() -> None:
+    """Full reports should still contain a report-analysis block without a DeepSeek service."""
+    service = AssessmentReportService()
+    now = datetime.now(UTC).replace(tzinfo=None)
+    submissions = [
+        build_submission(
+            submission_id=601,
+            questionnaire_code="SCREEN",
+            submitted_at=now,
+            raw_score=44,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+        build_submission(
+            submission_id=602,
+            questionnaire_code="SDS",
+            submitted_at=now + timedelta(minutes=1),
+            raw_score=42,
+            standardized_score=52,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+        build_submission(
+            submission_id=603,
+            questionnaire_code="SAS",
+            submitted_at=now + timedelta(minutes=2),
+            raw_score=39,
+            standardized_score=48,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+        build_submission(
+            submission_id=604,
+            questionnaire_code="SLEEP",
+            submitted_at=now + timedelta(minutes=3),
+            raw_score=6,
+            risk_level=QuestionnaireRiskLevel.LOW,
+        ),
+    ]
+
+    report = service.build_full_profile_report(submissions)
+
+    ai_analysis = report.content["ai_integrated_analysis"]
+    assert ai_analysis["provider"] == "deepseek"
+    assert ai_analysis["model_name"] == "rule_based_fallback"
+    assert ai_analysis["fallback_used"] is True
+    assert ai_analysis["model_assessed_risk_level"] == "low"
+    assert ai_analysis["dimensions"][0]["name"] == "快速筛查"

@@ -47,6 +47,7 @@ class QuestionnaireSubmission(PrimaryKeyMixin, CreatedAtMixin, Base):
     )
     started_at: Mapped[datetime] = mapped_column(DATETIME_3, nullable=False)
     submitted_at: Mapped[datetime] = mapped_column(DATETIME_3, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DATETIME_3, nullable=True)
     status: Mapped[QuestionnaireSubmissionStatus] = mapped_column(
         Enum(
             QuestionnaireSubmissionStatus,

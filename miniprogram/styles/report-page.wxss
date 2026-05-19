@@ -30,6 +30,7 @@
 }
 
 .report-page__result-card,
+.report-page__analysis-card,
 .report-page__history-item {
   padding: 24rpx;
   border-radius: 28rpx;
@@ -39,6 +40,10 @@
   display: flex;
   flex-direction: column;
   gap: 14rpx;
+}
+
+.report-page__analysis-card {
+  background: #f8fbfa;
 }
 
 .report-page__history-list {
@@ -53,6 +58,32 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24rpx;
+}
+
+.report-page__history-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.report-page__history-main {
+  min-width: 0;
+}
+
+.report-page__delete-button {
+  margin: 0;
+  padding: 0 18rpx;
+  min-height: 52rpx;
+  border-radius: 999rpx;
+  background: #fbe7e7;
+  color: #a92a2a;
+  font-size: 24rpx;
+  line-height: 52rpx;
+}
+
+.report-page__delete-button::after {
+  border: 0;
 }
 
 .report-page__card-title {

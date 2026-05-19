@@ -128,7 +128,7 @@ def test_treehole_tables_create_expected_constraints_and_persistence() -> None:
             target_type=AIAnalysisTargetType.TREEHOLE_POST,
             target_id=published_post.id,
             provider=AIAnalysisProvider.DEEPSEEK,
-            model_name="deepseek-chat",
+            model_name="deepseek-v4-flash",
             request_payload_json={"content": published_post.content_raw},
             response_raw_json={"risk_level": "watch", "score": "0.8123"},
             parsed_risk_level=QuestionnaireRiskLevel.WATCH,

@@ -10,11 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from src.constants.questionnaire_enums import AssessmentReportType, QuestionnaireRiskLevel
+from src.constants.workflow_enums import AuditActorType
+from src.models.audit_log import AuditLog
+from src.models.base import utc_now
 from src.models.questionnaire_submission import QuestionnaireSubmission
 from src.services.assessment_report_service import (
     AssessmentReportService,
     GeneratedAssessmentReport,
 )
+from src.services.deepseek_service import DeepSeekService
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +26,7 @@ class ReportHistoryEntry:
     """One student-side report history item."""
 
     report_type: AssessmentReportType
+    submission_id: int
     questionnaire_code: str
     questionnaire_name: str
     submitted_at: datetime
@@ -33,6 +38,10 @@ class ReportHistoryEntry:
     summary_text: str
 
 
+class ReportSubmissionNotFoundError(ValueError):
+    """Raised when a student tries to delete a report submission they cannot access."""
+
+
 class StudentReportService:
     """Load student questionnaire submissions and derive report payloads."""
 
@@ -41,9 +50,12 @@ class StudentReportService:
         session: Session,
         *,
         report_service: AssessmentReportService | None = None,
+        deepseek_service: DeepSeekService | None = None,
     ) -> None:
         self.session = session
-        self.report_service = report_service or AssessmentReportService()
+        self.report_service = report_service or AssessmentReportService(
+            deepseek_service=deepseek_service
+        )
 
     def build_report_summary(self, *, student_id: int) -> dict[str, Any]:
         """Build the student report-home payload from current submissions."""
@@ -78,6 +90,7 @@ class StudentReportService:
             history_entries.append(
                 ReportHistoryEntry(
                     report_type=generated_report.report_type,
+                    submission_id=submission.id,
                     questionnaire_code=questionnaire_code,
                     questionnaire_name=questionnaire_entry.name,
                     submitted_at=submission.submitted_at,
@@ -91,6 +104,43 @@ class StudentReportService:
             )
         return history_entries
 
+    def delete_report_history_item(
+        self,
+        *,
+        student_id: int,
+        submission_id: int,
+    ) -> QuestionnaireSubmission:
+        """Soft-delete one student-visible report history item."""
+        statement = select(QuestionnaireSubmission).where(
+            QuestionnaireSubmission.id == submission_id,
+            QuestionnaireSubmission.student_id == student_id,
+            QuestionnaireSubmission.deleted_at.is_(None),
+        )
+        submission = self.session.scalar(statement)
+        if submission is None:
+            raise ReportSubmissionNotFoundError("report history item does not exist")
+
+        questionnaire_code = self._resolve_questionnaire_code(submission)
+        submission.deleted_at = utc_now()
+        self.session.add(
+            AuditLog(
+                actor_type=AuditActorType.STUDENT,
+                actor_id=student_id,
+                action_code="STUDENT_DELETE_REPORT_HISTORY_ITEM",
+                target_type="questionnaire_submission",
+                target_id=submission.id,
+                metadata_json={
+                    "questionnaire_code": questionnaire_code,
+                    "risk_level": submission.risk_level.value,
+                    "hard_trigger_hit": submission.hard_trigger_hit,
+                },
+                ip_address=None,
+            )
+        )
+        self.session.commit()
+        self.session.refresh(submission)
+        return submission
+
     def _load_student_submissions(
         self,
         student_id: int,
@@ -99,7 +149,10 @@ class StudentReportService:
         statement = (
             select(QuestionnaireSubmission)
             .options(selectinload(QuestionnaireSubmission.template))
-            .where(QuestionnaireSubmission.student_id == student_id)
+            .where(
+                QuestionnaireSubmission.student_id == student_id,
+                QuestionnaireSubmission.deleted_at.is_(None),
+            )
         )
         return list(self.session.scalars(statement).all())
 

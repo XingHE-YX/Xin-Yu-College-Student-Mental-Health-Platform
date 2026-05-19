@@ -16,6 +16,7 @@ from src.constants.questionnaire_enums import (
 from src.models.assessment_report import AssessmentReport
 from src.models.questionnaire_submission import QuestionnaireSubmission
 from src.schemas.question_bank_seed import QuestionBankSeedFile
+from src.services.deepseek_service import DeepSeekJsonCompletionResult, DeepSeekService
 from src.utils.validate_question_bank_seeds import discover_seed_files, load_seed_file
 
 REPORT_VERSION = "v1.0"
@@ -55,6 +56,7 @@ PRESENTATION_HINTS = {
 }
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SEED_DIRECTORY = REPO_ROOT / "appendices" / "question_bank"
+DEFAULT_REPORT_MOCK_RESPONSE_PATH = REPO_ROOT / "backend" / "mock_report_response.json"
 
 
 class AssessmentReportGenerationError(ValueError):
@@ -63,6 +65,10 @@ class AssessmentReportGenerationError(ValueError):
 
 class AssessmentReportConfigurationError(AssessmentReportGenerationError):
     """Raised when report generation cannot resolve questionnaire metadata."""
+
+
+class AssessmentReportAIAnalysisError(AssessmentReportGenerationError):
+    """Raised when an AI report-analysis payload cannot be normalized."""
 
 
 class FullProfileLockedError(AssessmentReportGenerationError):
@@ -138,6 +144,40 @@ class GeneratedAssessmentReport:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class ReportAIAnalysisSnapshot:
+    """Normalized AI analysis block for one full-profile report."""
+
+    analysis_summary: str
+    model_assessed_risk_level: QuestionnaireRiskLevel
+    dimensions: list[dict[str, str]]
+    risk_factors: list[str]
+    protective_factors: list[str]
+    recommendations: list[dict[str, str]]
+    manual_review_hint: str
+    model_name: str
+    fallback_used: bool
+    fallback_reason: str | None
+    request_payload_json: dict[str, Any]
+    response_raw_json: dict[str, Any]
+
+    def to_content_block(self) -> dict[str, Any]:
+        """Return the frontend-facing AI analysis block."""
+        return {
+            "provider": "deepseek",
+            "model_name": self.model_name,
+            "fallback_used": self.fallback_used,
+            "fallback_reason": self.fallback_reason,
+            "model_assessed_risk_level": self.model_assessed_risk_level.value,
+            "analysis_summary": self.analysis_summary,
+            "dimensions": self.dimensions,
+            "risk_factors": self.risk_factors,
+            "protective_factors": self.protective_factors,
+            "recommendations": self.recommendations,
+            "manual_review_hint": self.manual_review_hint,
+        }
+
+
 class AssessmentReportService:
     """Generate scale-result, summary, and full-profile report payloads."""
 
@@ -146,6 +186,7 @@ class AssessmentReportService:
         *,
         template_catalog: Sequence[QuestionnaireCatalogEntry] | None = None,
         seed_directory: Path = DEFAULT_SEED_DIRECTORY,
+        deepseek_service: DeepSeekService | None = None,
     ) -> None:
         catalog_entries = list(template_catalog or self._load_catalog(seed_directory))
         if not catalog_entries:
@@ -163,6 +204,7 @@ class AssessmentReportService:
             catalog_by_code[normalized_code] = entry
 
         self.catalog_by_code = catalog_by_code
+        self.deepseek_service = deepseek_service
 
     def build_scale_result_report(
         self,
@@ -276,6 +318,10 @@ class AssessmentReportService:
         student_id = self._resolve_student_id(latest_submissions.values())
         overall_risk_level = self._aggregate_full_profile_risk_level(latest_submissions)
         ordered_submissions = self._ordered_submissions(latest_submissions)
+        ai_analysis = self._build_full_profile_ai_analysis(
+            ordered_submissions=ordered_submissions,
+            overall_risk_level=overall_risk_level,
+        )
         content = {
             "schema_version": REPORT_VERSION,
             "page_type": "full_profile",
@@ -288,6 +334,7 @@ class AssessmentReportService:
                 latest_submissions,
                 overall_risk_level=overall_risk_level,
             ),
+            "ai_integrated_analysis": ai_analysis.to_content_block(),
             "questionnaire_summaries": [
                 self._build_scale_result_card(
                     self._resolve_catalog_entry(submission),
@@ -905,6 +952,369 @@ class AssessmentReportService:
         if questionnaire_code == "UPI":
             return "UPI 结果仅作辅助参考，不参与完整报告总分，也不构成诊断。"
         return "本结果用于自助筛查与校园支持参考，不构成诊断。"
+
+    def _build_full_profile_ai_analysis(
+        self,
+        *,
+        ordered_submissions: list[QuestionnaireSubmission],
+        overall_risk_level: QuestionnaireRiskLevel,
+    ) -> ReportAIAnalysisSnapshot:
+        """Build an AI-assisted multidimensional analysis block for the full report."""
+        if self.deepseek_service is None:
+            return self._build_rule_based_ai_analysis_snapshot(
+                ordered_submissions=ordered_submissions,
+                overall_risk_level=overall_risk_level,
+                fallback_reason="DeepSeek service is not configured for report analysis",
+            )
+
+        try:
+            completion_result = self.deepseek_service.create_json_completion_with_fallback(
+                system_prompt=(
+                    "You are an extremely professional clinical-psychology expert and "
+                    "campus mental-health report consultant. Analyze scored questionnaire "
+                    "results from multiple dimensions and return a student-facing, "
+                    "non-diagnostic JSON report. Your style is warm, tactful, comforting, "
+                    "and academically careful: avoid blunt conclusions, avoid medical "
+                    "diagnoses, explain risk gently, and provide practical support "
+                    "suggestions that a college student can actually follow."
+                ),
+                user_prompt=self._build_full_profile_ai_prompt(
+                    ordered_submissions=ordered_submissions,
+                    overall_risk_level=overall_risk_level,
+                ),
+                response_example={
+                    "analysis_summary": "brief integrated summary",
+                    "model_assessed_risk_level": "low",
+                    "dimensions": [
+                        {
+                            "name": "情绪状态",
+                            "level": "low",
+                            "evidence": "brief evidence from SDS",
+                        }
+                    ],
+                    "risk_factors": ["one possible risk factor"],
+                    "protective_factors": ["one protective factor"],
+                    "recommendations": [
+                        {
+                            "title": "one action title",
+                            "summary": "brief action summary",
+                        }
+                    ],
+                    "manual_review_hint": "brief review hint",
+                },
+                max_tokens=1200,
+                mock_response_path=DEFAULT_REPORT_MOCK_RESPONSE_PATH,
+            )
+            return self._normalize_report_ai_completion_result(
+                completion_result,
+                fallback_risk_level=overall_risk_level,
+            )
+        except AssessmentReportAIAnalysisError as exc:
+            return self._build_rule_based_ai_analysis_snapshot(
+                ordered_submissions=ordered_submissions,
+                overall_risk_level=overall_risk_level,
+                fallback_reason=str(exc),
+            )
+
+    def _build_full_profile_ai_prompt(
+        self,
+        *,
+        ordered_submissions: list[QuestionnaireSubmission],
+        overall_risk_level: QuestionnaireRiskLevel,
+    ) -> str:
+        """Build the structured prompt sent to DeepSeek for report interpretation."""
+        submission_payload = [
+            self._build_ai_submission_payload(submission)
+            for submission in ordered_submissions
+        ]
+        return (
+            "Analyze this student's completed questionnaire profile. Use the fixed "
+            "risk levels as source evidence, but add multidimensional interpretation "
+            "across emotion, anxiety, sleep, pressure, protective factors, and review "
+            "priority. Return JSON only.\n"
+            f"Overall rule risk level: {overall_risk_level.value}\n"
+            f"Questionnaire results: {submission_payload}"
+        )
+
+    def _build_ai_submission_payload(
+        self,
+        submission: QuestionnaireSubmission,
+    ) -> dict[str, Any]:
+        """Return compact questionnaire evidence for AI report analysis."""
+        catalog_entry = self._resolve_catalog_entry(submission)
+        return {
+            "code": catalog_entry.code,
+            "name": catalog_entry.name,
+            "raw_score": submission.raw_score,
+            "standardized_score": submission.standardized_score,
+            "risk_level": submission.risk_level.value,
+            "hard_trigger_hit": submission.hard_trigger_hit,
+            "submitted_at": submission.submitted_at.isoformat(timespec="seconds"),
+            "summary_text": self._build_scale_summary_text(
+                questionnaire_code=catalog_entry.code,
+                risk_level=submission.risk_level,
+            ),
+            "hard_trigger_matches": (
+                submission.scoring_snapshot_json or {}
+            ).get("hard_trigger_matches", []),
+        }
+
+    def _normalize_report_ai_completion_result(
+        self,
+        completion_result: DeepSeekJsonCompletionResult,
+        *,
+        fallback_risk_level: QuestionnaireRiskLevel,
+    ) -> ReportAIAnalysisSnapshot:
+        """Normalize one DeepSeek or mock completion into a report content block."""
+        content_json = completion_result.content_json
+        analysis_summary = self._require_text_field(
+            content_json,
+            field_name="analysis_summary",
+        )
+        risk_level_raw = content_json.get("model_assessed_risk_level")
+        try:
+            model_assessed_risk_level = QuestionnaireRiskLevel(str(risk_level_raw))
+        except ValueError:
+            model_assessed_risk_level = fallback_risk_level
+
+        dimensions = self._normalize_ai_dimensions(content_json.get("dimensions", []))
+        risk_factors = self._normalize_string_list(
+            content_json.get("risk_factors", []),
+            field_name="risk_factors",
+        )
+        protective_factors = self._normalize_string_list(
+            content_json.get("protective_factors", []),
+            field_name="protective_factors",
+        )
+        recommendations = self._normalize_ai_recommendations(
+            content_json.get("recommendations", [])
+        )
+        manual_review_hint = self._require_text_field(
+            content_json,
+            field_name="manual_review_hint",
+        )
+
+        return ReportAIAnalysisSnapshot(
+            analysis_summary=analysis_summary,
+            model_assessed_risk_level=model_assessed_risk_level,
+            dimensions=dimensions,
+            risk_factors=risk_factors,
+            protective_factors=protective_factors,
+            recommendations=recommendations,
+            manual_review_hint=manual_review_hint,
+            model_name=completion_result.effective_model_name,
+            fallback_used=completion_result.fallback_used,
+            fallback_reason=completion_result.fallback_reason,
+            request_payload_json=completion_result.request_payload,
+            response_raw_json=completion_result.response_payload,
+        )
+
+    def _build_rule_based_ai_analysis_snapshot(
+        self,
+        *,
+        ordered_submissions: list[QuestionnaireSubmission],
+        overall_risk_level: QuestionnaireRiskLevel,
+        fallback_reason: str,
+    ) -> ReportAIAnalysisSnapshot:
+        """Return a deterministic report-analysis block when AI output is unavailable."""
+        dimensions = [
+            self._build_rule_based_dimension(submission)
+            for submission in ordered_submissions
+        ]
+        return ReportAIAnalysisSnapshot(
+            analysis_summary=self._build_full_profile_summary(
+                self._select_latest_submissions(ordered_submissions),
+                overall_risk_level=overall_risk_level,
+            ),
+            model_assessed_risk_level=overall_risk_level,
+            dimensions=dimensions,
+            risk_factors=self._build_rule_based_risk_factors(
+                ordered_submissions=ordered_submissions,
+                overall_risk_level=overall_risk_level,
+            ),
+            protective_factors=self._build_rule_based_protective_factors(
+                overall_risk_level=overall_risk_level
+            ),
+            recommendations=self._build_support_actions(
+                risk_level=overall_risk_level,
+                unlocked=True,
+            ),
+            manual_review_hint=self._build_rule_based_manual_review_hint(
+                overall_risk_level
+            ),
+            model_name="rule_based_fallback",
+            fallback_used=True,
+            fallback_reason=fallback_reason,
+            request_payload_json={
+                "mode": "rule_based_report_analysis",
+                "source_submission_ids": [
+                    submission.id for submission in ordered_submissions
+                ],
+            },
+            response_raw_json={
+                "source": "rule_based_fallback",
+                "risk_level": overall_risk_level.value,
+            },
+        )
+
+    def _build_rule_based_dimension(
+        self,
+        submission: QuestionnaireSubmission,
+    ) -> dict[str, str]:
+        """Build one fallback dimension from questionnaire metadata."""
+        catalog_entry = self._resolve_catalog_entry(submission)
+        return {
+            "name": catalog_entry.name,
+            "level": submission.risk_level.value,
+            "evidence": self._build_scale_summary_text(
+                questionnaire_code=catalog_entry.code,
+                risk_level=submission.risk_level,
+            ),
+        }
+
+    def _build_rule_based_risk_factors(
+        self,
+        *,
+        ordered_submissions: list[QuestionnaireSubmission],
+        overall_risk_level: QuestionnaireRiskLevel,
+    ) -> list[str]:
+        """Build concise fallback risk factors from latest questionnaire results."""
+        if overall_risk_level is QuestionnaireRiskLevel.LOW:
+            return ["当前量表结果未出现需要立即升级处理的风险信号。"]
+
+        factors: list[str] = []
+        for submission in ordered_submissions:
+            if submission.risk_level is QuestionnaireRiskLevel.LOW:
+                continue
+            catalog_entry = self._resolve_catalog_entry(submission)
+            factors.append(f"{catalog_entry.name}结果为{RISK_LABELS[submission.risk_level]}。")
+        return factors or ["综合结果提示近期状态值得继续留意。"]
+
+    def _build_rule_based_protective_factors(
+        self,
+        *,
+        overall_risk_level: QuestionnaireRiskLevel,
+    ) -> list[str]:
+        """Build fallback protective factors for the AI block."""
+        factors = ["学生已完成完整测评链路，系统具备较完整的自助筛查信息。"]
+        if overall_risk_level is not QuestionnaireRiskLevel.HIGH:
+            factors.append("当前未出现需要立即拦截的高风险综合结论。")
+        return factors
+
+    def _build_rule_based_manual_review_hint(
+        self,
+        overall_risk_level: QuestionnaireRiskLevel,
+    ) -> str:
+        """Return a fallback review hint aligned with the aggregate risk."""
+        if overall_risk_level is QuestionnaireRiskLevel.HIGH:
+            return "建议后台优先复核，并提醒学生尽快联系线下支持资源。"
+        if overall_risk_level is QuestionnaireRiskLevel.WATCH:
+            return "建议继续观察，必要时进入重点关注列表。"
+        return "当前无需直接升级人工复核，但应保留主动求助入口。"
+
+    def _require_text_field(
+        self,
+        content_json: dict[str, Any],
+        *,
+        field_name: str,
+    ) -> str:
+        """Return a required non-blank string from an AI payload."""
+        value = content_json.get(field_name)
+        if not isinstance(value, str) or not value.strip():
+            raise AssessmentReportAIAnalysisError(
+                f"report AI analysis payload contains an invalid {field_name}"
+            )
+        return value.strip()
+
+    def _normalize_ai_dimensions(self, value: object) -> list[dict[str, str]]:
+        """Normalize AI dimension entries for report rendering."""
+        if not isinstance(value, list):
+            raise AssessmentReportAIAnalysisError(
+                "report AI analysis payload contains invalid dimensions"
+            )
+
+        dimensions: list[dict[str, str]] = []
+        for item in value:
+            if not isinstance(item, dict):
+                raise AssessmentReportAIAnalysisError(
+                    "report AI analysis payload contains invalid dimensions"
+                )
+            name = item.get("name")
+            level = item.get("level")
+            evidence = item.get("evidence")
+            if (
+                not isinstance(name, str)
+                or not name.strip()
+                or str(level) not in {level.value for level in QuestionnaireRiskLevel}
+                or not isinstance(evidence, str)
+                or not evidence.strip()
+            ):
+                raise AssessmentReportAIAnalysisError(
+                    "report AI analysis payload contains invalid dimensions"
+                )
+            dimensions.append(
+                {
+                    "name": name.strip(),
+                    "level": str(level),
+                    "evidence": evidence.strip(),
+                }
+            )
+        return dimensions
+
+    def _normalize_ai_recommendations(self, value: object) -> list[dict[str, str]]:
+        """Normalize AI recommendations for report rendering."""
+        if not isinstance(value, list):
+            raise AssessmentReportAIAnalysisError(
+                "report AI analysis payload contains invalid recommendations"
+            )
+
+        recommendations: list[dict[str, str]] = []
+        for item in value:
+            if not isinstance(item, dict):
+                raise AssessmentReportAIAnalysisError(
+                    "report AI analysis payload contains invalid recommendations"
+                )
+            title = item.get("title")
+            summary = item.get("summary")
+            if (
+                not isinstance(title, str)
+                or not title.strip()
+                or not isinstance(summary, str)
+                or not summary.strip()
+            ):
+                raise AssessmentReportAIAnalysisError(
+                    "report AI analysis payload contains invalid recommendations"
+                )
+            recommendations.append(
+                {
+                    "title": title.strip(),
+                    "summary": summary.strip(),
+                }
+            )
+        return recommendations
+
+    def _normalize_string_list(
+        self,
+        value: object,
+        *,
+        field_name: str,
+    ) -> list[str]:
+        """Validate that one AI payload field is a string array and trim empty items."""
+        if not isinstance(value, list):
+            raise AssessmentReportAIAnalysisError(
+                f"report AI analysis payload contains an invalid {field_name}"
+            )
+
+        normalized_items: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise AssessmentReportAIAnalysisError(
+                    f"report AI analysis payload contains an invalid {field_name}"
+                )
+            normalized_item = item.strip()
+            if normalized_item:
+                normalized_items.append(normalized_item)
+        return normalized_items
 
     def _build_full_profile_summary(
         self,

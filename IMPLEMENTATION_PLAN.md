@@ -313,7 +313,7 @@ MVP 必须按严格依赖顺序构建：
 
 - 使用 `httpx`
 - 接口地址：`https://api.deepseek.com`
-- 模型：`deepseek-chat`
+- 模型：`deepseek-v4-flash`，请求中显式关闭思维链模式
 - 强制要求 JSON 输出
 - 完成标准：
   - 常规调用时后端能拿到可解析 JSON。

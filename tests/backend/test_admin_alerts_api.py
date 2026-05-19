@@ -229,7 +229,7 @@ def seed_alert_workflow_data(app) -> dict[str, int]:
             target_type=AIAnalysisTargetType.TREEHOLE_POST,
             target_id=current_treehole_post.id,
             provider=AIAnalysisProvider.DEEPSEEK,
-            model_name="deepseek-chat",
+            model_name="deepseek-v4-flash",
             request_payload_json={"content": current_treehole_post.content_raw},
             response_raw_json={"risk_level": "high"},
             parsed_risk_level=QuestionnaireRiskLevel.HIGH,

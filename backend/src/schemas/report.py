@@ -70,6 +70,7 @@ class ReportHistoryItemResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     report_type: AssessmentReportType
+    submission_id: int
     questionnaire_code: str
     questionnaire_name: str
     submitted_at: datetime
@@ -79,6 +80,26 @@ class ReportHistoryItemResponse(BaseModel):
     flow_step: str | None
     score_summary: list[dict[str, Any]]
     summary_text: str
+
+
+class ReportDeleteData(BaseModel):
+    """Payload returned by report-history delete responses."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    submission_id: int
+    deleted_at: datetime
+
+
+class ReportDeleteSuccessResponse(BaseModel):
+    """Standard success envelope for report-history delete responses."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: Literal["OK"] = "OK"
+    message: Literal["success"] = "success"
+    request_id: str
+    data: ReportDeleteData
 
 
 class ReportHistoryData(BaseModel):
