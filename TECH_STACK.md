@@ -85,7 +85,7 @@
 | 模型 ID | `deepseek-v4-flash` |
 | 模型模式 | 非思维链模式，`thinking.type = disabled` |
 | 返回模式 | 必须输出 JSON |
-| 回退策略 | 外部调用失败时读取本地 `mock_response.json` |
+| 容错策略 | 外部调用失败时读取本地 `mock_response.json` |
 
 必须满足的行为要求：
 
@@ -140,7 +140,7 @@ MVP 支持两种部署模式：
 - FastAPI 本地运行
 - Streamlit 本地运行
 - MySQL 本地运行
-- 优先调用 DeepSeek，失败时回退模拟数据
+- 优先调用 DeepSeek，失败时使用本地模拟数据
 
 ### 10.2 低成本云演示模式
 

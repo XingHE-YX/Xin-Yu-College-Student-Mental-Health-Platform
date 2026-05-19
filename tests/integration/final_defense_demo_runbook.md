@@ -30,7 +30,7 @@ SHOW_SEEDED_CASES=true
 
 推荐原因：
 
-- `ENABLE_DEMO_LOGIN=true`：学生端登录存在兜底入口；
+- `ENABLE_DEMO_LOGIN=true`：学生端登录存在备用入口；
 - `ENABLE_MOCK_AI=true`：高风险树洞不依赖 DeepSeek 外网；
 - `SHOW_SEEDED_CASES=true`：后台任意时刻都有可展示案例，不怕现场空列表。
 
@@ -137,7 +137,7 @@ cd /Users/xingheluqi/Xin-Yu-College-Student-Mental-Health-Platform/backend
 - “当前只写模拟通知日志，不触发真实外发，符合校园演示环境的边界。”
 - “这一步证明的是处置记录可追溯，而不是现场真的给老师发消息。”
 
-## 5. 兜底切换
+## 5. 备用切换
 
 若现场出现异常，按下面顺序降级，不要临场 improvisation：
 

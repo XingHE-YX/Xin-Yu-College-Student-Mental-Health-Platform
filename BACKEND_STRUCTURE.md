@@ -234,7 +234,7 @@
 | `trigger_phrases_json` | `JSON` | 否 | 触发短语数组 |
 | `reason_text` | `TEXT` | 否 | 可读理由 |
 | `recommended_action` | `ENUM('publish','focus_list','manual_review_high')` | 否 | 推荐动作 |
-| `fallback_used` | `TINYINT(1)` | 否 | 是否使用模拟回退 |
+| `fallback_used` | `TINYINT(1)` | 否 | 是否使用本地模拟分析 |
 | `created_at` | `DATETIME(3)` | 否 | 创建时间 |
 
 ### 4.11 `alert_cases`

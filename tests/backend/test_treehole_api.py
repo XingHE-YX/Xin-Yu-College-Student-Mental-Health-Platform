@@ -115,7 +115,7 @@ def build_mock_treehole_ai_result(
     recommended_action: str = "publish",
     emotion_tags: list[str] | None = None,
     trigger_phrases: list[str] | None = None,
-    reason_text: str = "模拟回退：当前内容未出现明确高风险信号。",
+    reason_text: str = "本地模拟分析：当前内容未出现明确高风险信号。",
 ) -> DeepSeekJsonCompletionResult:
     """Build one normalized fake AI result for treehole posting tests."""
     content_json = {

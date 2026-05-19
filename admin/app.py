@@ -3397,12 +3397,13 @@ def build_ai_analysis_card_html(ai_analysis: dict[str, Any]) -> str:
     """Build one AI analysis summary card for treehole alert details."""
     trigger_phrases = "、".join(str(item) for item in ai_analysis.get("trigger_phrases", [])) or "无"
     emotion_tags = "、".join(str(item) for item in ai_analysis.get("emotion_tags", [])) or "无"
+    analysis_source = "本地模拟分析" if ai_analysis.get("fallback_used") else "DeepSeek 实时分析"
     return (
         '<div class="xinyu-detail-card">'
         '<div class="xinyu-detail-title">AI 分析结果</div>'
         f'<div class="xinyu-detail-copy">风险等级：{escape_html(render_risk_label(str(ai_analysis.get("parsed_risk_level") or "--")))}'
         f' · 风险分：{escape_html(str(ai_analysis.get("parsed_risk_score") or "--"))}'
-        f' · 回退：{escape_html("是" if ai_analysis.get("fallback_used") else "否")}</div>'
+        f' · 分析来源：{escape_html(analysis_source)}</div>'
         f'<div class="xinyu-detail-foot">触发短语：{escape_html(trigger_phrases)} · 情绪标签：{escape_html(emotion_tags)}</div>'
         f'<div class="xinyu-alert-card-copy">{escape_html(str(ai_analysis.get("reason_text") or "--"))}</div>'
         "</div>"

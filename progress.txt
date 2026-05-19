@@ -159,7 +159,7 @@
 - `IMPLEMENTATION_PLAN.md` 步骤 `8.2`：小程序树洞页面实现。
 - `IMPLEMENTATION_PLAN.md` 步骤 `8.3`：树洞软删除规则前端表现补齐。
 - `IMPLEMENTATION_PLAN.md` 步骤 `9.1`：DeepSeek 客户端实现。
-- `IMPLEMENTATION_PLAN.md` 步骤 `9.2`：DeepSeek 模拟回退路径实现。
+- `IMPLEMENTATION_PLAN.md` 步骤 `9.2`：DeepSeek 本地模拟分析路径实现。
 - `IMPLEMENTATION_PLAN.md` 步骤 `9.3`：风险聚合器实现。
 - `IMPLEMENTATION_PLAN.md` 步骤 `9.4`：树洞发布决策逻辑实现。
 - `IMPLEMENTATION_PLAN.md` 步骤 `10.1`：工单创建实现。

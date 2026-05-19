@@ -114,7 +114,7 @@ cd /Users/xingheluqi/Xin-Yu-College-Student-Mental-Health-Platform/backend
 
 - `ENABLE_MOCK_AI=true` 时，树洞风险分析会直接走本地模拟路径，不访问 DeepSeek 外网；
 - 本地模拟路径会根据树洞文本中的明确危险表达，把内容稳定分流到 `low / watch / high`，因此“高风险树洞拦截”脚本现在可以在无外网或外网抖动时继续演练；
-- `SHOW_SEEDED_CASES=true` 时，后台会展示 `14.1` 预置的低风险 / 需关注 / 高风险样例，适合在开场或兜底时直接进入 A02-A08 演示；
+- `SHOW_SEEDED_CASES=true` 时，后台会展示 `14.1` 预置的低风险 / 需关注 / 高风险样例，适合在开场或备用演示时直接进入 A02-A08 演示；
 - 若希望验证真实 DeepSeek 链路，可将 `ENABLE_MOCK_AI=false`，但答辩前应确认 `DEEPSEEK_API_KEY` 有效且外网可达。
 
 ## 3. 开场自检
@@ -353,4 +353,4 @@ cd /Users/xingheluqi/Xin-Yu-College-Student-Mental-Health-Platform/backend
 
 1. 当前已经完成 `14.2` 的 `ENABLE_MOCK_AI` 与 `SHOW_SEEDED_CASES`，因此答辩演示可在“真实 DeepSeek 模式”和“本地 mock 容错模式”之间切换；推荐正式答辩优先使用 `ENABLE_MOCK_AI=true` 与 `SHOW_SEEDED_CASES=true`，降低外网抖动风险。
 2. 当前已经提供 `14.1` 的演示种子数据脚本，因此 A02 / A03 / A05 / A06 / A07 / A08 可以通过统一 seed 命令直接获得展示样例；学生端若需要证明实时状态机仍然可用，仍建议至少手动走一遍树洞发布和报告查看链路。
-3. 当前手册已经可以支撑“从空库到一轮稳定答辩演练”；`14.3` 对应的最终现场顺序与兜底策略现已独立沉淀在 [final_defense_demo_runbook.md](/Users/xingheluqi/Xin-Yu-College-Student-Mental-Health-Platform/tests/integration/final_defense_demo_runbook.md)。
+3. 当前手册已经可以支撑“从空库到一轮稳定答辩演练”；`14.3` 对应的最终现场顺序与备用策略现已独立沉淀在 [final_defense_demo_runbook.md](/Users/xingheluqi/Xin-Yu-College-Student-Mental-Health-Platform/tests/integration/final_defense_demo_runbook.md)。
