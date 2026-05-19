@@ -1,0 +1,22 @@
+{
+  "include": [
+    "admin",
+    "backend/src",
+    "tests"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".uv-cache",
+    "backend/.venv"
+  ],
+  "extraPaths": [
+    "backend"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "venv": ".venv",
+  "venvPath": "backend"
+}
